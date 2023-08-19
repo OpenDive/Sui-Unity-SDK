@@ -1,0 +1,451 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>NBitcoin.Secp256k1</name>
+    </assembly>
+    <members>
+        <member name="M:NBitcoin.Secp256k1.ECPrivKey.ProveDLEQ(NBitcoin.Secp256k1.ECPubKey,NBitcoin.Secp256k1.ECPubKey)">
+            <summary>
+            Create a proof such that, X = aG, Z = bY, a == b == x, while keeping x secret
+            </summary>
+            <param name="Y"></param>
+            <param name="Z"></param>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECPrivKey.secp256k1_dleq_pair(NBitcoin.Secp256k1.ECMultGenContext,NBitcoin.Secp256k1.Scalar@,NBitcoin.Secp256k1.GE@,NBitcoin.Secp256k1.GE@,NBitcoin.Secp256k1.GE@)">
+            <summary>
+            p1 = x*G, p2 = x*gen2, constant time
+            </summary>
+            <param name="ecmult_gen_ctx"></param>
+            <param name="sk"></param>
+            <param name="gen2"></param>
+            <param name="p1"></param>
+            <param name="p2"></param>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECPrivKey.CreatePubKey">
+            <summary>
+            Compute the public key for a secret key.
+            </summary>
+            <exception cref="T:System.ObjectDisposedException">This instance has been disposed</exception>
+            <returns>A public key</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECPrivKey.TweakAdd(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Tweak a private key by adding tweak to it.
+            secp256k1_ec_privkey_tweak_add
+            </summary>
+            <param name="tweak">32 bytes tweak</param>
+            <exception cref="T:System.ArgumentException">If the tweak is not 32 bytes or if the tweak was out of range (chance of around 1 in 2^128 for uniformly random 32-byte arrays, or if the resulting private key would be invalid(only when the tweak is the complement of the private key)</exception>
+            <exception cref="T:System.ObjectDisposedException">This instance has been disposed</exception>
+            <returns>A tweaked private key</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECPrivKey.TryTweakAdd(System.ReadOnlySpan{System.Byte},NBitcoin.Secp256k1.ECPrivKey@)">
+            <summary>
+            Tweak a private key by adding tweak to it.
+            secp256k1_ec_privkey_tweak_add
+            </summary>
+            <param name="tweak">32 bytes tweak</param>
+            <param name="tweakedPrivKey">False If the tweak is not 32 bytes or if the tweak was out of range (chance of around 1 in 2^128 for uniformly random 32-byte arrays, or if the resulting private key would be invalid(only when the tweak is the complement of the private key)</param>
+            <exception cref="T:System.ObjectDisposedException">This instance has been disposed</exception>
+            <returns>A tweaked private key</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECPrivKey.TweakMul(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Tweak a private key by multiplying it by a tweak value.
+            secp256k1_ec_privkey_tweak_mul
+            </summary>
+            <param name="tweak">32 bytes tweak</param>
+            <param name="tweakedPrivKey">False If the tweak is not 32 bytes or if the tweak was out of range (chance of around 1 in 2^128 for uniformly random 32-byte arrays, or if the resulting private key would be invalid(only when the tweak is the complement of the private key)</param>
+            <exception cref="T:System.ObjectDisposedException">This instance has been disposed</exception>
+            <returns>A tweaked private key</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECPrivKey.TryTweakMul(System.ReadOnlySpan{System.Byte},NBitcoin.Secp256k1.ECPrivKey@)">
+            <summary>
+            Tweak a private key by multiplying it by a tweak value.
+            secp256k1_ec_privkey_tweak_mul
+            </summary>
+            <param name="tweak">32 bytes tweak</param>
+            <param name="tweakedPrivKey">False If the tweak is not 32 bytes or if the tweak was out of range (chance of around 1 in 2^128 for uniformly random 32-byte arrays, or if the resulting private key would be invalid(only when the tweak is the complement of the private key)</param>
+            <exception cref="T:System.ObjectDisposedException">This instance has been disposed</exception>
+            <returns>A tweaked private key</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECPrivKey.SignBIP340(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Create a non deterministic BIP340 schnorr signature. With Auxiliary random data taken from secure RNG.
+            </summary>
+            <param name="msg32">32 bytes message to sign</param>
+            <returns>A schnorr signature</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECPrivKey.SignBIP340(System.ReadOnlySpan{System.Byte},System.ReadOnlyMemory{System.Byte})">
+            <summary>
+            Create a deterministic BIP340 schnorr signature. With auxiliary random data passed in parameter.
+            </summary>
+            <param name="msg32">32 bytes message to sign</param>
+            <param name="auxData32">Auxiliary random data</param>
+            <returns>A schnorr signature</returns>
+        </member>
+        <member name="F:NBitcoin.Secp256k1.ECPubKey.order_as_fe">
+            Group order for secp256k1 defined as 'n' in "Standards for Efficient Cryptography" (SEC2) 2.7.1
+            sage: for t in xrange(1023, -1, -1):
+               ..   p = 2**256 - 2**32 - t
+               ..   if p.is_prime():
+               ..     print '%x'%p
+               ..     break
+             'fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f'
+            sage: a = 0
+            sage: b = 7
+            sage: F = FiniteField (p)
+            sage: '%x' % (EllipticCurve ([F (a), F (b)]).order())
+             'fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141'
+        </member>
+        <member name="F:NBitcoin.Secp256k1.ECPubKey.p_minus_order">
+            Difference between field and order, values 'p' and 'n' values defined in
+            "Standards for Efficient Cryptography" (SEC2) 2.7.1.
+            sage: p = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+            sage: a = 0
+            sage: b = 7
+            sage: F = FiniteField (p)
+            sage: '%x' % (p - EllipticCurve ([F (a), F (b)]).order())
+             '14551231950b75fc4402da1722fc9baee'
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECPubKey.TryCombine(NBitcoin.Secp256k1.Context,System.Collections.Generic.IEnumerable{NBitcoin.Secp256k1.ECPubKey},NBitcoin.Secp256k1.ECPubKey@)">
+            <summary>
+            The original function name is `secp256k1_ec_pubkey_combine`
+            </summary>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECXOnlyPubKey.WriteToSpan(System.Span{System.Byte})">
+            <summary>
+            Write the 32 bytes of the X value of the public key to output32
+            </summary>
+            <param name="output32"></param>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECXOnlyPubKey.CheckIsTweakedWith(NBitcoin.Secp256k1.ECXOnlyPubKey,System.ReadOnlySpan{System.Byte},System.Boolean)">
+            <summary>
+            Checks that a tweaked pubkey is the result of calling AddTweak on internalPubKey and tweak32
+            </summary>
+            <param name="internalPubKey">The internal PubKey</param>
+            <param name="tweak32">The tweak to add to internalPubKey</param>
+            <param name="expectedParity">The expected parity</param>
+            <returns></returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECMultContext.Mult(NBitcoin.Secp256k1.GEJ@,NBitcoin.Secp256k1.Scalar@,System.Nullable{NBitcoin.Secp256k1.Scalar}@)">
+            <summary>
+            Double multiply: R = na*A + ng*G
+            (secp256k1_ecmult)
+            </summary>
+            <param name="a"></param>
+            <param name="na"></param>
+            <param name="ng"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECMultContext.MultBatch(System.Nullable{NBitcoin.Secp256k1.Scalar}@,System.ReadOnlySpan{NBitcoin.Secp256k1.Scalar},System.ReadOnlySpan{NBitcoin.Secp256k1.GE},NBitcoin.Secp256k1.MultBatchOptions)">
+            <summary>
+            R = inp_g_sc * G + SUM(scalars[i] * points[i])
+            </summary>
+            <param name="inp_g_sc">The scalar for point G</param>
+            <param name="scalars">The scalars</param>
+            <param name="points">The points</param>
+            <param name="options">Advanced options</param>
+            <returns>R</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECMultContext.MultBatch(System.Nullable{NBitcoin.Secp256k1.Scalar}@,System.ReadOnlySpan{NBitcoin.Secp256k1.Scalar},System.ReadOnlySpan{NBitcoin.Secp256k1.GE},NBitcoin.Secp256k1.ECMultiImplementation)">
+            <summary>
+            R = inp_g_sc * G + SUM(scalars[i] * points[i])
+            </summary>
+            <param name="inp_g_sc">The scalar for point G</param>
+            <param name="scalars">The scalars</param>
+            <param name="points">The points</param>
+            <param name="implementation">The implementation</param>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECMultContext.MultBatch(System.Nullable{NBitcoin.Secp256k1.Scalar}@,System.ReadOnlySpan{NBitcoin.Secp256k1.Scalar},System.ReadOnlySpan{NBitcoin.Secp256k1.GE})">
+            <summary>
+            R = inp_g_sc * G + SUM(scalars[i] * points[i])
+            </summary>
+            <param name="inp_g_sc">The scalar for point G</param>
+            <param name="scalars">The scalars</param>
+            <param name="points">The points</param>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECMultContext.MultBatch(System.ReadOnlySpan{NBitcoin.Secp256k1.Scalar},System.ReadOnlySpan{NBitcoin.Secp256k1.GE})">
+            <summary>
+            R = SUM(scalars[i] * points[i])
+            </summary>
+            <param name="scalars">The scalars</param>
+            <param name="points">The points</param>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECMultContext.secp256k1_ecmult_odd_multiples_table_globalz_windowa(System.Span{NBitcoin.Secp256k1.GE},NBitcoin.Secp256k1.FE@,NBitcoin.Secp256k1.GEJ@)">
+            Fill a table 'pre' with precomputed odd multiples of a.
+            
+              There are two versions of this function:
+              - secp256k1_ecmult_odd_multiples_table_globalz_windowa which brings its
+                resulting point set to a single constant Z denominator, stores the X and Y
+                coordinates as ge_storage points in pre, and stores the global Z in rz.
+                It only operates on tables sized for WINDOW_A wnaf multiples.
+              - secp256k1_ecmult_odd_multiples_table_storage_var, which converts its
+                resulting point set to actually affine points, and stores those in pre.
+                It operates on tables of any size, but uses heap-allocated temporaries.
+            
+              To compute a*P + b*G, we compute a table for P using the first function,
+              and for G using the second (which requires an inverse, but it only needs to
+              happen once).
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECMultContext.secp256k1_pippenger_bucket_window(System.Int32)">
+            Returns optimal bucket_window (number of bits of a scalar represented by a
+            set of buckets) for a given number of points.
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECMultContext.secp256k1_ecmult_odd_multiples_table(System.Int32,System.Span{NBitcoin.Secp256k1.GEJ},System.Span{NBitcoin.Secp256k1.FE},NBitcoin.Secp256k1.GEJ@)">
+            Fill a table 'prej' with precomputed odd multiples of a. Prej will contain
+            the values [1*a,3*a,...,(2*n-1)*a], so it space for n values. zr[0] will
+            contain prej[0].z / a.z. The other zr[i] values = prej[i].z / prej[i-1].z.
+            Prej's Z values are undefined, except for the last value.
+        </member>
+        <member name="M:NBitcoin.Secp256k1.ECMultGenContext.MultGen(NBitcoin.Secp256k1.Scalar@)">
+            <summary>
+            Multiply with the generator: R = a*G
+            (secp256k1_ecmult_gen)
+            </summary>
+            <param name="a">A scalar to multiply to G</param>
+            <returns>The result of a*G</returns>
+        </member>
+        <member name="T:NBitcoin.Secp256k1.INonceFunction">
+            A pointer to a function to deterministically generate a nonce.
+            
+             Returns: 1 if a nonce was successfully generated. 0 will cause signing to fail.
+             Out:     nonce32:   pointer to a 32-byte array to be filled by the function.
+             In:      msg32:     the 32-byte message hash being verified (will not be NULL)
+                      key32:     pointer to a 32-byte secret key (will not be NULL)
+                      algo16:    pointer to a 16-byte array describing the signature
+                                 algorithm (will be NULL for ECDSA for compatibility).
+                      data:      Arbitrary data pointer that is passed through.
+                      attempt:   how many iterations we have tried to find a nonce.
+                                 This will almost always be 0, but different attempt values
+                                 are required to result in a different nonce.
+            
+             Except for test cases, this function should compute some cryptographic hash of
+             the message, the algorithm, the key and the attempt.
+        </member>
+        <member name="M:NBitcoin.Secp256k1.FE.CONST(System.UInt32,System.UInt32,System.UInt32,System.UInt32,System.UInt32,System.UInt32,System.UInt32,System.UInt32)">
+            <summary>
+            Create a field element from uint, most significative uint first. (big endian)
+            </summary>
+            <param name="d7"></param>
+            <param name="d6"></param>
+            <param name="d5"></param>
+            <param name="d4"></param>
+            <param name="d3"></param>
+            <param name="d2"></param>
+            <param name="d1"></param>
+            <param name="d0"></param>
+            <returns>A field element</returns>
+        </member>
+        <member name="F:NBitcoin.Secp256k1.GE.SECP256K1_TAG_PUBKEY_EVEN">
+            Prefix byte used to tag various encoded curvepoints for specific purposes 
+        </member>
+        <member name="P:NBitcoin.Secp256k1.GE.Infinity">
+            Generator for secp256k1, value 'g' defined in
+            "Standards for Efficient Cryptography" (SEC2) 2.7.1.
+        </member>
+        <member name="M:NBitcoin.Secp256k1.GE.ToEvenY(System.Boolean@)">
+            <summary>
+            Keeps a group element as is if it has an even Y and otherwise negates it.
+            parity is set to 0 in the former case and to 1 in the latter case.
+            Requires that the coordinates of r are normalized.
+            </summary>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.GE.ToEvenY">
+            <summary>
+            Keeps a group element as is if it has an even Y and otherwise negates it.
+            Requires that the coordinates of r are normalized.
+            </summary>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.GE.MultConst(NBitcoin.Secp256k1.Scalar@,System.Int32)">
+            <summary>
+            Multiply this group element by q in constant time
+            (secp256k1_ecmult_const)
+            </summary>
+            <param name="q">The scalar to multiply to</param>
+            <param name="bits">Here `bits` should be set to the maximum bitlength of the _absolute value_ of `q` plus one because we internally sometimes add 2 to the number during the WNAF conversion.</param>
+            <returns></returns>
+        </member>
+        <member name="F:NBitcoin.Secp256k1.ECMultiImplementation.Auto">
+            <summary>
+            Pick the optimum algorithm depending on the size of the batch
+            </summary>
+        </member>
+        <member name="P:NBitcoin.Secp256k1.MultBatchOptions.PippengerThreshold">
+            <summary>
+            The number of scalars until the Auto implementation pick pippenger algorithm over strauss (Default: 88)
+            </summary>
+        </member>
+        <member name="P:NBitcoin.Secp256k1.MultBatchOptions.Implementation">
+            <summary>
+            The implementation to pick
+            </summary>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.Musig.MusigContext.Tweak(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Add tweak to the xonly aggregated pubkey
+            </summary>
+            <param name="tweak32"></param>
+            <returns></returns>
+            <exception cref="T:System.InvalidOperationException"></exception>
+            <exception cref="T:System.ArgumentException"></exception>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.Musig.MusigContext.Tweak(System.ReadOnlySpan{System.Byte},System.Boolean)">
+            <summary>
+            Add tweak to the xonly aggregated pubkey or to the plain pubkey
+            </summary>
+            <param name="tweak32"></param>
+            <param name="xOnly"></param>
+            <returns></returns>
+            <exception cref="T:System.InvalidOperationException"></exception>
+            <exception cref="T:System.ArgumentException"></exception>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.Musig.MusigContext.DeterministicSign(NBitcoin.Secp256k1.ECPrivKey)">
+            <summary>
+            <inheritdoc cref="M:NBitcoin.Secp256k1.Musig.MusigContext.DeterministicSign(NBitcoin.Secp256k1.ECPrivKey,System.Byte[])"/>
+            </summary>
+            <param name="privKey"><inheritdoc cref="M:NBitcoin.Secp256k1.Musig.MusigContext.DeterministicSign(NBitcoin.Secp256k1.ECPrivKey,System.Byte[])" path="/param/[@name='privKey']"></inheritdoc>/></param>
+            <returns></returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.Musig.MusigContext.DeterministicSign(NBitcoin.Secp256k1.ECPrivKey,System.Byte[])">
+            <summary>
+            To deterministically sign, you need to call <see cref="M:NBitcoin.Secp256k1.Musig.MusigContext.Process(NBitcoin.Secp256k1.Musig.MusigPubNonce)"/> or <see cref="M:NBitcoin.Secp256k1.Musig.MusigContext.ProcessNonces(NBitcoin.Secp256k1.Musig.MusigPubNonce[])"/> with the nonces of all other participants.
+            See the BIP for more information about deterministic signer.
+            </summary>
+            <param name="privKey">The private key of the stateless signer</param>
+            <param name="rand">An optional random data</param>
+            <returns>The partial signature with the derived public nonce of this signer</returns>
+            <exception cref="T:System.ArgumentNullException"></exception>
+            <exception cref="T:System.InvalidOperationException"></exception>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.Musig.MusigContext.GenerateNonce(NBitcoin.Secp256k1.ECPubKey)">
+            <summary>
+            This function derives a random secret nonce that will be required for signing and
+            creates a private nonce whose public part intended to be sent to other signers.
+            </summary>
+            <param name="signingPubKey">The individual signing public key (see BIP Modifications to Nonce Generation for the reason that this argument is mandatory)</param>
+            <returns>A private nonce whose public part intended to be sent to other signers</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.Musig.MusigContext.GenerateNonce(NBitcoin.Secp256k1.ECPubKey,System.Byte[])">
+            <summary>
+            This function derives a secret nonce that will be required for signing and
+            creates a private nonce whose public part intended to be sent to other signers.
+            </summary>
+            <param name="signingPubKey">The individual signing public key (see BIP Modifications to Nonce Generation for the reason that this argument is mandatory)</param>
+            <param name="sessionId">A unique session_id. It is a "number used once". If null, it will be randomly generated.</param>
+            <returns>A private nonce whose public part intended to be sent to other signers</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.Musig.MusigContext.GenerateNonce(System.UInt64,NBitcoin.Secp256k1.ECPrivKey)">
+            <summary>
+            This function derives a secret nonce that will be required for signing and
+            creates a private nonce whose public part intended to be sent to other signers.
+            </summary>
+            <param name="counter">A unique counter. Never reuse the same value twice for the same msg32/pubkeys.</param>
+            <param name="signingKey">Provide the message to be signed to increase misuse-resistance. If you do provide a signingKey, sessionId32 can instead be a counter (that must never repeat!). However, it is recommended to always choose session_id32 uniformly at random. Can be null.</param>
+            <returns>A private nonce whose public part intended to be sent to other signers</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.Musig.MusigContext.GenerateNonce(NBitcoin.Secp256k1.ECPubKey,System.Byte[],NBitcoin.Secp256k1.ECPrivKey)">
+            <summary>
+            This function derives a secret nonce that will be required for signing and
+            creates a private nonce whose public part intended to be sent to other signers.
+            </summary>
+            <param name="signingPubKey">The individual signing public key (see BIP Modifications to Nonce Generation for the reason that this argument is mandatory)</param>
+            <param name="sessionId">A unique session_id32. It is a "number used once". If null, it will be randomly generated.</param>
+            <param name="signingKey">Provide the message to be signed to increase misuse-resistance. If you do provide a signingKey, sessionId32 can instead be a counter (that must never repeat!). However, it is recommended to always choose session_id32 uniformly at random. Can be null.</param>
+            <returns>A private nonce whose public part intended to be sent to other signers</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.Musig.MusigContext.GenerateNonce(NBitcoin.Secp256k1.ECPubKey,System.Byte[],NBitcoin.Secp256k1.ECPrivKey,System.Byte[])">
+            <summary>
+            This function derives a secret nonce that will be required for signing and
+            creates a private nonce whose public part intended to be sent to other signers.
+            </summary>
+            <param name="signingPubKey">The individual signing public key (see BIP Modifications to Nonce Generation for the reason that this argument is mandatory)</param>
+            <param name="sessionId">A unique session_id. It is a "number used once". If null, it will be randomly generated.</param>
+            <param name="signingKey">Provide the message to be signed to increase misuse-resistance. If you do provide a signingKey, sessionId32 can instead be a counter (that must never repeat!). However, it is recommended to always choose session_id32 uniformly at random. Can be null.</param>
+            <param name="extraInput">Provide the message to be signed to increase misuse-resistance. The extra_input32 argument can be used to provide additional data that does not repeat in normal scenarios, such as the current time. Can be null.</param>
+            <returns>A private nonce whose public part intended to be sent to other signers</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.Musig.MusigPrivNonce.GenerateMusigNonce(NBitcoin.Secp256k1.ECPubKey,NBitcoin.Secp256k1.Context,System.Byte[],NBitcoin.Secp256k1.ECPrivKey,System.Byte[],NBitcoin.Secp256k1.ECXOnlyPubKey,System.Byte[])">
+            <summary>
+            This function derives a secret nonce that will be required for signing and
+            creates a private nonce whose public part intended to be sent to other signers.
+            </summary>
+            <param name="signingPubKey">The individual signing public key (see BIP Modifications to Nonce Generation for the reason that this argument is mandatory)</param>
+            <param name="context">The context</param>
+            <param name="sessionId">A unique session_id32. It is a "number used once". If null, it will be randomly generated.</param>
+            <param name="signingKey">Provide the message to be signed to increase misuse-resistance. If you do provide a signingKey, sessionId32 can instead be a counter (that must never repeat!). However, it is recommended to always choose session_id32 uniformly at random. Can be null.</param>
+            <param name="msg">Provide the message to be signed to increase misuse-resistance.</param>
+            <param name="aggregatePubKey">Provide the message to be signed to increase misuse-resistance. Can be null.</param>
+            <param name="extraInput">Provide the message to be signed to increase misuse-resistance. The extra_input32 argument can be used to provide additional data that does not repeat in normal scenarios, such as the current time.</param>
+            <returns>A private nonce whose public part intended to be sent to other signers</returns>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.Scalar.extract(System.Span{System.UInt32},System.UInt32@)">
+            Extract the lowest 32 bits of (c0,c1,c2) into n, and left shift the number 32 bits. 
+        </member>
+        <member name="M:NBitcoin.Secp256k1.Scalar.CONST(System.UInt32,System.UInt32,System.UInt32,System.UInt32,System.UInt32,System.UInt32,System.UInt32,System.UInt32)">
+             The Secp256k1 curve has an endomorphism, where lambda * (x, y) = (beta * x, y), where
+             lambda is {0x53,0x63,0xad,0x4c,0xc0,0x5c,0x30,0xe0,0xa5,0x26,0x1c,0x02,0x88,0x12,0x64,0x5a,
+                        0x12,0x2e,0x22,0xea,0x20,0x81,0x66,0x78,0xdf,0x02,0x96,0x7c,0x1b,0x23,0xbd,0x72}
+            
+             "Guide to Elliptic Curve Cryptography" (Hankerson, Menezes, Vanstone) gives an algorithm
+             (algorithm 3.74) to find k1 and k2 given k, such that k1 + k2 * lambda == k mod n, and k1
+             and k2 have a small size.
+             It relies on constants a1, b1, a2, b2. These constants for the value of lambda above are:
+            
+             - a1 =      {0x30,0x86,0xd2,0x21,0xa7,0xd4,0x6b,0xcd,0xe8,0x6c,0x90,0xe4,0x92,0x84,0xeb,0x15}
+             - b1 =     -{0xe4,0x43,0x7e,0xd6,0x01,0x0e,0x88,0x28,0x6f,0x54,0x7f,0xa9,0x0a,0xbf,0xe4,0xc3}
+             - a2 = {0x01,0x14,0xca,0x50,0xf7,0xa8,0xe2,0xf3,0xf6,0x57,0xc1,0x10,0x8d,0x9d,0x44,0xcf,0xd8}
+             - b2 =      {0x30,0x86,0xd2,0x21,0xa7,0xd4,0x6b,0xcd,0xe8,0x6c,0x90,0xe4,0x92,0x84,0xeb,0x15}
+            
+             The algorithm then computes c1 = round(b1 * k / n) and c2 = round(b2 * k / n), and gives
+             k1 = k - (c1*a1 + c2*a2) and k2 = -(c1*b1 + c2*b2). Instead, we use modular arithmetic, and
+             compute k1 as k - k2 * lambda, avoiding the need for constants a1 and a2.
+            
+             g1, g2 are precomputed constants used to replace division with a rounded multiplication
+             when decomposing the scalar for an endomorphism-based point multiplication.
+            
+             The possibility of using precomputed estimates is mentioned in "Guide to Elliptic Curve
+             Cryptography" (Hankerson, Menezes, Vanstone) in section 3.5.
+            
+             The derivation is described in the paper "Efficient Software Implementation of Public-Key
+             Cryptography on Sensor Networks Using the MSP430X Microcontroller" (Gouvea, Oliveira, Lopez),
+             Section 4.3 (here we use a somewhat higher-precision estimate):
+             d = a1*b2 - b1*a2
+             g1 = round((2^272)*b2/d)
+             g2 = round((2^272)*b1/d)
+            
+             (Note that 'd' is also equal to the curve order here because [a1,b1] and [a2,b2] are found
+             as outputs of the Extended Euclidean Algorithm on inputs 'order' and 'lambda').
+            
+             The function below splits a in r1 and r2, such that r1 + lambda * r2 == a (mod order).
+        </member>
+        <member name="T:NBitcoin.Secp256k1.BIP340NonceFunction">
+            <summary>
+            This nonce function is described in BIP-schnorr (https://github.com/sipa/bips/blob/bip-schnorr/bip-schnorr.mediawiki)
+            </summary>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.SecpECDSASignature.#ctor(NBitcoin.Secp256k1.Scalar@,NBitcoin.Secp256k1.Scalar@,System.Boolean)">
+            <summary>
+            Create a signature from r and s
+            </summary>
+            <param name="r"></param>
+            <param name="s"></param>
+            <param name="enforceCheck">If true, will check that r and s are not zero or overflow. If false, we assume the caller made the checks</param>
+            <exception cref="T:System.ArgumentException">Thrown if enforceCheck is true and r or s is not valid</exception>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.SHA256.InitializeTagged(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Initializes a sha256 struct and writes the 64 byte string
+            SHA256(tag)||SHA256(tag) into it.
+            </summary>
+            <param name="tag"></param>
+        </member>
+        <member name="M:NBitcoin.Secp256k1.SHA256.InitializeTagged(System.String)">
+            <summary>
+            Initializes a sha256 struct and writes the 64 byte string
+            SHA256(tag)||SHA256(tag) into it.
+            </summary>
+            <param name="tag"></param>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:NBitcoin.Secp256k1.Wnaf.Fixed(System.Span{System.Int32},NBitcoin.Secp256k1.Scalar@,System.Int32)" -->
+    </members>
+</doc>
