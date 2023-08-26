@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 
 namespace Sui.Utils
 {
@@ -25,6 +26,21 @@ namespace Sui.Utils
                 output[i] = Convert.ToByte(new string(numeral), 16);
             }
             return output;
+        }
+
+        /// <summary>
+        /// Check if it's a valid hex address.
+        /// </summary>
+        /// <param name="walletAddress"></param>
+        /// <returns>true if is a valid hex address, false otherwise.</returns>
+        public static bool IsValidHexAddress(string walletAddress)
+        {
+            if (walletAddress[0..2].Equals("0x"))
+                walletAddress = walletAddress[2..];
+
+            string pattern = @"[a-fA-F0-9]{64}$";
+            Regex rg = new Regex(pattern);
+            return rg.IsMatch(walletAddress);
         }
     }
 }

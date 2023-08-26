@@ -8,9 +8,15 @@ namespace Sui.Cryptography.Ed25519
     {
         public const int ExtendedKeyLength = 64;
         public const int KeyLength = 32;
-        private string _key;
         private byte[] _extendedKeyBytes;
         private byte[] _keyBytes;
+        private string _key;
+
+        public enum KeyFormat
+        {
+            HEX,
+            BASE64
+        };
 
         public string Key
         {
@@ -63,13 +69,48 @@ namespace Sui.Cryptography.Ed25519
             if (privateKey == null)
                 throw new ArgumentNullException(nameof(privateKey));
             if (privateKey.Length != KeyLength)
-                throw new ArgumentException("Invalid key length: ", nameof(privateKey));
+                throw new ArgumentException("Invalid key length: ", nameof(privateKey) + ". Length must be of length: " + KeyLength + ".");
+
             KeyBytes = new byte[KeyLength];
-            Array.Copy(privateKey, KeyBytes, KeyLength);
+            Array.Copy(
+                privateKey,
+                KeyBytes,
+                KeyLength
+            );
 
             _extendedKeyBytes = new byte[Chaos.NaCl.Ed25519.ExpandedPrivateKeySizeInBytes];
-            Array.Copy(Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(KeyBytes), _extendedKeyBytes, Chaos.NaCl.Ed25519.ExpandedPrivateKeySizeInBytes);
+            Array.Copy(
+                Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(KeyBytes),
+                _extendedKeyBytes,
+                Chaos.NaCl.Ed25519.ExpandedPrivateKeySizeInBytes
+            );
         }
+
+        public PrivateKey(ReadOnlySpan<byte> privateKey)
+        {
+            if (privateKey.Length != KeyLength)
+                throw new ArgumentException("Invalid key length: ", nameof(privateKey) + ". Length must be of length: " + KeyLength + ".");
+            KeyBytes = new byte[KeyLength];
+            privateKey.CopyTo(KeyBytes.AsSpan());
+
+            _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(KeyBytes);
+        }
+
+        public PrivateKey(string key, KeyFormat keyType)
+        {
+            if(keyType == KeyFormat.HEX)
+            {
+                if (!Utils.Utils.IsValidHexAddress(key))
+                    throw new ArgumentException("Invalid key", nameof(key));
+                Key = key ?? throw new ArgumentNullException(nameof(key));
+            }
+            //else if(keyType == KeyFormat.BASE64)
+            else
+            {
+                // TODO: Implement check
+            }
+        }
+
 
         public string Hex()
         {
@@ -81,9 +122,60 @@ namespace Sui.Cryptography.Ed25519
             throw new NotImplementedException();
         }
 
+        public static PrivateKey FromHex(string hexStr)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static PrivateKey FromBase64(string base64Str)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static PrivateKey Random()
+        {
+            throw new NotImplementedException();
+        }
+
         public ISignature Sign(byte[] data)
         {
             throw new NotImplementedException();
+        }
+
+        public static bool operator ==(PrivateKey lhs, PrivateKey rhs)
+        {
+
+            if (lhs is null)
+            {
+                if (rhs is null)
+                {
+                    return true;
+                }
+                return false;
+            }
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(PrivateKey lhs, PrivateKey rhs) => !(lhs == rhs);
+
+        public override bool Equals(object obj)
+        {
+            if (obj is PrivateKey privateKey)
+            {
+                return privateKey.Key == this.Key;
+            }
+
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return Key.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return Key;
         }
     }
 }
