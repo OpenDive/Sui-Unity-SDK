@@ -10,7 +10,8 @@ namespace Sui.Cryptography.Ed25519
         public const int KeyLength = 32;
         private byte[] _extendedKeyBytes;
         private byte[] _keyBytes;
-        private string _key;
+        private string _keyHex;
+        private string _keyBase58;
 
         /// <summary>
         /// Used to define the format of the string passed to generate private key
@@ -46,18 +47,18 @@ namespace Sui.Cryptography.Ed25519
         {
             get
             {
-                if (_key == null && _keyBytes != null)
+                if (_keyHex == null && _keyBytes != null)
                 {
                     string addressHex = CryptoBytes.ToHexStringLower(_keyBytes);
-                    _key = "0x" + addressHex;
+                    _keyHex = "0x" + addressHex;
                 }
 
-                return _key;
+                return _keyHex;
             }
 
             set
             {
-                _key = value;
+                _keyHex = value;
             }
         }
 
@@ -66,15 +67,15 @@ namespace Sui.Cryptography.Ed25519
         {
             get
             {
-                if(_key == null)
+                if(_keyBase58 == null)
                 {
                     KeyBase58 = Encoders.Base58.EncodeData(KeyBytes);
                 }
-                return _key;
+                return _keyBase58;
             }
             set
             {
-                _key = value;
+                _keyBase58 = value;
             }
         }
 
@@ -85,18 +86,20 @@ namespace Sui.Cryptography.Ed25519
                 // if the private key bytes have not being initialized,
                 // but the 32-byte (64 character) string private key has been set
                 // decode the string based on the key format (i.e. Hex or Base58)
-                if (_keyBytes == null && _extendedKeyBytes == null && _key != null)
+                if (_keyBytes == null && _extendedKeyBytes == null
+                    && (_keyHex != null || _keyBase58 != null))
                 {
-                    string key = _key;
                     if(_keyFormat == KeyFormat.HEX)
                     {
-                        if (_key[0..2].Equals("0x")) { key = _key[2..]; } // Trim the private key hex string
+                        string key = _keyHex;
+                        if (_keyHex[0..2].Equals("0x")) { key = _keyHex[2..]; } // Trim the private key hex string
 
                         byte[] seed = key.HexStringToByteArray(); // Turn private key hex string into byte to be used a seed to derive the extended key
                         _keyBytes = seed;
                     }
                     else
                     {
+                        string key = _keyBase58;
                         byte[] seed = Encoders.Base58.DecodeData(key);
                         _keyBytes = seed;
                     }
