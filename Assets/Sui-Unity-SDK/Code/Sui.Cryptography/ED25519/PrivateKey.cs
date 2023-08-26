@@ -96,7 +96,7 @@ namespace Sui.Cryptography.Ed25519
             _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(KeyBytes);
         }
 
-        public PrivateKey(string key, KeyFormat keyType)
+        public PrivateKey(string key, KeyFormat keyType = KeyFormat.HEX)
         {
             if(keyType == KeyFormat.HEX)
             {
@@ -137,9 +137,13 @@ namespace Sui.Cryptography.Ed25519
             throw new NotImplementedException();
         }
 
-        public ISignature Sign(byte[] data)
+        public ISignature Sign(byte[] message)
         {
-            throw new NotImplementedException();
+            ArraySegment<byte> signature = new(new byte[64]);
+            Chaos.NaCl.Ed25519.Sign(signature,
+                new ArraySegment<byte>(message),
+                new ArraySegment<byte>(_extendedKeyBytes));
+            return new Signature(signature.Array);
         }
 
         public static bool operator ==(PrivateKey lhs, PrivateKey rhs)
