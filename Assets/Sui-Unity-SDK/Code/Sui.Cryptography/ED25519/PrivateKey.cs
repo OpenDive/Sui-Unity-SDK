@@ -12,13 +12,37 @@ namespace Sui.Cryptography.Ed25519
         private byte[] _keyBytes;
         private string _key;
 
+        /// <summary>
+        /// Used to define the format of the string passed to generate private key
+        /// </summary>
         public enum KeyFormat
         {
             HEX,
-            BASE64
+            BASE58
         };
+        private KeyFormat _keyFormat;
 
-        public string Key
+        //public string Key
+        //{
+        //    get
+        //    {
+        //        if (_key == null && _keyBytes != null)
+        //        {
+        //            string addressHex = CryptoBytes.ToHexStringLower(_keyBytes);
+        //            _key = "0x" + addressHex;
+        //        }
+
+        //        return _key;
+        //    }
+
+        //    set
+        //    {
+        //        _key = value;
+        //    }
+        //}
+
+
+        public string KeyHex
         {
             get
             {
@@ -37,20 +61,47 @@ namespace Sui.Cryptography.Ed25519
             }
         }
 
+
+        public string KeyBase58
+        {
+            get
+            {
+                if(_key == null)
+                {
+                    KeyBase58 = Encoders.Base58.EncodeData(KeyBytes);
+                }
+                return _key;
+            }
+            set
+            {
+                _key = value;
+            }
+        }
+
         public byte[] KeyBytes
         {
             get
             {
-                // if the private key bytes have not being initialized, but a 32-byte (64 character) string private has been set
+                // if the private key bytes have not being initialized,
+                // but the 32-byte (64 character) string private key has been set
+                // decode the string based on the key format (i.e. Hex or Base58)
                 if (_keyBytes == null && _extendedKeyBytes == null && _key != null)
                 {
                     string key = _key;
-                    if (_key[0..2].Equals("0x")) { key = _key[2..]; } // Trim the private key hex string
+                    if(_keyFormat == KeyFormat.HEX)
+                    {
+                        if (_key[0..2].Equals("0x")) { key = _key[2..]; } // Trim the private key hex string
 
-                    byte[] seed = key.HexStringToByteArray(); // Turn private key hex string into byte to be used a seed to derive the extended key
-                    _keyBytes = seed;
-                    _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(seed);
+                        byte[] seed = key.HexStringToByteArray(); // Turn private key hex string into byte to be used a seed to derive the extended key
+                        _keyBytes = seed;
+                    }
+                    else
+                    {
+                        byte[] seed = Encoders.Base58.DecodeData(key);
+                        _keyBytes = seed;
+                    }
                 }
+                _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(_keyBytes);
                 return _keyBytes;
             }
 
@@ -69,7 +120,8 @@ namespace Sui.Cryptography.Ed25519
             if (privateKey == null)
                 throw new ArgumentNullException(nameof(privateKey));
             if (privateKey.Length != KeyLength)
-                throw new ArgumentException("Invalid key length: ", nameof(privateKey) + ". Length must be of length: " + KeyLength + ".");
+                throw new ArgumentException("Usage: Invalid key length: ", nameof(privateKey)
+                    + ". Length must be of length: " + KeyLength + ".");
 
             KeyBytes = new byte[KeyLength];
             Array.Copy(
@@ -89,28 +141,31 @@ namespace Sui.Cryptography.Ed25519
         public PrivateKey(ReadOnlySpan<byte> privateKey)
         {
             if (privateKey.Length != KeyLength)
-                throw new ArgumentException("Invalid key length: ", nameof(privateKey) + ". Length must be of length: " + KeyLength + ".");
+                throw new ArgumentException("Usage: Invalid key length: ", nameof(privateKey)
+                    + ". Length must be of length: " + KeyLength + ".");
             KeyBytes = new byte[KeyLength];
             privateKey.CopyTo(KeyBytes.AsSpan());
 
             _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(KeyBytes);
         }
 
-        public PrivateKey(string key, KeyFormat keyType = KeyFormat.HEX)
+        public PrivateKey(string key, KeyFormat keyFormat = KeyFormat.HEX)
         {
-            if(keyType == KeyFormat.HEX)
+            if(keyFormat == KeyFormat.HEX)
             {
                 if (!Utils.Utils.IsValidHexAddress(key))
                     throw new ArgumentException("Invalid key", nameof(key));
-                Key = key ?? throw new ArgumentNullException(nameof(key));
+                _keyFormat = keyFormat;
+                KeyHex = key ?? throw new ArgumentNullException(nameof(key));
             }
-            //else if(keyType == KeyFormat.BASE64)
             else
             {
-                // TODO: Implement check
+                if (!Base58Encoder.IsValidEncoding(key))
+                    throw new ArgumentException("Invalid key", nameof(key));
+                _keyFormat = keyFormat;
+                KeyBase58 = key ?? throw new ArgumentNullException(nameof(key));
             }
         }
-
 
         public string Hex()
         {
@@ -166,7 +221,7 @@ namespace Sui.Cryptography.Ed25519
         {
             if (obj is PrivateKey privateKey)
             {
-                return privateKey.Key == this.Key;
+                return privateKey.KeyHex == this.KeyHex;
             }
 
             return false;
@@ -174,12 +229,12 @@ namespace Sui.Cryptography.Ed25519
 
         public override int GetHashCode()
         {
-            return Key.GetHashCode();
+            return KeyHex.GetHashCode();
         }
 
         public override string ToString()
         {
-            return Key;
+            return KeyHex;
         }
     }
 }
