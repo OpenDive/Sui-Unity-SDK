@@ -90,7 +90,7 @@ namespace Sui.Cryptography.Ed25519
             set
             {
                 if (value.Length != KeyLength)
-                    throw new ArgumentException("Invalid key length: ", nameof(value));
+                    throw new ArgumentException("Usage: Invalid key length: ", nameof(value));
 
                 _keyBytes = value;
                 _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(value);
