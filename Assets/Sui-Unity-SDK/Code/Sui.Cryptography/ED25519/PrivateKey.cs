@@ -1,5 +1,6 @@
 using System;
 using Chaos.NaCl;
+using NBitcoin;
 using Sui.Utils;
 
 namespace Sui.Cryptography.Ed25519
@@ -23,26 +24,6 @@ namespace Sui.Cryptography.Ed25519
         };
         private KeyFormat _keyFormat;
 
-        //public string Key
-        //{
-        //    get
-        //    {
-        //        if (_key == null && _keyBytes != null)
-        //        {
-        //            string addressHex = CryptoBytes.ToHexStringLower(_keyBytes);
-        //            _key = "0x" + addressHex;
-        //        }
-
-        //        return _key;
-        //    }
-
-        //    set
-        //    {
-        //        _key = value;
-        //    }
-        //}
-
-
         public string KeyHex
         {
             get
@@ -62,14 +43,13 @@ namespace Sui.Cryptography.Ed25519
             }
         }
 
-
         public string KeyBase58
         {
             get
             {
-                if(_keyBase58 == null)
+                if(_keyBase58 == null && _keyBytes != null)
                 {
-                    KeyBase58 = Encoders.Base58.EncodeData(KeyBytes);
+                    _keyBase58 = Encoders.Base58.EncodeData(KeyBytes);
                 }
                 return _keyBase58;
             }
@@ -107,7 +87,6 @@ namespace Sui.Cryptography.Ed25519
                 _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(_keyBytes);
                 return _keyBytes;
             }
-
             set
             {
                 if (value.Length != KeyLength)
@@ -170,29 +149,19 @@ namespace Sui.Cryptography.Ed25519
             }
         }
 
-        public string Hex()
-        {
-            throw new NotImplementedException();
-        }
+        public string Hex() => KeyHex;
 
-        public string Base64()
-        {
-            throw new NotImplementedException();
-        }
+        public string Base64() => KeyBase58;
 
-        public static PrivateKey FromHex(string hexStr)
-        {
-            throw new NotImplementedException();
-        }
+        public static PrivateKey FromHex(string hexStr) => new(hexStr, KeyFormat.HEX);
 
-        public static PrivateKey FromBase64(string base64Str)
-        {
-            throw new NotImplementedException();
-        }
+        public static PrivateKey FromBase64(string base64Str) => new(base64Str, KeyFormat.BASE58);
 
         public static PrivateKey Random()
         {
-            throw new NotImplementedException();
+            byte[] seed = new byte[Chaos.NaCl.Ed25519.PrivateKeySeedSizeInBytes];
+            RandomUtils.GetBytes(seed); // TODO: Remove NBitcoin dependency
+            return new PrivateKey(seed);
         }
 
         public ISignature Sign(byte[] message)
@@ -206,7 +175,6 @@ namespace Sui.Cryptography.Ed25519
 
         public static bool operator ==(PrivateKey lhs, PrivateKey rhs)
         {
-
             if (lhs is null)
             {
                 if (rhs is null)
