@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace Sui.Utils
+namespace Sui.Utilities
 {
 	/// <summary>
 	/// https://github.com/MetacoSA/NBitcoin/blob/master/NBitcoin/DataEncoders/Base58Encoder.cs

@@ -1,7 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
 
-namespace Sui.Utils
+namespace Sui.Utilities
 {
     public static class Utils
     {

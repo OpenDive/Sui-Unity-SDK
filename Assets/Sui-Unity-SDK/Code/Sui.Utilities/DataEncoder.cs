@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Sui.Utils
+namespace Sui.Utilities
 {
 	/// <summary>
 	/// https://github.com/MetacoSA/NBitcoin/tree/master/NBitcoin/DataEncoders

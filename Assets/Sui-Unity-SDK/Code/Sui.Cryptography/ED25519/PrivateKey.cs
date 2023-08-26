@@ -1,7 +1,7 @@
 using System;
 using Chaos.NaCl;
 using NBitcoin;
-using Sui.Utils;
+using Sui.Utilities;
 
 namespace Sui.Cryptography.Ed25519
 {
@@ -135,7 +135,7 @@ namespace Sui.Cryptography.Ed25519
         {
             if(keyFormat == KeyFormat.HEX)
             {
-                if (!Utils.Utils.IsValidHexAddress(key))
+                if (!Utilities.Utils.IsValidHexAddress(key))
                     throw new ArgumentException("Invalid key", nameof(key));
                 _keyFormat = keyFormat;
                 KeyHex = key ?? throw new ArgumentNullException(nameof(key));

@@ -1,4 +1,4 @@
-namespace Sui.Utils
+namespace Sui.Utilities
 {
     /// <summary>
     /// Utility class to create static instances of different encoders
