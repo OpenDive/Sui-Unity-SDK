@@ -1,6 +1,5 @@
 using NUnit.Framework;
 using System;
-using System.Text;
 using Sui.Cryptography.Ed25519;
 using UnityEngine;
 
@@ -10,6 +9,7 @@ namespace Sui.Tests.Cryptography
     {
         byte[] privateKeyBytes = TestValues.PrivateKeyBytes;
         string expPrivateKeyHex = TestValues.PrivateKeyHex;
+        byte[] expSignatureBytes = TestValues.SignatureBytes;
 
         byte[] privateKeyBytesInvalid = TestValues.PrivateKeyBytesInvalidLength;
 
@@ -73,7 +73,13 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PrivateKeyToHexString()
         {
-            Assert.AreEqual(1, 0);
+            PrivateKey privateKey = new(privateKeyBytes);
+
+            byte[] keyBytes = privateKey.KeyBytes;
+            Assert.AreEqual(32, keyBytes.Length);
+
+            string actual = privateKey.Hex();
+            Assert.AreEqual(expPrivateKeyHex, actual);
         }
 
         [Test]
