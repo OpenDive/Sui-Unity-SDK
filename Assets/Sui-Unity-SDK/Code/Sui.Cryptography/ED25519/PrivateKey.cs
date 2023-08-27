@@ -90,7 +90,7 @@ namespace Sui.Cryptography.Ed25519
             set
             {
                 if (value.Length != KeyLength)
-                    throw new ArgumentException("Usage: Invalid key length: ", nameof(value));
+                    throw new ArgumentException("Invalid key length: ", nameof(value));
 
                 _keyBytes = value;
                 _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(value);
@@ -102,8 +102,7 @@ namespace Sui.Cryptography.Ed25519
             if (privateKey == null)
                 throw new ArgumentNullException(nameof(privateKey));
             if (privateKey.Length != KeyLength)
-                throw new ArgumentException("Usage: Invalid key length: ", nameof(privateKey)
-                    + ". Length must be of length: " + KeyLength + ".");
+                throw new ArgumentException("Invalid key length: ", nameof(privateKey));
 
             KeyBytes = new byte[KeyLength];
             Array.Copy(

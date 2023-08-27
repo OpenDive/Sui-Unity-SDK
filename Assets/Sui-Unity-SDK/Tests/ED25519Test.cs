@@ -2,6 +2,7 @@ using NUnit.Framework;
 using System;
 using System.Text;
 using Sui.Cryptography.Ed25519;
+using UnityEngine;
 
 namespace Sui.Tests.Cryptography
 {
@@ -35,9 +36,8 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PrivateKeyFromBytesInvalidLength()
         {
-            PrivateKey privateKey = new(privateKeyBytesInvalid);
-
-            Assert.AreEqual(1, 0);
+            var ex = Assert.Throws<ArgumentException>(() => new PrivateKey(privateKeyBytesInvalid));
+            Assert.AreEqual("Invalid key length: \nParameter name: privateKey", ex.Message);
         }
 
         [Test]
