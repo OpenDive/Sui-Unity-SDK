@@ -1,20 +1,42 @@
 using NUnit.Framework;
 using System;
 using System.Text;
+using Sui.Cryptography.Ed25519;
 
-namespace Sui.Cryptography
+namespace Sui.Tests.Cryptography
 {
     public class ED25519Test
     {
+        byte[] privateKeyBytes = TestValues.PrivateKeyBytes;
+        string expPrivateKeyHex = TestValues.PrivateKeyHex;
+
+        byte[] privateKeyBytesInvalid = TestValues.PrivateKeyBytesInvalidLength;
+
+        [Test]
+        public void PrivateKeyRandom()
+        {
+            PrivateKey privateKey = PrivateKey.Random();
+            byte[] keyBytes = privateKey.KeyBytes;
+            Assert.AreEqual(32, keyBytes.Length);
+        }
+
         [Test]
         public void PrivateKeyFromBytesSuccess()
         {
-            Assert.AreEqual(1, 0);
+            PrivateKey privateKey = new(privateKeyBytes);
+
+            byte[] keyBytes = privateKey.KeyBytes;
+            Assert.AreEqual(32, keyBytes.Length);
+
+            string actual = privateKey.KeyHex;
+            Assert.AreEqual(expPrivateKeyHex, actual);
         }
 
         [Test]
         public void PrivateKeyFromBytesInvalidLength()
         {
+            PrivateKey privateKey = new(privateKeyBytesInvalid);
+
             Assert.AreEqual(1, 0);
         }
 
