@@ -8,8 +8,8 @@ namespace Sui.Cryptography
 {
     public abstract class PublicKeyBase
     {
-        public abstract SignatureScheme SignatureScheme { set; }
-        public int KeyLength { get;  set; }
+        public abstract SignatureScheme SignatureScheme { get; }
+        public abstract int KeyLength { get; }
         public string _key;
         private byte[] _keyBytes;
 
