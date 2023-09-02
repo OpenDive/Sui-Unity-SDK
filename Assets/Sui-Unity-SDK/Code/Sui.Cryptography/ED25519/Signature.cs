@@ -4,11 +4,21 @@ namespace Sui.Cryptography.Ed25519
 {
     public class Signature : ISignature
     {
-        public const int SignatureLength = 64;
-
         private readonly byte[] _signatureBytes;
 
         private string _signature;
+
+        //public byte[] SignatureBytes
+        //{
+        //    get
+        //    {
+        //        return "";
+        //    }
+
+        //    set
+        //    {
+        //    }
+        //}
 
         public Signature(byte[] signature)
         {
@@ -41,6 +51,16 @@ namespace Sui.Cryptography.Ed25519
             }
 
             return false;
+        }
+
+        public string Serialize()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public ISignature Deserialize(string serializedSignature)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }
