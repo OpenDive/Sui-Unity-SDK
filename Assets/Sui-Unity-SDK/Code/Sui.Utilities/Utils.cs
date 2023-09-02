@@ -1,10 +1,26 @@
 using System;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Sui.Utilities
 {
     public static class Utils
     {
+        public static bool Equals(this byte[] lhs, byte[] rhs)
+        {
+            if (lhs.Length != rhs.Length) return false;
+#if !DOTNET35
+            for(int i = 0; i < lhs.Length; i++)
+            {
+                if (lhs[i] != rhs[i]) return false;
+            }
+            return true;
+#else
+
+            return lhs.SequenceEqual(rhs);
+#endif
+        }
+
         /// <summary>
         /// Converts a hexadecimal string to an array of bytes.
         /// The input string can start with a `0x` or not.
