@@ -12,7 +12,7 @@ namespace Sui.Cryptography.Ed25519
     /// </summary>
     public class PrivateKey : IPrivateKey
     {
-        public const SignatureScheme ignatureScheme = SignatureScheme.ED25519;
+        public const SignatureScheme signatureScheme = SignatureScheme.ED25519;
         public const int ExtendedKeyLength = 64;
         public const int KeyLength = 32;
         private byte[] _extendedKeyBytes;
