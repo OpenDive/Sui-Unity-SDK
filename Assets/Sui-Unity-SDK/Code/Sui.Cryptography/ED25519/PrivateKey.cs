@@ -2,11 +2,17 @@ using System;
 using Chaos.NaCl;
 using NBitcoin;
 using Sui.Utilities;
+using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Cryptography.Ed25519
 {
+    /// <summary>
+    /// Implements the functionality of a private key.
+    /// The key may be viewed as a Hex or Base58 string as supported by Sui.
+    /// </summary>
     public class PrivateKey : IPrivateKey
     {
+        public const SignatureScheme ignatureScheme = SignatureScheme.ED25519;
         public const int ExtendedKeyLength = 64;
         public const int KeyLength = 32;
         private byte[] _extendedKeyBytes;
@@ -170,6 +176,18 @@ namespace Sui.Cryptography.Ed25519
                 new ArraySegment<byte>(message),
                 new ArraySegment<byte>(_extendedKeyBytes));
             return new Signature(signature.Array);
+        }
+
+        /// <summary>
+        /// Return a signature as a base64 string
+        /// </summary>
+        /// <param name="b64Message"></param>
+        /// <returns></returns>
+        public string Sign(string b64Message)
+        {
+            byte[] bytes = CryptoBytes.FromBase64String(b64Message);
+            Signature signature = (Signature)Sign(bytes);
+            return CryptoBytes.ToBase64String(signature.Data());
         }
 
         public static bool operator ==(PrivateKey lhs, PrivateKey rhs)
