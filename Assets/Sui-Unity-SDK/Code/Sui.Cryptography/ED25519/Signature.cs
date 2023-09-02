@@ -2,7 +2,7 @@ using Chaos.NaCl;
 
 namespace Sui.Cryptography.Ed25519
 {
-    public class Signature : ISignature
+    public class Signature : SignatureBase
     {
         private readonly byte[] _signatureBytes;
 
@@ -23,11 +23,6 @@ namespace Sui.Cryptography.Ed25519
         public Signature(byte[] signature)
         {
             _signatureBytes = signature;
-        }
-
-        public byte[] Data()
-        {
-            return _signatureBytes;
         }
 
         public override int GetHashCode()
@@ -53,12 +48,17 @@ namespace Sui.Cryptography.Ed25519
             return false;
         }
 
-        public string Serialize()
+        public override byte[] Data()
         {
             throw new System.NotImplementedException();
         }
 
-        public ISignature Deserialize(string serializedSignature)
+        public override string Serialize()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override SignatureBase Deserialize(string serializedSignature)
         {
             throw new System.NotImplementedException();
         }

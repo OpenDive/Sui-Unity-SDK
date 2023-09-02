@@ -169,7 +169,7 @@ namespace Sui.Cryptography.Ed25519
             return new PrivateKey(seed);
         }
 
-        public ISignature Sign(byte[] message)
+        public Signature Sign(byte[] message)
         {
             ArraySegment<byte> signature = new(new byte[64]);
             Chaos.NaCl.Ed25519.Sign(signature,
@@ -223,6 +223,11 @@ namespace Sui.Cryptography.Ed25519
         public override string ToString()
         {
             return KeyHex;
+        }
+
+        SignatureBase IPrivateKey.Sign(byte[] data)
+        {
+            throw new NotImplementedException();
         }
     }
 }

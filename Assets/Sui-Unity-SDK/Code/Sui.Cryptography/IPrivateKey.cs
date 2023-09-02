@@ -10,7 +10,7 @@ namespace Sui.Cryptography
         public static IPrivateKey FromHex(string hexStr) => throw new NotImplementedException();
         public static IPrivateKey FromBase64(string base64Str) => throw new NotImplementedException();
         public static IPrivateKey Random() => throw new NotImplementedException();
-        public ISignature Sign(byte[] data);
+        public SignatureBase Sign(byte[] data);
         //public void Serialize(Serializer serializer);
     }
 }

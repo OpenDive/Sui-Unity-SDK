@@ -20,12 +20,12 @@ namespace Sui.Cryptography
             Zk
         }
 
-        public static string ToSerializedSignature(ISignature signature)
+        public static string ToSerializedSignature(SignatureBase signature)
         {
             throw new NotImplementedException();
         }
 
-        public static ISignature ToSerializedSignature(string serializedSignature)
+        public static SignatureBase ToSerializedSignature(string serializedSignature)
         {
             throw new NotImplementedException();
         }
@@ -41,6 +41,11 @@ namespace Sui.Cryptography
             { SignatureScheme.MultiSig,     0x03 },
             { SignatureScheme.Zk,           0x05 }
         };
+
+        public static byte GetFlag(SignatureScheme signatureScheme)
+        {
+            return _signatureSchemeToFlag[signatureScheme];
+        }
 
         public static byte ED25519      => _signatureSchemeToFlag[SignatureScheme.ED25519];
         public static byte Secp256k1    => _signatureSchemeToFlag[SignatureScheme.Secp256k1];
@@ -63,6 +68,14 @@ namespace Sui.Cryptography
             //{ SignatureScheme.Zk, __ }
         };
 
+        public static int GetSize(SignatureScheme signatureScheme)
+        {
+            if (!_signatureSchemeToSize.ContainsKey(signatureScheme))
+                throw new NotSupportedException("Unsupported signature scheme");
+
+            return _signatureSchemeToSize[signatureScheme];
+        }
+
         public static int ED25519       => _signatureSchemeToSize[SignatureScheme.ED25519];
         public static int Secp256k1     => _signatureSchemeToSize[SignatureScheme.Secp256k1];
         public static int Secp256r1     => _signatureSchemeToSize[SignatureScheme.Secp256r1];
@@ -81,6 +94,11 @@ namespace Sui.Cryptography
             { 0x03, SignatureScheme.MultiSig },
             { 0x05, SignatureScheme.Zk }
         };
+
+        public static SignatureScheme GetScheme(byte flagByte)
+        {
+            return _signatureFlagToScheme[flagByte];
+        }
 
         public static SignatureScheme FLAG_0x00     => _signatureFlagToScheme[0x00];
         public static SignatureScheme FLAG_0x01     => _signatureFlagToScheme[0x01];

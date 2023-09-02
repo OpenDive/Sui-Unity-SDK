@@ -18,7 +18,7 @@ namespace Sui.Cryptography.Ed25519
         /// <returns></returns>
         public override byte Flag() => SignatureSchemeToFlag.ED25519;
 
-        public override bool Verify(byte[] message, ISignature signature)
+        public override bool Verify(byte[] message, SignatureBase signature)
         {
             throw new System.NotImplementedException();
         }

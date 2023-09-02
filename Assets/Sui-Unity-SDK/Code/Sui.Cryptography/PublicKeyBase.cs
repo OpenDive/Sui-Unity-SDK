@@ -108,11 +108,19 @@ namespace Sui.Cryptography
 
         /// <summary>
         /// Verifies that the signature is valid for for the provided message
+        ///
+        /// When a user submits a signed transaction, a serialized signature
+        /// and a serialized transaction data is submitted.
+        /// The serialized transaction data is the BCS serialized bytes of
+        /// the struct TransactionData and the serialized signature is defined
+        /// as a concatenation of bytes of flag || sig || pk.
+        ///
+        /// https://docs.sui.io/learn/cryptography/sui-signatures#user-signature
         /// </summary>
         /// <param name="message"></param>
         /// <param name="signature"></param>
         /// <returns></returns>
-        abstract public bool Verify(byte[] message, ISignature signature);
+        abstract public bool Verify(byte[] message, SignatureBase signature);
 
         // TODO: VerifyWithIntent
 
