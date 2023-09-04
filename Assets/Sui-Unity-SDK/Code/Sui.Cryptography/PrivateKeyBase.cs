@@ -93,7 +93,16 @@ namespace Sui.Cryptography
 
         public abstract byte[] KeyBytes { get; set; }
 
+        /// <summary>
+        /// Return the private key as a hex string
+        /// </summary>
+        /// <returns></returns>
         public string ToHex() => KeyHex;
+
+        /// <summary>
+        /// Return the private key as a base64 string
+        /// </summary>
+        /// <returns></returns>
         public string ToBase64() => KeyBase64;
         //public void Serialize(Serializer serializer);
     }
