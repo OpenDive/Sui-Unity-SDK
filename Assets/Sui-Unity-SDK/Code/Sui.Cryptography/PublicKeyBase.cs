@@ -254,10 +254,6 @@ namespace Sui.Cryptography
         /// <returns></returns>
         public string ToSuiAddress()
         {
-            // Signature scheme (1 byte) + public key bytes
-            //byte[] addressBytes = new byte[KeyLength + 1];
-            //addressBytes[0] = SignatureSchemeToFlag.ED25519;
-            //Array.Copy(KeyBytes, 0, addressBytes, 1, KeyLength);
             byte[] addressBytes = ToSuiBytes();
 
             // BLAKE2b hash
