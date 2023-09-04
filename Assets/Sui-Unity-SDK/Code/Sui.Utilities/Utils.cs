@@ -57,5 +57,16 @@ namespace Sui.Utilities
             Regex rg = new Regex(pattern);
             return rg.IsMatch(walletAddress);
         }
+
+        /// <summary>
+        /// Check if it's a valid base64 string
+        /// </summary>
+        /// <param name="base64">Base64 string</param>
+        /// <returns></returns>
+        public static bool IsBase64String(string base64)
+        {
+            Span<byte> buffer = new(new byte[base64.Length]);
+            return Convert.TryFromBase64String(base64, buffer, out int bytesParsed);
+        }
     }
 }
