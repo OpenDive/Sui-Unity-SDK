@@ -88,7 +88,7 @@ namespace Sui.Cryptography
 
         public PublicKeyBase(string publicKey)
         {
-            if (Utils.IsValidHexAddress(publicKey))
+            if (Utils.IsValidEd25519Key(publicKey))
             {
                 KeyHex = publicKey ?? throw new ArgumentNullException(nameof(publicKey));
             }
@@ -98,7 +98,7 @@ namespace Sui.Cryptography
             }
             else
             {
-                throw new ArgumentException("Invalid key", nameof(publicKey));
+                throw new ArgumentException("Invalid key: ", nameof(publicKey));
             }
         }
 
