@@ -10,24 +10,43 @@ namespace Sui.Cryptography
     {
         public abstract SignatureScheme SignatureScheme { get; }
         public abstract int KeyLength { get; }
-        public string _key;
+        //public string _key;
         private byte[] _keyBytes;
+        private string _keyHex;
+        private string _keyBase64;
 
-        public string Key
+        public string KeyHex
         {
             get
             {
-                if (_key == null && _keyBytes != null)
+                if (_keyHex == null && _keyBytes != null)
                 {
                     string addressHex = CryptoBytes.ToHexStringLower(_keyBytes);
-                    _key = "0x" + addressHex;
+                    _keyHex = "0x" + addressHex;
                 }
-                return _key;
+
+                return _keyHex;
             }
 
             set
             {
-                _key = value;
+                _keyHex = value;
+            }
+        }
+
+        public string KeyBase64
+        {
+            get
+            {
+                if (_keyBase64 == null && _keyBytes != null)
+                {
+                    _keyBase64 = CryptoBytes.ToBase64String(KeyBytes);
+                }
+                return _keyBase64;
+            }
+            set
+            {
+                _keyBase64 = value;
             }
         }
 
@@ -35,11 +54,18 @@ namespace Sui.Cryptography
         {
             get
             {
-                if (_keyBytes == null && _key != null)
+                if (_keyBytes == null)
                 {
-                    string key = _key;
-                    if (_key[0..2].Equals("0x")) { key = _key[2..]; }
-                    _keyBytes = key.HexStringToByteArray();
+                    if(_keyHex != null)
+                    {
+                        string key = _keyHex;
+                        if (_keyHex[0..2].Equals("0x")) { key = _keyHex[2..]; }
+                        _keyBytes = key.HexStringToByteArray();
+                    }
+                    else // _keyBase64 is not null
+                    {
+                        _keyBytes = CryptoBytes.FromBase64String(_keyBase64);
+                    }
                 }
                 return _keyBytes;
             }
@@ -62,10 +88,18 @@ namespace Sui.Cryptography
 
         public PublicKeyBase(string publicKey)
         {
-            if (!Utils.IsValidHexAddress(publicKey))
+            if (Utils.IsValidHexAddress(publicKey))
+            {
+                KeyHex = publicKey ?? throw new ArgumentNullException(nameof(publicKey));
+            }
+            else if(Utils.IsBase64String(publicKey))
+            {
+                KeyBase64 = publicKey ?? throw new ArgumentNullException(nameof(publicKey));
+            }
+            else
+            {
                 throw new ArgumentException("Invalid key", nameof(publicKey));
-
-            Key = publicKey ?? throw new ArgumentNullException(nameof(publicKey));
+            }
         }
 
         /// <summary>
@@ -224,7 +258,7 @@ namespace Sui.Cryptography
         public override bool Equals(object obj)
         {
             if (obj is PublicKeyBase publicKey)
-                return publicKey.Key.Equals(Key);
+                return publicKey.KeyHex.Equals(KeyHex);
 
             return false;
         }
@@ -235,7 +269,7 @@ namespace Sui.Cryptography
         /// <returns></returns>
         public override int GetHashCode()
         {
-            return Key.GetHashCode();
+            return KeyHex.GetHashCode();
         }
 
         /// <summary>
