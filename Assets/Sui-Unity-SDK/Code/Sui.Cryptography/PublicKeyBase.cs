@@ -60,12 +60,12 @@ namespace Sui.Cryptography
             Array.Copy(publicKey, KeyBytes, KeyLength);
         }
 
-        public PublicKeyBase(string key)
+        public PublicKeyBase(string publicKey)
         {
-            if (!Utils.IsValidHexAddress(key))
-                throw new ArgumentException("Invalid key", nameof(key));
+            if (!Utils.IsValidHexAddress(publicKey))
+                throw new ArgumentException("Invalid key", nameof(publicKey));
 
-            Key = key ?? throw new ArgumentNullException(nameof(key));
+            Key = publicKey ?? throw new ArgumentNullException(nameof(publicKey));
         }
 
         /// <summary>
