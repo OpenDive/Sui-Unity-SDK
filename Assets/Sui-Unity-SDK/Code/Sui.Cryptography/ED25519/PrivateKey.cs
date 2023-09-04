@@ -18,7 +18,6 @@ namespace Sui.Cryptography.Ed25519
         private byte[] _extendedKeyBytes;
         private byte[] _keyBytes;
         private string _keyHex;
-        //private string _keyBase58;
         private string _keyBase64;
 
         /// <summary>
