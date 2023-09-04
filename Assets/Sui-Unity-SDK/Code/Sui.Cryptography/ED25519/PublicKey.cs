@@ -1,3 +1,4 @@
+using System;
 using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Cryptography.Ed25519
@@ -37,7 +38,30 @@ namespace Sui.Cryptography.Ed25519
 
         public override bool Verify(byte[] message, SignatureBase signature)
         {
-            return Chaos.NaCl.Ed25519.Verify(signature.Data(), message, ToRawBytes());
+            throw new System.NotImplementedException();
+        }
+
+        public override bool Verify(byte[] message, string serializedSignature)
+        {
+            ParsedSignatureOutput parsedSignature
+                = SignatureBase.ParseSerializedSignature(serializedSignature);
+
+            SignatureScheme signatureScheme = parsedSignature.SignatureScheme;
+            if (signatureScheme != SignatureScheme.ED25519)
+                throw new Exception("Invalid signature scheme.");
+
+            byte[] publicKey = parsedSignature.PublicKey; // TODO: Think about whether we need to have this as a byte array or just string
+            if (ToRawBytes().Equals(publicKey))
+                throw new Exception("Signature does not match public key.");
+
+            byte[] signature = parsedSignature.Signature;
+
+            return VerifyRaw(message, signature);
+        }
+
+        public override bool VerifyRaw(byte[] message, byte[] signature)
+        {
+            return Chaos.NaCl.Ed25519.Verify(signature, message, ToRawBytes());
         }
     }
 }
