@@ -122,6 +122,26 @@ namespace Sui.Cryptography
         /// <returns></returns>
         abstract public bool Verify(byte[] message, SignatureBase signature);
 
+        /// <summary>
+        /// Signature is committed to the intent message of the transaction data,
+        /// as base-64 encoded string.
+        /// A serialized signature has the following format:
+        /// (`flag || signature || pubkey` bytes, as base-64 encoded string).
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="serializedSignatured"></param>
+        /// <returns></returns>
+        abstract public bool Verify(byte[] message, string serializedSignatured);
+
+        /// <summary>
+        /// Vrification of a plain raw ED25519 signature -- without the Sui format.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="signature"></param>
+        /// <returns></returns>
+        abstract public bool VerifyRaw(byte[] message, byte[] signature);
+
+
         // TODO: VerifyWithIntent
 
         // TODO: verifyPersonalMessage
