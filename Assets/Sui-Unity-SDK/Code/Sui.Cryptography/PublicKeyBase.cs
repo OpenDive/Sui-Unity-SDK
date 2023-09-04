@@ -278,8 +278,7 @@ namespace Sui.Cryptography
         /// <returns></returns>
         public override string ToString()
         {
-            //return Key;
-            throw new NotImplementedException();
+            return KeyBase64;
         }
 
         public static bool operator ==(PublicKeyBase lhs, PublicKeyBase rhs)
