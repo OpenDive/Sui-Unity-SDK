@@ -8,10 +8,29 @@ namespace Sui.Cryptography
 {
     public abstract class PublicKeyBase
     {
+        /// <summary>
+        /// Signature scheme for the public key
+        /// </summary>
         public abstract SignatureScheme SignatureScheme { get; }
+
+        /// <summary>
+        /// The lenght of the public key
+        /// </summary>
         public abstract int KeyLength { get; }
+
+        /// <summary>
+        /// Public key represented as a byte array
+        /// </summary>
         private byte[] _keyBytes;
+
+        /// <summary>
+        /// Public key represented as a hex string
+        /// </summary>
         private string _keyHex;
+
+        /// <summary>
+        /// Public key represented as a base64 string
+        /// </summary>
         private string _keyBase64;
 
         public string KeyHex
@@ -37,10 +56,7 @@ namespace Sui.Cryptography
                 return _keyHex;
             }
 
-            set
-            {
-                _keyHex = value;
-            }
+            set => _keyHex = value;
         }
 
         public string KeyBase64
@@ -50,9 +66,7 @@ namespace Sui.Cryptography
                 if (_keyBase64 == null)
                 {
                     if(_keyBytes != null)
-                    {
                         _keyBase64 = CryptoBytes.ToBase64String(KeyBytes);
-                    }
                     else // _keyHex != null -- public key was set using hex string
                     {
                         string key = _keyHex;
@@ -64,10 +78,7 @@ namespace Sui.Cryptography
                 }
                 return _keyBase64;
             }
-            set
-            {
-                _keyBase64 = value;
-            }
+            set => _keyBase64 = value;
         }
 
         public byte[] KeyBytes
@@ -83,19 +94,18 @@ namespace Sui.Cryptography
                         _keyBytes = key.HexStringToByteArray();
                     }
                     else // _keyBase64 is not null
-                    {
                         _keyBytes = CryptoBytes.FromBase64String(_keyBase64);
-                    }
                 }
                 return _keyBytes;
             }
 
-            set
-            {
-                _keyBytes = value;
-            }
+            set => _keyBytes = value;
         }
 
+        /// <summary>
+        /// Creates a PublicKey object from a byte array
+        /// </summary>
+        /// <param name="publicKey"></param>
         public PublicKeyBase(byte[] publicKey)
         {
             if (publicKey == null)
@@ -106,6 +116,10 @@ namespace Sui.Cryptography
             Array.Copy(publicKey, KeyBytes, KeyLength);
         }
 
+        /// <summary>
+        /// Creates a PublicKey object from a hex or base64 string
+        /// </summary>
+        /// <param name="publicKey"></param>
         public PublicKeyBase(string publicKey)
         {
             if (Utils.IsValidEd25519Key(publicKey))
@@ -139,13 +153,12 @@ namespace Sui.Cryptography
         /// Return the base-64 representation of the raw public key
         /// </summary>
         /// <returns></returns>
-        public string ToBase64()
-        {
-            //string base64Key = CryptoBytes.ToBase64String(ToRawBytes()); // TODO: Review
-            string base64Key = CryptoBytes.ToBase64String(KeyBytes);
-            return base64Key;
-            throw new NotImplementedException();
-        }
+        //public string ToBase64()
+        //{
+        //    string base64Key = CryptoBytes.ToBase64String(KeyBytes);
+        //    return base64Key;
+        //}
+        public string ToBase64() => KeyBase64;
 
         /// <summary>
         /// Return the Sui representation of the public key encoded in
@@ -157,7 +170,6 @@ namespace Sui.Cryptography
         {
             byte[] bytes = ToSuiBytes();
             return CryptoBytes.ToBase64String(bytes);
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -213,10 +225,9 @@ namespace Sui.Cryptography
             byte[] rawBytes = ToRawBytes();
             byte[] suiBytes = new byte[1 + rawBytes.Length];
             suiBytes[0] = Flag();
-            Array.Copy(rawBytes, 0, suiBytes, 1, suiBytes.Length);
+            Array.Copy(rawBytes, 0, suiBytes, 1, rawBytes.Length);
 
             return suiBytes;
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -226,10 +237,7 @@ namespace Sui.Cryptography
         /// </summary>
         /// <returns></returns>
         //abstract public byte[] ToRawBytes();
-        public byte[] ToRawBytes()
-        {
-            return KeyBytes;
-        }
+        public byte[] ToRawBytes() => KeyBytes;
 
         /// <summary>
         /// // TODO: Look into whether Sui uses Ed25519 for all schemes public keys to generate the address
@@ -261,7 +269,7 @@ namespace Sui.Cryptography
             // Convert to hex string
             string addressHex = BitConverter.ToString(result); // Turn into hexadecimal string
             addressHex = addressHex.Replace("-", "").ToLowerInvariant(); // Remove '-' characters from hex string hash
-            return "0x" + addressHex;
+            return "0x" + addressHex.Substring(0, 64);
 
             throw new NotImplementedException();
         }
@@ -287,19 +295,13 @@ namespace Sui.Cryptography
         /// Required when overriding Equals method
         /// </summary>
         /// <returns></returns>
-        public override int GetHashCode()
-        {
-            return KeyHex.GetHashCode();
-        }
+        public override int GetHashCode() => KeyHex.GetHashCode();
 
         /// <summary>
         /// TODO: Implement ToString(), should use Base64 according to TypeScript SDK
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
-        {
-            return KeyBase64;
-        }
+        public override string ToString() => KeyBase64;
 
         public static bool operator ==(PublicKeyBase lhs, PublicKeyBase rhs)
         {
