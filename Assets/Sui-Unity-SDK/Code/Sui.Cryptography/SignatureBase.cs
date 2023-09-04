@@ -5,11 +5,40 @@ using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Cryptography
 {
+    /// <summary>
+    /// Represents all the properties and basic functions of a signature.
+    /// </summary>
     public abstract class SignatureBase
     {
+        /// <summary>
+        /// The length of the signature.
+        /// </summary>
         public const int SignatureLength = 64;
+
+        /// <summary>
+        /// Signature as a byte array.
+        /// </summary>
+        /// <returns></returns>
         public abstract byte[] Data();
 
+        /// <summary>
+        /// Return the signature as a hex string.
+        /// </summary>
+        /// <returns>The signature as a hex string.</returns>
+        public abstract string ToHex();
+
+        /// <summary>
+        /// Return the signature as a base64 string.
+        /// </summary>
+        /// <returns>The signature as a base64 string.</returns>
+        public abstract string ToBase64();
+
+        /// <summary>
+        /// Create a serialized signature from:
+        /// signature scheme, signature, and public key.
+        /// </summary>
+        /// <param name="serializeSignatureInput"></param>
+        /// <returns></returns>
         public static string ToSerializedSignature(SerializeSignatureInput serializeSignatureInput)
         {
             PublicKeyBase publicKey = serializeSignatureInput.PublicKey;
