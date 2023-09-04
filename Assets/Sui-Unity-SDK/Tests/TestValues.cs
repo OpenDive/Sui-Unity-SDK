@@ -73,7 +73,7 @@ namespace Sui.Tests
                 ),
             };
 
-        public static readonly string ValidKeyBase64 = "Uz39UFseB/B38iBwjesIU1JZxY6y+TRL9P84JFw41W4";
+        public static readonly string ValidKeyBase64 = "Uz39UFseB/B38iBwjesIU1JZxY6y+TRL9P84JFw41W4=";
 
     }
 }
