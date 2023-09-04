@@ -105,6 +105,20 @@ namespace Sui.Cryptography
         public abstract byte[] KeyBytes { get; set; }
 
         /// <summary>
+        /// Sign an arbitrary byte array.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        public abstract SignatureBase Sign(byte[] message);
+
+        /// <summary>
+        /// Sign an arbitrary b64 string.
+        /// </summary>
+        /// <param name="b64Message"></param>
+        /// <returns></returns>
+        public abstract string Sign(string b64Message);
+
+        /// <summary>
         /// Return the private key as a hex string.
         /// </summary>
         /// <returns>The private key as a hex string.</returns>
@@ -115,6 +129,7 @@ namespace Sui.Cryptography
         /// </summary>
         /// <returns>The private key as a base64 string.</returns>
         public string ToBase64() => KeyBase64;
+
         //public void Serialize(Serializer serializer);
     }
 }

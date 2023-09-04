@@ -13,18 +13,14 @@ namespace Sui.Cryptography.Ed25519
     /// </summary>
     public class PrivateKey : PrivateKeyBase, IPrivateKey
     {
-        public const SignatureScheme signatureScheme = SignatureScheme.ED25519;
+        /// <summary>
+        /// ED25519 signature scheme identifier.
+        /// </summary>
+        public override SignatureScheme SignatureScheme => SignatureScheme.ED25519;
 
         /// <summary>
-        /// Used to define the format of the string passed to generate private key
+        /// Byte array representations of a ED25519 private key
         /// </summary>
-        //public enum KeyFormat
-        //{
-        //    HEX,
-        //    BASE64
-        //};
-        //private KeyFormat _keyFormat;
-
         public override byte[] KeyBytes
         {
             get
@@ -61,8 +57,6 @@ namespace Sui.Cryptography.Ed25519
                 _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(value);
             }
         }
-
-        public override SignatureScheme SignatureScheme => throw new NotImplementedException();
 
         public PrivateKey(byte[] privateKey)
         {
@@ -117,11 +111,13 @@ namespace Sui.Cryptography.Ed25519
             }
         }
 
-        public string Hex() => KeyHex;
-
-        public string Base64() => KeyBase64;
-
-        public SignatureBase Sign(byte[] message)
+        /// <summary>
+        /// Sign an arbitrary message represented as a byte array using
+        /// the ED25519 private key.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        public override SignatureBase Sign(byte[] message)
         {
             ArraySegment<byte> signature = new(new byte[64]);
             Chaos.NaCl.Ed25519.Sign(signature,
@@ -131,11 +127,11 @@ namespace Sui.Cryptography.Ed25519
         }
 
         /// <summary>
-        /// Return a signature as a base64 string
+        /// Return a signature as a base64 string.
         /// </summary>
         /// <param name="b64Message"></param>
         /// <returns></returns>
-        public string Sign(string b64Message)
+        public override string Sign(string b64Message)
         {
             byte[] bytes = CryptoBytes.FromBase64String(b64Message);
             Signature signature = (Signature)Sign(bytes);

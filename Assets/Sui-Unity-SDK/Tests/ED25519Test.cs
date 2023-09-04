@@ -80,7 +80,7 @@ namespace Sui.Tests.Cryptography
             byte[] keyBytes = privateKey.KeyBytes;
             Assert.AreEqual(32, keyBytes.Length);
 
-            string actual = privateKey.Hex();
+            string actual = privateKey.ToHex();
             Assert.AreEqual(expPrivateKeyHex, actual);
         }
 
