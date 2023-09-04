@@ -13,10 +13,6 @@ namespace Sui.Cryptography.Ed25519
     public class PrivateKey : PrivateKeyBase, IPrivateKey
     {
         public const SignatureScheme signatureScheme = SignatureScheme.ED25519;
-        private byte[] _extendedKeyBytes;
-        private byte[] _keyBytes;
-        private string _keyHex;
-        private string _keyBase64;
 
         /// <summary>
         /// Used to define the format of the string passed to generate private key
@@ -35,10 +31,9 @@ namespace Sui.Cryptography.Ed25519
                 // if the private key bytes have not being initialized,
                 // but the 32-byte (64 character) string private key has been set
                 // decode the string based on the key format (i.e. Hex or Base58)
-                if (_keyBytes == null && _extendedKeyBytes == null
-                    && (_keyHex != null || _keyBase64 != null))
+                if (_keyBytes == null && _extendedKeyBytes == null)
                 {
-                    if(_keyFormat == KeyFormat.HEX)
+                    if (_keyHex != null)
                     {
                         string key = _keyHex;
                         if (_keyHex[0..2].Equals("0x")) { key = _keyHex[2..]; } // Trim the private key hex string
@@ -46,14 +41,14 @@ namespace Sui.Cryptography.Ed25519
                         byte[] seed = key.HexStringToByteArray(); // Turn private key hex string into byte to be used a seed to derive the extended key
                         _keyBytes = seed;
                     }
-                    else
+                    else // _keyBase64 is not null
                     {
                         string key = _keyBase64;
                         byte[] seed = CryptoBytes.FromBase64String(key);
                         _keyBytes = seed;
                     }
+                    _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(_keyBytes);
                 }
-                _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(_keyBytes);
                 return _keyBytes;
             }
             set
