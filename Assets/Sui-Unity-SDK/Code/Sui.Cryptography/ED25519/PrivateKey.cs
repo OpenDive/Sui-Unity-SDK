@@ -10,11 +10,9 @@ namespace Sui.Cryptography.Ed25519
     /// Implements the functionality of a private key.
     /// The key may be viewed as a Hex or Base58 string as supported by Sui.
     /// </summary>
-    public class PrivateKey : IPrivateKey
+    public class PrivateKey : PrivateKeyBase, IPrivateKey
     {
         public const SignatureScheme signatureScheme = SignatureScheme.ED25519;
-        public const int ExtendedKeyLength = 64;
-        public const int KeyLength = 32;
         private byte[] _extendedKeyBytes;
         private byte[] _keyBytes;
         private string _keyHex;
@@ -30,58 +28,7 @@ namespace Sui.Cryptography.Ed25519
         };
         private KeyFormat _keyFormat;
 
-        public string KeyHex
-        {
-            get
-            {
-                if (_keyHex == null && _keyBytes != null)
-                {
-                    string addressHex = CryptoBytes.ToHexStringLower(_keyBytes);
-                    _keyHex = "0x" + addressHex;
-                }
-
-                return _keyHex;
-            }
-
-            set
-            {
-                _keyHex = value;
-            }
-        }
-
-        //public string KeyBase58
-        //{
-        //    get
-        //    {
-        //        if(_keyBase58 == null && _keyBytes != null)
-        //        {
-        //            _keyBase58 = Encoders.Base58.EncodeData(KeyBytes);
-        //        }
-        //        return _keyBase58;
-        //    }
-        //    set
-        //    {
-        //        _keyBase58 = value;
-        //    }
-        //}
-
-        public string KeyBase64
-        {
-            get
-            {
-                if (_keyBase64 == null && _keyBytes != null)
-                {
-                    _keyBase64 = CryptoBytes.ToBase64String(KeyBytes);
-                }
-                return _keyBase64;
-            }
-            set
-            {
-                _keyBase64 = value;
-            }
-        }
-
-        public byte[] KeyBytes
+        public override byte[] KeyBytes
         {
             get
             {
@@ -118,6 +65,8 @@ namespace Sui.Cryptography.Ed25519
                 _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(value);
             }
         }
+
+        public override SignatureScheme SignatureScheme => throw new NotImplementedException();
 
         public PrivateKey(byte[] privateKey)
         {
@@ -178,18 +127,7 @@ namespace Sui.Cryptography.Ed25519
 
         public string Base64() => KeyBase64;
 
-        public static PrivateKey FromHex(string hexStr) => new(hexStr, KeyFormat.HEX);
-
-        public static PrivateKey FromBase64(string base64Str) => new(base64Str, KeyFormat.BASE64);
-
-        public static PrivateKey Random()
-        {
-            byte[] seed = new byte[Chaos.NaCl.Ed25519.PrivateKeySeedSizeInBytes];
-            RandomUtils.GetBytes(seed); // TODO: Remove NBitcoin dependency
-            return new PrivateKey(seed);
-        }
-
-        public Signature Sign(byte[] message)
+        public SignatureBase Sign(byte[] message)
         {
             ArraySegment<byte> signature = new(new byte[64]);
             Chaos.NaCl.Ed25519.Sign(signature,
@@ -245,9 +183,21 @@ namespace Sui.Cryptography.Ed25519
             return KeyHex;
         }
 
-        SignatureBase IPrivateKey.Sign(byte[] data)
+        public static PrivateKeyBase FromHex(string hexStr)
         {
             throw new NotImplementedException();
+        }
+
+        public static PrivateKeyBase FromBase64(string base64Str)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static PrivateKeyBase Random()
+        {
+            byte[] seed = new byte[Chaos.NaCl.Ed25519.PrivateKeySeedSizeInBytes];
+            RandomUtils.GetBytes(seed); // TODO: Remove NBitcoin dependency
+            return new PrivateKey(seed);
         }
     }
 }
