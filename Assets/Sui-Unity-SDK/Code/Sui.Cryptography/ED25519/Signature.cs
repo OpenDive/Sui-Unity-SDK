@@ -53,6 +53,16 @@ namespace Sui.Cryptography.Ed25519
             throw new System.NotImplementedException();
         }
 
+        public override string ToHex()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override string ToBase64()
+        {
+            throw new System.NotImplementedException();
+        }
+
         public override string Serialize()
         {
             throw new System.NotImplementedException();
