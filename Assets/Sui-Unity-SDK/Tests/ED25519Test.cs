@@ -157,9 +157,11 @@ namespace Sui.Tests.Cryptography
         }
 
         [Test]
-        public void PublicKeyFromBase58StringInvalid()
+        public void PublicKeyFromBase64StringInvalid()
         {
-            Assert.AreEqual(1, 0);
+            string invalidPublicKeyHex = "Uz39UFseB/B38iBwjesIU1JZxY6y+TRL9P84JFw414=";
+            var ex = Assert.Throws<ArgumentException>(() => new PublicKey(invalidPublicKeyHex));
+            Assert.AreEqual("Invalid key: \nParameter name: publicKey", ex.Message);
         }
 
         [Test]
@@ -177,7 +179,7 @@ namespace Sui.Tests.Cryptography
         }
 
         [Test]
-        public void PublicKeyToBase58String()
+        public void PublicKeyToBase64String()
         {
             PublicKey publicKey = new(TestValues.ValidKeyBase64);
             Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToBase64());
@@ -194,7 +196,9 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PublicKeyComparisonFalse()
         {
-            Assert.AreEqual(1, 0);
+            PublicKey publicKeyOne = new("0xd77a6cd55073e98d4029b1b0b8bd8d88f45f343dad2732fc9a7965094e635c55");
+            PublicKey publicKeyTwo = new(TestValues.ValidKeyBase64);
+            Assert.AreNotEqual(publicKeyOne, publicKeyTwo, publicKeyOne.KeyHex + "!\n" + publicKeyTwo.KeyHex + "!");
         }
     }
 }
