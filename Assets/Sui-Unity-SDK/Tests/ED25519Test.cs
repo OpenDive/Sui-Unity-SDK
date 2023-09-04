@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using System;
+using Sui.Utilities;
 using Sui.Cryptography.Ed25519;
 using UnityEngine;
 
@@ -112,7 +113,11 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PublicKeyFromBytesSuccess()
         {
-            Assert.AreEqual(1, 0);
+            PublicKey publicKey = new(TestValues.ValidKeyBytes);
+            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToBase64());
+            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToString());
+            Assert.AreEqual(TestValues.ValidKeyHex, publicKey.KeyHex);
+            Assert.AreEqual(TestValues.ValidKeyBytes, publicKey.KeyBytes);
         }
 
         [Test]
@@ -126,22 +131,29 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PublicKeyFromHexStringSuccess()
         {
-            Assert.AreEqual(1, 0);
+            PublicKey publicKey = new(TestValues.ValidKeyHex);
+            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToBase64());
+            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToString());
+            Assert.AreEqual(TestValues.ValidKeyHex, publicKey.KeyHex);
+            Assert.AreEqual(TestValues.ValidKeyBytes, publicKey.KeyBytes);
         }
 
         [Test]
         public void PublicKeyFromHexStringInvalid()
         {
-            Assert.AreEqual(1, 0);
+            string invalidPublicKeyHex = "0x30000000";
+            var ex = Assert.Throws<ArgumentException>(() => new PublicKey(invalidPublicKeyHex));
+            Assert.AreEqual("Invalid key: \nParameter name: publicKey", ex.Message);
         }
 
         [Test]
         public void PublicKeyFromBase64StringSuccess()
         {
-            PublicKey publicKey = new PublicKey(TestValues.ValidKeyBase64);
-            string actualBase64PublicKey = publicKey.ToBase64();
-            Assert.AreEqual(TestValues.ValidKeyBase64, actualBase64PublicKey);
+            PublicKey publicKey = new(TestValues.ValidKeyBase64);
+            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToBase64());
             Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToString());
+            Assert.AreEqual(TestValues.ValidKeyHex, publicKey.KeyHex);
+            Assert.AreEqual(TestValues.ValidKeyBytes, publicKey.KeyBytes);
         }
 
         [Test]
