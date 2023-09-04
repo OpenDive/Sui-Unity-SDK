@@ -4,22 +4,6 @@ namespace Sui.Cryptography.Ed25519
 {
     public class Signature : SignatureBase
     {
-        private readonly byte[] _signatureBytes;
-
-        private string _signature;
-
-        //public byte[] SignatureBytes
-        //{
-        //    get
-        //    {
-        //        return "";
-        //    }
-
-        //    set
-        //    {
-        //    }
-        //}
-
         public Signature(byte[] signature)
         {
             _signatureBytes = signature;
@@ -33,9 +17,9 @@ namespace Sui.Cryptography.Ed25519
         public override string ToString()
         {
             string signatureHex = CryptoBytes.ToHexStringLower(_signatureBytes);
-            _signature = "0x" + signatureHex;
+            SignatureHex = "0x" + signatureHex;
 
-            return _signature;
+            return SignatureHex;
         }
 
         public override bool Equals(object obj)
@@ -48,20 +32,6 @@ namespace Sui.Cryptography.Ed25519
             return false;
         }
 
-        public override byte[] Data()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override string ToHex()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override string ToBase64()
-        {
-            throw new System.NotImplementedException();
-        }
 
         public override string Serialize()
         {

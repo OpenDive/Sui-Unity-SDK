@@ -15,23 +15,53 @@ namespace Sui.Cryptography
         /// </summary>
         public const int SignatureLength = 64;
 
+        protected byte[] _signatureBytes;
+
+        private string _signatureHex;
+
+        private string _signatureBase64;
+
+        public string SignatureHex
+        {
+            get
+            {
+                return null;
+            }
+            set
+            {
+
+            }
+        }
+
+        public string SignatureBase64
+        {
+            get
+            {
+                return null;
+            }
+            set
+            {
+
+            }
+        }
+
         /// <summary>
         /// Signature as a byte array.
         /// </summary>
         /// <returns></returns>
-        public abstract byte[] Data();
+        public byte[] Data() => _signatureBytes;
 
         /// <summary>
         /// Return the signature as a hex string.
         /// </summary>
         /// <returns>The signature as a hex string.</returns>
-        public abstract string ToHex();
+        public string ToHex() => SignatureHex;
 
         /// <summary>
         /// Return the signature as a base64 string.
         /// </summary>
         /// <returns>The signature as a base64 string.</returns>
-        public abstract string ToBase64();
+        public string ToBase64() => SignatureBase64;
 
         /// <summary>
         /// Create a serialized signature from:
