@@ -165,31 +165,30 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PublicKeyToString()
         {
-            Assert.AreEqual(1, 0);
+            PublicKey publicKey = new(TestValues.ValidKeyBase64);
+            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToString());
         }
 
         [Test]
         public void PublicKeyToHexString()
         {
-            PrivateKey privateKey = new(privateKeyBytes);
-
-            byte[] keyBytes = privateKey.KeyBytes;
-            Assert.AreEqual(32, keyBytes.Length);
-
-            string actual = privateKey.Hex();
-            Assert.AreEqual(expPrivateKeyHex, actual);
+            PublicKey publicKey = new(TestValues.ValidKeyBase64);
+            Assert.AreEqual(TestValues.ValidKeyHex, publicKey.KeyHex);
         }
 
         [Test]
         public void PublicKeyToBase58String()
         {
-            Assert.AreEqual(1, 0);
+            PublicKey publicKey = new(TestValues.ValidKeyBase64);
+            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToBase64());
         }
 
         [Test]
         public void PublicKeyComparisonTrue()
         {
-            Assert.AreEqual(1, 0);
+            PublicKey publicKeyOne = new(TestValues.ValidKeyHex);
+            PublicKey publicKeyTwo = new(TestValues.ValidKeyBase64);
+            Assert.AreEqual(publicKeyOne, publicKeyTwo, publicKeyOne.KeyHex + "!\n" + publicKeyTwo.KeyHex + "!");
         }
 
         [Test]

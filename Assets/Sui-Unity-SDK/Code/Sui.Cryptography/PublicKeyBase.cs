@@ -10,7 +10,6 @@ namespace Sui.Cryptography
     {
         public abstract SignatureScheme SignatureScheme { get; }
         public abstract int KeyLength { get; }
-        //public string _key;
         private byte[] _keyBytes;
         private string _keyHex;
         private string _keyBase64;
@@ -19,10 +18,20 @@ namespace Sui.Cryptography
         {
             get
             {
-                if (_keyHex == null && _keyBytes != null)
+                if (_keyHex == null)
                 {
-                    string addressHex = CryptoBytes.ToHexStringLower(_keyBytes);
-                    _keyHex = "0x" + addressHex;
+                    if(_keyBytes != null)
+                    {
+                        string addressHex = CryptoBytes.ToHexStringLower(_keyBytes);
+                        _keyHex = "0x" + addressHex;
+                    }
+                    else // _keyBase64 != null -- public key was set using base64 string
+                    {
+                        byte[] bytes = Convert.FromBase64String(_keyBase64);
+                        string hex = BitConverter.ToString(bytes);
+                        hex = hex.Replace("-", "").ToLowerInvariant();
+                        _keyHex = "0x" + hex;
+                    }
                 }
 
                 return _keyHex;
@@ -38,9 +47,20 @@ namespace Sui.Cryptography
         {
             get
             {
-                if (_keyBase64 == null && _keyBytes != null)
+                if (_keyBase64 == null)
                 {
-                    _keyBase64 = CryptoBytes.ToBase64String(KeyBytes);
+                    if(_keyBytes != null)
+                    {
+                        _keyBase64 = CryptoBytes.ToBase64String(KeyBytes);
+                    }
+                    else // _keyHex != null -- public key was set using hex string
+                    {
+                        string key = _keyHex;
+                        if (_keyHex[0..2].Equals("0x")) { key = _keyHex[2..]; }
+                        byte[] keyBytes = key.HexStringToByteArray();
+                        _keyBase64 = CryptoBytes.ToBase64String(keyBytes);
+                    }
+                    
                 }
                 return _keyBase64;
             }
