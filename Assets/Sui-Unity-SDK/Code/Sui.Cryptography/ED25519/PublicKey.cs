@@ -14,7 +14,7 @@ namespace Sui.Cryptography.Ed25519
         public override SignatureScheme SignatureScheme { get => SignatureScheme.ED25519; }
 
         /// <summary>
-        /// The size of an ED25519 public key - 32
+        /// The length of an ED25519 public key - 32
         /// </summary>
         public override int KeyLength { get => SignatureSchemeToSize.ED25519; }
 
