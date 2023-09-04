@@ -3,6 +3,7 @@ using Chaos.NaCl;
 using NBitcoin;
 using Sui.Utilities;
 using static Sui.Cryptography.SignatureUtils;
+//using Utils = Sui.Utilities.Utils;
 
 namespace Sui.Cryptography.Ed25519
 {
@@ -17,12 +18,12 @@ namespace Sui.Cryptography.Ed25519
         /// <summary>
         /// Used to define the format of the string passed to generate private key
         /// </summary>
-        public enum KeyFormat
-        {
-            HEX,
-            BASE64
-        };
-        private KeyFormat _keyFormat;
+        //public enum KeyFormat
+        //{
+        //    HEX,
+        //    BASE64
+        //};
+        //private KeyFormat _keyFormat;
 
         public override byte[] KeyBytes
         {
@@ -96,25 +97,23 @@ namespace Sui.Cryptography.Ed25519
             _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(KeyBytes);
         }
 
-        public PrivateKey(string key, KeyFormat keyFormat = KeyFormat.HEX)
+        public PrivateKey(string key)
         {
-            if(keyFormat == KeyFormat.HEX)
+            if (Utilities.Utils.IsValidEd25519Key(key))
             {
                 if (!Utilities.Utils.IsValidHexAddress(key))
                     throw new ArgumentException("Invalid key", nameof(key));
-                _keyFormat = keyFormat;
                 KeyHex = key ?? throw new ArgumentNullException(nameof(key));
+            }
+            else if(Utilities.Utils.IsBase64String(key))
+            {
+                if (!Utilities.Utils.IsBase64String(key))
+                    throw new ArgumentException("Invalid key", nameof(key));
+                KeyBase64 = key ?? throw new ArgumentNullException(nameof(key));
             }
             else
             {
-                //if (!Base58Encoder.IsValidEncoding(key))
-                //    throw new ArgumentException("Invalid key", nameof(key));
-                //_keyFormat = keyFormat;
-                //KeyBase58 = key ?? throw new ArgumentNullException(nameof(key));
-                if (!Utilities.Utils.IsBase64String(key))
-                    throw new ArgumentException("Invalid key", nameof(key));
-                _keyFormat = keyFormat;
-                KeyBase64 = key ?? throw new ArgumentNullException(nameof(key));
+                throw new ArgumentException("Invalid key: ", nameof(key));
             }
         }
 
