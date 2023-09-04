@@ -131,11 +131,12 @@ namespace Sui.Cryptography.Ed25519
         /// </summary>
         /// <param name="b64Message"></param>
         /// <returns></returns>
-        public override string Sign(string b64Message)
+        public override byte[] Sign(string b64Message)
         {
             byte[] bytes = CryptoBytes.FromBase64String(b64Message);
             Signature signature = (Signature)Sign(bytes);
-            return CryptoBytes.ToBase64String(signature.Data());
+            //return CryptoBytes.ToBase64String(signature.Data());
+            return signature.Data();
         }
 
         public static bool operator ==(PrivateKey lhs, PrivateKey rhs)

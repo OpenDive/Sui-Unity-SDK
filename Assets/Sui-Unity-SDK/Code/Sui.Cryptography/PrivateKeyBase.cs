@@ -116,7 +116,7 @@ namespace Sui.Cryptography
         /// </summary>
         /// <param name="b64Message"></param>
         /// <returns></returns>
-        public abstract string Sign(string b64Message);
+        public abstract byte[] Sign(string b64Message);
 
         /// <summary>
         /// Return the private key as a hex string.
