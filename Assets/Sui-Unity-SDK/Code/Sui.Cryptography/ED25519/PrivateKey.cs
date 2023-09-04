@@ -139,6 +139,12 @@ namespace Sui.Cryptography.Ed25519
             return signature.Data();
         }
 
+        string IPrivateKey.Sign(string b64Message)
+        {
+            byte[] bytes = Sign(b64Message);
+            return CryptoBytes.ToBase64String(bytes);
+        }
+
         public static bool operator ==(PrivateKey lhs, PrivateKey rhs)
         {
             if (lhs is null)
