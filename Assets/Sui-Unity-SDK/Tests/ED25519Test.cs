@@ -17,7 +17,7 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PrivateKeyRandom()
         {
-            PrivateKey privateKey = PrivateKey.Random();
+            PrivateKey privateKey = (PrivateKey)PrivateKey.Random();
             byte[] keyBytes = privateKey.KeyBytes;
             Assert.AreEqual(32, keyBytes.Length);
         }
