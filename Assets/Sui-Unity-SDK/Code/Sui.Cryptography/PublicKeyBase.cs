@@ -224,9 +224,7 @@ namespace Sui.Cryptography
         public override bool Equals(object obj)
         {
             if (obj is PublicKeyBase publicKey)
-            {
                 return publicKey.Key.Equals(Key);
-            }
 
             return false;
         }
