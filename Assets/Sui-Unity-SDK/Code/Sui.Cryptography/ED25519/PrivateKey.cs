@@ -18,7 +18,8 @@ namespace Sui.Cryptography.Ed25519
         private byte[] _extendedKeyBytes;
         private byte[] _keyBytes;
         private string _keyHex;
-        private string _keyBase58;
+        //private string _keyBase58;
+        private string _keyBase64;
 
         /// <summary>
         /// Used to define the format of the string passed to generate private key
@@ -26,7 +27,7 @@ namespace Sui.Cryptography.Ed25519
         public enum KeyFormat
         {
             HEX,
-            BASE58
+            BASE64
         };
         private KeyFormat _keyFormat;
 
@@ -49,19 +50,35 @@ namespace Sui.Cryptography.Ed25519
             }
         }
 
-        public string KeyBase58
+        //public string KeyBase58
+        //{
+        //    get
+        //    {
+        //        if(_keyBase58 == null && _keyBytes != null)
+        //        {
+        //            _keyBase58 = Encoders.Base58.EncodeData(KeyBytes);
+        //        }
+        //        return _keyBase58;
+        //    }
+        //    set
+        //    {
+        //        _keyBase58 = value;
+        //    }
+        //}
+
+        public string KeyBase64
         {
             get
             {
-                if(_keyBase58 == null && _keyBytes != null)
+                if (_keyBase64 == null && _keyBytes != null)
                 {
-                    _keyBase58 = Encoders.Base58.EncodeData(KeyBytes);
+                    _keyBase64 = CryptoBytes.ToBase64String(KeyBytes);
                 }
-                return _keyBase58;
+                return _keyBase64;
             }
             set
             {
-                _keyBase58 = value;
+                _keyBase64 = value;
             }
         }
 
@@ -73,7 +90,7 @@ namespace Sui.Cryptography.Ed25519
                 // but the 32-byte (64 character) string private key has been set
                 // decode the string based on the key format (i.e. Hex or Base58)
                 if (_keyBytes == null && _extendedKeyBytes == null
-                    && (_keyHex != null || _keyBase58 != null))
+                    && (_keyHex != null || _keyBase64 != null))
                 {
                     if(_keyFormat == KeyFormat.HEX)
                     {
@@ -85,8 +102,8 @@ namespace Sui.Cryptography.Ed25519
                     }
                     else
                     {
-                        string key = _keyBase58;
-                        byte[] seed = Encoders.Base58.DecodeData(key);
+                        string key = _keyBase64;
+                        byte[] seed = CryptoBytes.FromBase64String(key);
                         _keyBytes = seed;
                     }
                 }
@@ -147,20 +164,24 @@ namespace Sui.Cryptography.Ed25519
             }
             else
             {
-                if (!Base58Encoder.IsValidEncoding(key))
+                //if (!Base58Encoder.IsValidEncoding(key))
+                //    throw new ArgumentException("Invalid key", nameof(key));
+                //_keyFormat = keyFormat;
+                //KeyBase58 = key ?? throw new ArgumentNullException(nameof(key));
+                if (!Utilities.Utils.IsBase64String(key))
                     throw new ArgumentException("Invalid key", nameof(key));
                 _keyFormat = keyFormat;
-                KeyBase58 = key ?? throw new ArgumentNullException(nameof(key));
+                KeyBase64 = key ?? throw new ArgumentNullException(nameof(key));
             }
         }
 
         public string Hex() => KeyHex;
 
-        public string Base64() => KeyBase58;
+        public string Base64() => KeyBase64;
 
         public static PrivateKey FromHex(string hexStr) => new(hexStr, KeyFormat.HEX);
 
-        public static PrivateKey FromBase64(string base64Str) => new(base64Str, KeyFormat.BASE58);
+        public static PrivateKey FromBase64(string base64Str) => new(base64Str, KeyFormat.BASE64);
 
         public static PrivateKey Random()
         {
