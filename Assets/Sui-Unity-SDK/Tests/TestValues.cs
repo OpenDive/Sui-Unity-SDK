@@ -74,6 +74,10 @@ namespace Sui.Tests
             };
 
         public static readonly string ValidKeyBase64 = "Uz39UFseB/B38iBwjesIU1JZxY6y+TRL9P84JFw41W4=";
-
+        public static readonly string ValidKeyHex = "0x533dfd505b1e07f077f220708deb08535259c58eb2f9344bf4ff38245c38d56e";
+        public static readonly byte[] ValidKeyBytes =
+        {
+            83, 61, 253, 80, 91, 30, 7, 240, 119, 242, 32, 112, 141, 235, 8, 83, 82, 89, 197, 142, 178, 249, 52, 75, 244, 255, 56, 36, 92, 56, 213, 110
+        };
     }
 }
