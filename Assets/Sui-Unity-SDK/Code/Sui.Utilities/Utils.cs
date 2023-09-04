@@ -16,7 +16,6 @@ namespace Sui.Utilities
             }
             return true;
 #else
-
             return lhs.SequenceEqual(rhs);
 #endif
         }
