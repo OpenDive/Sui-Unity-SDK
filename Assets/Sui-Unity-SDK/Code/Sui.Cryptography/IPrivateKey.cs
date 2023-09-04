@@ -31,7 +31,7 @@ namespace Sui.Cryptography
         public static PrivateKeyBase Random() => throw new NotImplementedException();
 
         /// <summary>
-        /// Uses private key to sign abitrary data
+        /// Use private key to sign abitrary data in byte array.
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
