@@ -136,9 +136,12 @@ namespace Sui.Tests.Cryptography
         }
 
         [Test]
-        public void PublicKeyFromBase58StringSuccess()
+        public void PublicKeyFromBase64StringSuccess()
         {
-            Assert.AreEqual(1, 0);
+            PublicKey publicKey = new PublicKey(TestValues.ValidKeyBase64);
+            string actualBase64PublicKey = publicKey.ToBase64();
+            Assert.AreEqual(TestValues.ValidKeyBase64, actualBase64PublicKey);
+            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToString());
         }
 
         [Test]
