@@ -27,8 +27,9 @@ namespace Sui.Tests.Cryptography
         {
             PrivateKey privateKey = new(privateKeyBytes);
 
-            byte[] keyBytes = privateKey.KeyBytes;
-            Assert.AreEqual(32, keyBytes.Length);
+            byte[] ActualKeyBytes = privateKey.KeyBytes;            
+            Assert.AreEqual(32, ActualKeyBytes.Length);
+            Assert.AreEqual(privateKeyBytes, ActualKeyBytes);
 
             string actual = privateKey.KeyHex;
             Assert.AreEqual(expPrivateKeyHex, actual);
