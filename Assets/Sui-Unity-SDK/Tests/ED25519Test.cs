@@ -105,5 +105,82 @@ namespace Sui.Tests.Cryptography
         {
             Assert.AreEqual(1, 0);
         }
+
+        /// <summary>
+        /// Public key
+        /// </summary>
+        [Test]
+        public void PublicKeyFromBytesSuccess()
+        {
+            Assert.AreEqual(1, 0);
+        }
+
+        [Test]
+        public void PublicKeyFromBytesInvalidLength()
+        {
+            byte[] invalidPublicKey = { 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            var ex = Assert.Throws<ArgumentException>(() => new PublicKey(invalidPublicKey));
+            Assert.AreEqual("Invalid key length: \nParameter name: publicKey", ex.Message);
+        }
+
+        [Test]
+        public void PublicKeyFromHexStringSuccess()
+        {
+            Assert.AreEqual(1, 0);
+        }
+
+        [Test]
+        public void PublicKeyFromHexStringInvalid()
+        {
+            Assert.AreEqual(1, 0);
+        }
+
+        [Test]
+        public void PublicKeyFromBase58StringSuccess()
+        {
+            Assert.AreEqual(1, 0);
+        }
+
+        [Test]
+        public void PublicKeyFromBase58StringInvalid()
+        {
+            Assert.AreEqual(1, 0);
+        }
+
+        [Test]
+        public void PublicKeyToString()
+        {
+            Assert.AreEqual(1, 0);
+        }
+
+        [Test]
+        public void PublicKeyToHexString()
+        {
+            PrivateKey privateKey = new(privateKeyBytes);
+
+            byte[] keyBytes = privateKey.KeyBytes;
+            Assert.AreEqual(32, keyBytes.Length);
+
+            string actual = privateKey.Hex();
+            Assert.AreEqual(expPrivateKeyHex, actual);
+        }
+
+        [Test]
+        public void PublicKeyToBase58String()
+        {
+            Assert.AreEqual(1, 0);
+        }
+
+        [Test]
+        public void PublicKeyComparisonTrue()
+        {
+            Assert.AreEqual(1, 0);
+        }
+
+        [Test]
+        public void PublicKeyComparisonFalse()
+        {
+            Assert.AreEqual(1, 0);
+        }
     }
 }
