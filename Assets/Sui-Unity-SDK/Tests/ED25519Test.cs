@@ -200,5 +200,30 @@ namespace Sui.Tests.Cryptography
             PublicKey publicKeyTwo = new(TestValues.ValidKeyBase64);
             Assert.AreNotEqual(publicKeyOne, publicKeyTwo, publicKeyOne.KeyHex + "!\n" + publicKeyTwo.KeyHex + "!");
         }
+
+        [Test]
+        public void PublicKeySuiPublicKey()
+        {
+            for(int i = 0; i < TestValues.TestCases.Length; i++)
+            {
+                string rawPublicKey = TestValues.TestCases[i].Item1;
+                string suiPublicKey = TestValues.TestCases[i].Item2;
+                PublicKey publicKey = new PublicKey(rawPublicKey);
+                Assert.AreEqual(suiPublicKey, publicKey.ToSuiPublicKey());
+            }
+        }
+
+        [Test]
+        public void PublicKeySuiAddress()
+        {
+            for (int i = 0; i < TestValues.TestCases.Length; i++)
+            {
+                string rawPublicKey = TestValues.TestCases[i].Item1;
+                string suiAddress = TestValues.TestCases[i].Item3;
+
+                PublicKey publicKey = new PublicKey(rawPublicKey);
+                Assert.AreEqual(suiAddress, publicKey.ToSuiAddress(), publicKey.ToSuiAddress().Length + "---- \n" + publicKey.ToSuiBytes().ToReadableString() + "\n" + publicKey.ToSuiAddress());
+            }
+        }
     }
 }
