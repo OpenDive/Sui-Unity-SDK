@@ -25,22 +25,22 @@ namespace Sui.Cryptography
         /// <summary>
         /// Extended private key as a byte array
         /// </summary>
-        private byte[] _extendedKeyBytes;
+        protected byte[] _extendedKeyBytes;
 
         /// <summary>
         /// Private key represented as a byte array
         /// </summary>
-        private byte[] _keyBytes;
+        protected byte[] _keyBytes;
 
         /// <summary>
         /// Public key represented as a hex string
         /// </summary>
-        private string _keyHex;
+        protected string _keyHex;
 
         /// <summary>
         /// Public key represented as a base64 string
         /// </summary>
-        private string _keyBase64;
+        protected string _keyBase64;
 
 
         public string KeyHex
