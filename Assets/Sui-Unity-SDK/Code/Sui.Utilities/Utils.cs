@@ -58,6 +58,16 @@ namespace Sui.Utilities
             return rg.IsMatch(walletAddress);
         }
 
+        public static bool IsValidEd25519Key(string walletAddress)
+        {
+            if (walletAddress[0..2].Equals("0x"))
+                walletAddress = walletAddress[2..];
+
+            string pattern = @"[a-fA-F0-9]{32}$";
+            Regex rg = new Regex(pattern);
+            return rg.IsMatch(walletAddress);
+        }
+
         /// <summary>
         /// Check if it's a valid base64 string
         /// </summary>
@@ -67,6 +77,16 @@ namespace Sui.Utilities
         {
             Span<byte> buffer = new(new byte[base64.Length]);
             return Convert.TryFromBase64String(base64, buffer, out int bytesParsed);
+        }
+
+        /// <summary>
+        /// Print a byte array into a readeable string
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static string ToReadableString(this byte[] input)
+        {
+            return string.Join(", ", input);
         }
     }
 }
