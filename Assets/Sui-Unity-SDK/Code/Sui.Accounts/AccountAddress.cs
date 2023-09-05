@@ -41,7 +41,7 @@ namespace Sui.Accounts
             blake2b.BlockUpdate(suiBytes, 0, suiBytes.Length);
             blake2b.DoFinal(result, 0);
 
-            AddressBytes = result;
+            new AccountAddress(result);
         }
 
         /// <summary>
