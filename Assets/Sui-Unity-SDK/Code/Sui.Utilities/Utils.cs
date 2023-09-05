@@ -48,22 +48,22 @@ namespace Sui.Utilities
         /// </summary>
         /// <param name="walletAddress"></param>
         /// <returns>true if is a valid hex address, false otherwise.</returns>
-        public static bool IsValidHexAddress(string walletAddress)
-        {
-            if (walletAddress[0..2].Equals("0x"))
-                walletAddress = walletAddress[2..];
+        //public static bool IsValidHexAddress(string walletAddress)
+        //{
+        //    if (walletAddress[0..2].Equals("0x"))
+        //        walletAddress = walletAddress[2..];
 
-            string pattern = @"[a-fA-F0-9]{64}$";
-            Regex rg = new Regex(pattern);
-            return rg.IsMatch(walletAddress);
-        }
+        //    string pattern = @"[a-fA-F0-9]{64}$";
+        //    Regex rg = new Regex(pattern);
+        //    return rg.IsMatch(walletAddress);
+        //}
 
         public static bool IsValidEd25519HexKey(string privateKey)
         {
             if (privateKey[0..2].Equals("0x"))
                 privateKey = privateKey[2..];
 
-            string pattern = @"[a-fA-F0-9]{32}$";
+            string pattern = @"[a-fA-F0-9]{64}$";
             Regex rg = new Regex(pattern);
             return rg.IsMatch(privateKey);
         }
