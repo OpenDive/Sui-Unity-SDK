@@ -111,6 +111,14 @@ namespace Sui.Cryptography.Ed25519
             }
         }
 
+        public PublicKey PublicKey()
+        {
+            PublicKey publicKey = new PublicKey(
+                Chaos.NaCl.Ed25519.PublicKeyFromSeed(KeyBytes)
+            );
+            return publicKey;
+        }
+
         /// <summary>
         /// Sign an arbitrary message represented as a byte array using
         /// the ED25519 private key.
@@ -143,41 +151,6 @@ namespace Sui.Cryptography.Ed25519
         {
             byte[] bytes = Sign(b64Message);
             return CryptoBytes.ToBase64String(bytes);
-        }
-
-        public static bool operator ==(PrivateKey lhs, PrivateKey rhs)
-        {
-            if (lhs is null)
-            {
-                if (rhs is null)
-                {
-                    return true;
-                }
-                return false;
-            }
-            return lhs.Equals(rhs);
-        }
-
-        public static bool operator !=(PrivateKey lhs, PrivateKey rhs) => !(lhs == rhs);
-
-        public override bool Equals(object obj)
-        {
-            if (obj is PrivateKey privateKey)
-            {
-                return privateKey.KeyHex == this.KeyHex;
-            }
-
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return KeyHex.GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return KeyBase64;
         }
 
         public static PrivateKeyBase FromSecretKey(int[] secretKey)
