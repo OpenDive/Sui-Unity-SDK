@@ -58,6 +58,10 @@ namespace Sui.Cryptography.Ed25519
             }
         }
 
+        /// <summary>
+        /// Create a PrivateKey object from a byte array representation
+        /// </summary>
+        /// <param name="privateKey"></param>
         public PrivateKey(byte[] privateKey)
         {
             if (privateKey == null)
@@ -80,6 +84,10 @@ namespace Sui.Cryptography.Ed25519
             );
         }
 
+        /// <summary>
+        /// Create a PrivateKey object from a byte array representation.
+        /// </summary>
+        /// <param name="privateKey"></param>
         public PrivateKey(ReadOnlySpan<byte> privateKey)
         {
             if (privateKey.Length != KeyLength)
@@ -91,6 +99,10 @@ namespace Sui.Cryptography.Ed25519
             _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(KeyBytes);
         }
 
+        /// <summary>
+        /// Create a PrivateKey object from a hex or base64 string.
+        /// </summary>
+        /// <param name="privateKey"></param>
         public PrivateKey(string privateKey)
         {
             // TODO: Check valid lenghts and throw respective exception
@@ -112,6 +124,10 @@ namespace Sui.Cryptography.Ed25519
             }
         }
 
+        /// <summary>
+        /// Derive public key from the private key.
+        /// </summary>
+        /// <returns></returns>
         public PublicKey PublicKey()
         {
             PublicKey publicKey = new PublicKey(
