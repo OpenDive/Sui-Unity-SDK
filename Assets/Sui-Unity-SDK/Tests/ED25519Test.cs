@@ -55,13 +55,20 @@ namespace Sui.Tests.Cryptography
         }
 
         [Test]
-        public void PrivateKeyFromBase58StringSuccess()
+        public void PrivateKeyFromBase64tringSuccess()
         {
-            Assert.AreEqual(1, 0);
+            string pkHex = "0x99da9559e15e913ee9ab2e53e3dfad575da33b49be1125bb922e33494f498828";
+            string pkBase64 = "mdqVWeFekT7pqy5T49+tV12jO0m+ESW7ki4zSU9JiCg=";
+            byte[] pkBytes = { 153, 218, 149, 89, 225, 94, 145, 62, 233, 171, 46, 83, 227, 223, 173, 87, 93, 163, 59, 73, 190, 17, 37, 187, 146, 46, 51, 73, 79, 73, 136, 40 };
+            string publicKey = "Gy9JCW4+Xb0Pz6nAwM2S2as7IVRLNNXdSmXZi4eLmSI=";
+            PrivateKey pk = new PrivateKey(pkBase64);
+
+            Assert.AreEqual(1, 0, pk.PublicKey().ToBase64());
+            //Assert.AreEqual(pkBase64, pk.KeyBase64);
         }
 
         [Test]
-        public void PrivateKeyFromBase58StringInvalid()
+        public void PrivateKeyFromBase64StringInvalid()
         {
             Assert.AreEqual(1, 0);
         }
@@ -69,7 +76,9 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PrivateKeyToString()
         {
-            Assert.AreEqual(1, 0);
+            PrivateKey pk1 = new PrivateKey("0x99da9559e15e913ee9ab2e53e3dfad575da33b49be1125bb922e33494f498828");
+            string pkBase64 = "mdqVWeFekT7pqy5T49+tV12jO0m+ESW7ki4zSU9JiCg=";
+            Assert.AreEqual(pkBase64, pk1.ToString());
         }
 
         [Test]
@@ -85,21 +94,27 @@ namespace Sui.Tests.Cryptography
         }
 
         [Test]
-        public void PrivateKeyToBase58String()
+        public void PrivateKeyToBase64String()
         {
-            Assert.AreEqual(1, 0);
+            PrivateKey pk1 = new PrivateKey("0x99da9559e15e913ee9ab2e53e3dfad575da33b49be1125bb922e33494f498828");
+            string pkBase64 = "mdqVWeFekT7pqy5T49+tV12jO0m+ESW7ki4zSU9JiCg=";
+            Assert.AreEqual(pkBase64, pk1.KeyBase64);
         }
 
         [Test]
         public void PrivateKeyComparisonTrue()
         {
-            Assert.AreEqual(1, 0);
+            PrivateKey pk1 = new PrivateKey("0x99da9559e15e913ee9ab2e53e3dfad575da33b49be1125bb922e33494f498828");
+            PrivateKey pk2 = new PrivateKey("mdqVWeFekT7pqy5T49+tV12jO0m+ESW7ki4zSU9JiCg=");
+            Assert.AreEqual(pk1, pk2);
         }
 
         [Test]
         public void PrivateKeyComparisonFalse()
         {
-            Assert.AreEqual(1, 0);
+            PrivateKey pk1 = new PrivateKey("mdqVWeFekT7pqy5T49+tV12jO0m+ESW7ki4zSU9JiCg=");
+            PrivateKey pk2 = new PrivateKey("Uz39UFseB/B38iBwjesIU1JZxY6y+TRL9P84JFw41W4=");
+            Assert.AreNotEqual(pk1, pk2);
         }
 
         [Test]
