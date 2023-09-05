@@ -56,9 +56,9 @@ namespace Sui.Accounts
             AddressBytes = suiAddress;
         }
 
-        public static AccountAddress FromKey(byte[] publicKey)
+        public static AccountAddress FromKey(byte[] publicKey, SignatureScheme signatureScheme)
         {
-            throw new NotImplementedException();
+            return new AccountAddress(publicKey, signatureScheme);
         }
 
         public static AccountAddress FromHex(string publicKey)
