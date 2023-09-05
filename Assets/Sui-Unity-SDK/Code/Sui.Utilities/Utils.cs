@@ -58,14 +58,14 @@ namespace Sui.Utilities
             return rg.IsMatch(walletAddress);
         }
 
-        public static bool IsValidEd25519Key(string walletAddress)
+        public static bool IsValidEd25519HexKey(string privateKey)
         {
-            if (walletAddress[0..2].Equals("0x"))
-                walletAddress = walletAddress[2..];
+            if (privateKey[0..2].Equals("0x"))
+                privateKey = privateKey[2..];
 
             string pattern = @"[a-fA-F0-9]{32}$";
             Regex rg = new Regex(pattern);
-            return rg.IsMatch(walletAddress);
+            return rg.IsMatch(privateKey);
         }
 
         /// <summary>

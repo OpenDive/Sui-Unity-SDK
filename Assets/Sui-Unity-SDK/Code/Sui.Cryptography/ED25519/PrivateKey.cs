@@ -93,9 +93,9 @@ namespace Sui.Cryptography.Ed25519
 
         public PrivateKey(string key)
         {
-            if (Utilities.Utils.IsValidEd25519Key(key))
+            if (Utilities.Utils.IsValidEd25519HexKey(key))
             {
-                if (!Utilities.Utils.IsValidHexAddress(key))
+                if (!Utilities.Utils.IsValidEd25519HexKey(key))
                     throw new ArgumentException("Invalid key", nameof(key));
                 KeyHex = key ?? throw new ArgumentNullException(nameof(key));
             }
@@ -177,7 +177,12 @@ namespace Sui.Cryptography.Ed25519
 
         public override string ToString()
         {
-            return KeyHex;
+            return KeyBase64;
+        }
+
+        public static PrivateKeyBase FromSecretKey(int[] secretKey)
+        {
+            throw new NotImplementedException();
         }
 
         public static PrivateKeyBase FromHex(string hexStr)

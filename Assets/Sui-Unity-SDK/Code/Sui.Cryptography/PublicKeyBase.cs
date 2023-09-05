@@ -122,7 +122,7 @@ namespace Sui.Cryptography
         /// <param name="publicKey"></param>
         public PublicKeyBase(string publicKey)
         {
-            if (Utils.IsValidEd25519Key(publicKey))
+            if (Utils.IsValidEd25519HexKey(publicKey))
             {
                 KeyHex = publicKey ?? throw new ArgumentNullException(nameof(publicKey));
             }
