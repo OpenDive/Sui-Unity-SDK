@@ -253,7 +253,7 @@ namespace Sui.Tests.Cryptography
                 string suiAddress = TestValues.TestCases[i].Item3;
 
                 PublicKey publicKey = new PublicKey(rawPublicKey);
-                Assert.AreEqual(suiAddress, publicKey.ToSuiAddress(), publicKey.ToSuiAddress().Length + "---- \n" + publicKey.ToSuiBytes().ToReadableString() + "\n" + publicKey.ToSuiAddress());
+                Assert.AreEqual(suiAddress, publicKey.ToSuiAddress(), "---- \n" + publicKey.ToSuiBytes().ToReadableString() + "\n" + publicKey.ToSuiAddress());
             }
         }
     }

@@ -1,6 +1,7 @@
 using System;
 using Chaos.NaCl;
 using Org.BouncyCastle.Crypto.Digests;
+using Sui.Accounts;
 using Sui.Utilities;
 using static Sui.Cryptography.SignatureUtils;
 
@@ -217,15 +218,20 @@ namespace Sui.Cryptography
         /// <summary>
         /// Byte representation of the public key
         /// prefixed with the signature scheme flag.
-        /// SIGNATURE_SCHEME_FLAG + public key bytes
+        /// SIGNATURE_SCHEME_FLAG (byte) + public key bytes
         /// </summary>
         /// <returns></returns>
         public byte[] ToSuiBytes()
         {
-            byte[] rawBytes = ToRawBytes();
-            byte[] suiBytes = new byte[1 + rawBytes.Length];
-            suiBytes[0] = Flag();
-            Array.Copy(rawBytes, 0, suiBytes, 1, rawBytes.Length);
+            return ToSuiBytes(SignatureScheme, ToRawBytes());
+        }
+
+        public static byte[] ToSuiBytes(SignatureScheme signatureScheme, byte[] publicKey)
+        {
+            byte flag = SignatureSchemeToFlag.GetFlag(signatureScheme);
+            byte[] suiBytes = new byte[1 + publicKey.Length];
+            suiBytes[0] = flag;
+            Array.Copy(publicKey, 0, suiBytes, 1, publicKey.Length);
 
             return suiBytes;
         }
@@ -252,22 +258,25 @@ namespace Sui.Cryptography
         /// https://docs.sui.io/learn/cryptography/sui-wallet-specs#address-format
         /// </summary>
         /// <returns></returns>
-        public string ToSuiAddress()
+        //public string ToSuiAddress()
+        //{
+        //    byte[] addressBytes = ToSuiBytes();
+
+        //    // BLAKE2b hash
+        //    byte[] result = new byte[64];
+        //    Blake2bDigest blake2b = new(256);
+        //    blake2b.BlockUpdate(addressBytes, 0, addressBytes.Length);
+        //    blake2b.DoFinal(result, 0);
+
+        //    // Convert to hex string
+        //    string addressHex = BitConverter.ToString(result); // Turn into hexadecimal string
+        //    addressHex = addressHex.Replace("-", "").ToLowerInvariant(); // Remove '-' characters from hex string hash
+        //    return "0x" + addressHex.Substring(0, 64);
+        //}
+
+        public AccountAddress ToSuiAddress()
         {
-            byte[] addressBytes = ToSuiBytes();
-
-            // BLAKE2b hash
-            byte[] result = new byte[64];
-            Blake2bDigest blake2b = new(256);
-            blake2b.BlockUpdate(addressBytes, 0, addressBytes.Length);
-            blake2b.DoFinal(result, 0);
-
-            // Convert to hex string
-            string addressHex = BitConverter.ToString(result); // Turn into hexadecimal string
-            addressHex = addressHex.Replace("-", "").ToLowerInvariant(); // Remove '-' characters from hex string hash
-            return "0x" + addressHex.Substring(0, 64);
-
-            throw new NotImplementedException();
+            return new AccountAddress(KeyBytes, SignatureScheme);
         }
 
         /// <summary>
