@@ -91,23 +91,24 @@ namespace Sui.Cryptography.Ed25519
             _extendedKeyBytes = Chaos.NaCl.Ed25519.ExpandedPrivateKeyFromSeed(KeyBytes);
         }
 
-        public PrivateKey(string key)
+        public PrivateKey(string privateKey)
         {
-            if (Utilities.Utils.IsValidEd25519HexKey(key))
+            // TODO: Check valid lenghts and throw respective exception
+            if (Utilities.Utils.IsValidEd25519HexKey(privateKey))
             {
-                if (!Utilities.Utils.IsValidEd25519HexKey(key))
-                    throw new ArgumentException("Invalid key", nameof(key));
-                KeyHex = key ?? throw new ArgumentNullException(nameof(key));
+                if (!Utilities.Utils.IsValidEd25519HexKey(privateKey))
+                    throw new ArgumentException("Invalid key", nameof(privateKey));
+                KeyHex = privateKey ?? throw new ArgumentNullException(nameof(privateKey));
             }
-            else if(Utilities.Utils.IsBase64String(key))
+            else if(Utilities.Utils.IsBase64String(privateKey))
             {
-                if (!Utilities.Utils.IsBase64String(key))
-                    throw new ArgumentException("Invalid key", nameof(key));
-                KeyBase64 = key ?? throw new ArgumentNullException(nameof(key));
+                if (!Utilities.Utils.IsBase64String(privateKey))
+                    throw new ArgumentException("Invalid key", nameof(privateKey));
+                KeyBase64 = privateKey ?? throw new ArgumentNullException(nameof(privateKey));
             }
             else
             {
-                throw new ArgumentException("Invalid key: ", nameof(key));
+                throw new ArgumentException("Invalid key: ", nameof(privateKey));
             }
         }
 
