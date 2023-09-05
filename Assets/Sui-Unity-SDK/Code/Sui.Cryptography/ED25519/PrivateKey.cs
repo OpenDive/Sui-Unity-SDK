@@ -164,26 +164,26 @@ namespace Sui.Cryptography.Ed25519
             return signature.Data();
         }
 
-        string IPrivateKey.Sign(string b64Message)
-        {
-            byte[] bytes = Sign(b64Message);
-            return CryptoBytes.ToBase64String(bytes);
-        }
+        //string IPrivateKey.Sign(string b64Message)
+        //{
+        //    byte[] bytes = Sign(b64Message);
+        //    return CryptoBytes.ToBase64String(bytes);
+        //}
 
-        public static PrivateKeyBase FromSecretKey(int[] secretKey)
-        {
-            throw new NotImplementedException();
-        }
+        //public static PrivateKeyBase FromSecretKey(int[] secretKey)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        public static PrivateKeyBase FromHex(string hexStr)
-        {
-            throw new NotImplementedException();
-        }
+        //public static PrivateKeyBase FromHex(string hexStr)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        public static PrivateKeyBase FromBase64(string base64Str)
-        {
-            throw new NotImplementedException();
-        }
+        //public static PrivateKeyBase FromBase64(string base64Str)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         public static PrivateKeyBase Random()
         {

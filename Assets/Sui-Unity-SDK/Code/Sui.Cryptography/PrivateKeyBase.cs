@@ -8,7 +8,7 @@ namespace Sui.Cryptography
     /// <summary>
     /// Represents all the properties and basic functions of a private key.
     /// </summary>
-    public abstract class PrivateKeyBase
+    public abstract class PrivateKeyBase : IPrivateKey
     {
         /// <summary>
         /// Signature scheme for the private key.
