@@ -130,16 +130,24 @@ namespace Sui.Cryptography
         /// <returns>The private key as a base64 string.</returns>
         public string ToBase64() => KeyBase64;
 
+        /// <summary>
+        /// Comparator function.
+        /// </summary>
+        /// <param name="obj">Private key to compare to.</param>
+        /// <returns></returns>
         public override bool Equals(object obj)
         {
             if (obj is PrivateKeyBase privateKey)
-            {
                 return privateKey.KeyHex == this.KeyHex;
-            }
-
             return false;
         }
 
+        /// <summary>
+        /// Equals operator.
+        /// </summary>
+        /// <param name="lhs"></param>
+        /// <param name="rhs"></param>
+        /// <returns></returns>
         public static bool operator ==(PrivateKeyBase lhs, PrivateKeyBase rhs)
         {
             if (lhs is null)
@@ -153,13 +161,27 @@ namespace Sui.Cryptography
             return lhs.Equals(rhs);
         }
 
+        /// <summary>
+        /// Not equals operator.
+        /// </summary>
+        /// <param name="lhs"></param>
+        /// <param name="rhs"></param>
+        /// <returns></returns>
         public static bool operator !=(PrivateKeyBase lhs, PrivateKeyBase rhs) => !(lhs == rhs);
 
+        /// <summary>
+        /// Get hash code from the private key hex.
+        /// </summary>
+        /// <returns></returns>
         public override int GetHashCode()
         {
             return KeyHex.GetHashCode();
         }
 
+        /// <summary>
+        /// ToString function.
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return KeyBase64;
