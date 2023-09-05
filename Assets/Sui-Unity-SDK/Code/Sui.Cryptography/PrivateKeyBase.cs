@@ -130,6 +130,41 @@ namespace Sui.Cryptography
         /// <returns>The private key as a base64 string.</returns>
         public string ToBase64() => KeyBase64;
 
+        public override bool Equals(object obj)
+        {
+            if (obj is PrivateKeyBase privateKey)
+            {
+                return privateKey.KeyHex == this.KeyHex;
+            }
+
+            return false;
+        }
+
+        public static bool operator ==(PrivateKeyBase lhs, PrivateKeyBase rhs)
+        {
+            if (lhs is null)
+            {
+                if (rhs is null)
+                {
+                    return true;
+                }
+                return false;
+            }
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(PrivateKeyBase lhs, PrivateKeyBase rhs) => !(lhs == rhs);
+
+        public override int GetHashCode()
+        {
+            return KeyHex.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return KeyBase64;
+        }
+
         //public void Serialize(Serializer serializer);
     }
 }
