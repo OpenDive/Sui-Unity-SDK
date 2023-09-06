@@ -9,6 +9,7 @@ namespace Sui.Accounts
     {
         public static Account CreateAccount(PrivateKeyBase privateKey)
         {
+            return new Cryptography.Ed25519.Account();
             throw new NotImplementedException();
         }
 

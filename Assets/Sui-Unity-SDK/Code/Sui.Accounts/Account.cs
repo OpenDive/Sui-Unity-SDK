@@ -4,32 +4,32 @@ using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Accounts
 {
-    public class Account
+    public abstract class Account
     {
         /// <summary>
         /// Signature scheme of the account.
         /// </summary>
-        public SignatureScheme SignatureScheme { get; set; }
+        public abstract SignatureScheme SignatureScheme { get; set; }
 
         /// <summary>
         /// Represents a PrivateKey object.
         /// </summary>
-        public PrivateKeyBase PrivateKey { get; set; }
+        public abstract PrivateKeyBase PrivateKey { get; set; }
 
         /// <summary>
         /// Represents a PublicKey object.
         /// </summary>
-        public PublicKeyBase PublicKey { get; set; }
+        public abstract PublicKeyBase PublicKey { get; set; }
 
         /// <summary>
         /// Represents an AccoutAddress object.
         /// </summary>
-        public AccountAddress AccountAddress { get; set; }
+        public abstract AccountAddress AccountAddress { get; set; }
 
         /// <summary>
         /// Private key as 32-byte array
         /// </summary>
-        public byte[] PrivateKeyShort { get; }
+        public abstract byte[] PrivateKeyShort { get; }
 
         /// <summary>
         /// Generates an account from a random seed.
