@@ -50,6 +50,11 @@ namespace Sui.Accounts
             SignatureScheme = signatureScheme;
         }
 
+        public Account(byte[] privateKey, SignatureScheme signatureScheme)
+        {
+            SignatureScheme = signatureScheme;
+        }
+
         public static Account Generate()
         {
             throw new NotImplementedException();
