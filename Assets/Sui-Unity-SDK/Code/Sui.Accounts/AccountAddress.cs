@@ -1,6 +1,8 @@
 using System;
+using Chaos.NaCl;
 using Org.BouncyCastle.Crypto.Digests;
 using Sui.Cryptography;
+using Sui.Utilities;
 using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Accounts
@@ -18,21 +20,62 @@ namespace Sui.Accounts
     /// </summary>
     public class AccountAddress
     {
+        /// <summary>
+        /// Length of a Sui account address.
+        /// </summary>
         private static readonly int Length = 32;
-        private readonly byte[] AddressBytes;
 
+
+        private byte[] _addressBytes;
+        /// <summary>
+        /// Sui address in byte array format.
+        /// </summary>
+        public byte[] AddressBytes
+        {
+            get => _addressBytes;
+            set => _addressBytes = value;
+        }
+
+        private SignatureScheme _signatureScheme;
+        /// <summary>
+        /// Return the signature scheme.
+        /// If the AccountAddress object was initialized with a sui address byte representation,
+        /// then we get the first byte from that byte array -- this represents the
+        /// signature scheme flat.
+        /// </summary>
+        public SignatureScheme SignatureScheme
+        {
+            get
+            {
+                // TODO: Look into how to check if an enum property is set
+                if (_signatureScheme <= 0)
+                {
+                    byte flag = AddressBytes[0];
+                    _signatureScheme = SignatureFlagToScheme.GetScheme(flag);
+                }
+                return _signatureScheme;
+            }
+
+            set => _signatureScheme = value;
+        }
+
+        /// <summary>
+        /// Create an AccountAddress object using a PublicKey object.
+        /// </summary>
+        /// <param name="publicKey"></param>
         public AccountAddress(PublicKeyBase publicKey)
         {
             new AccountAddress(publicKey.KeyBytes, publicKey.SignatureScheme);
         }
 
         /// <summary>
-        /// Cerates an AccountAddress object using a public key and a signature scheme.
+        /// Cerate an AccountAddress object using a public key and a signature scheme.
         /// </summary>
         /// <param name="publicKey"></param>
         /// <param name="signatureScheme"></param>
         public AccountAddress(byte[] publicKey, SignatureScheme signatureScheme)
         {
+            SignatureScheme = signatureScheme;
             byte[] suiBytes = PublicKeyBase.ToSuiBytes(signatureScheme, publicKey);
 
             // BLAKE2b hash
@@ -56,29 +99,67 @@ namespace Sui.Accounts
             AddressBytes = suiAddress;
         }
 
+        /// <summary>
+        /// Create an AccountAddress object from a given public key and signature scheme.
+        /// </summary>
+        /// <param name="publicKey"></param>
+        /// <param name="signatureScheme"></param>
+        /// <returns></returns>
         public static AccountAddress FromKey(byte[] publicKey, SignatureScheme signatureScheme)
         {
             return new AccountAddress(publicKey, signatureScheme);
         }
 
-        public static AccountAddress FromHex(string publicKey)
+        /// <summary>
+        /// Create an AccountAddress object from a hex string representation of a Sui address
+        /// </summary>
+        /// <param name="suiAddress"></param>
+        /// <returns></returns>
+        public static AccountAddress FromHex(string suiAddress)
         {
-            throw new NotImplementedException();
+            byte[] suiAddressBytes = suiAddress.HexStringToByteArray();
+            return new AccountAddress(suiAddressBytes);
         }
 
-        public static AccountAddress FromBase64(string publicKey)
+        /// <summary>
+        /// Create an AccountAddress object from a base64 string representation of a Sui address
+        /// </summary>
+        /// <param name="suiAddress"></param>
+        /// <returns></returns>
+        public static AccountAddress FromBase64(string suiAddress)
         {
-            throw new NotImplementedException();
+            byte[] suiAddressBytes = Convert.FromBase64String(suiAddress);
+            return new AccountAddress(suiAddressBytes);
         }
 
-        public override string ToString()
+        /// <summary>
+        /// Returns a hex string representation of a Sui address.
+        /// </summary>
+        /// <returns></returns>
+        public string ToHex()
         {
-            // Convert to hex string
             string addressHex = BitConverter.ToString(AddressBytes); // Turn into hexadecimal string
             addressHex = addressHex.Replace("-", "").ToLowerInvariant(); // Remove '-' characters from hex string hash
             addressHex = "0x" + addressHex.Substring(0, 64);
-
             return addressHex;
+        }
+
+        /// <summary>
+        /// Returns a base64 string representation of a Sui address.
+        /// </summary>
+        /// <returns></returns>
+        public string ToBase64()
+        {
+            return CryptoBytes.ToBase64String(AddressBytes);
+        }
+
+        /// <summary>
+        /// Returns a base64 string representation of a Sui address.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return ToBase64();
         }
     }
 }
