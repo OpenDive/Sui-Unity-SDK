@@ -31,6 +31,9 @@ namespace Sui.Cryptography
         }
     }
 
+    /// <summary>
+    /// Utility class to map a signature schem to the corresponding byte flag Sui uses.
+    /// </summary>
     public static class SignatureSchemeToFlag
     {
         private static readonly Dictionary<SignatureScheme, byte> _signatureSchemeToFlag = new()
@@ -42,19 +45,26 @@ namespace Sui.Cryptography
             { SignatureScheme.Zk,           0x05 }
         };
 
-        public static byte GetFlag(SignatureScheme signatureScheme)
-        {
-            return _signatureSchemeToFlag[signatureScheme];
-        }
-
         public static byte ED25519      => _signatureSchemeToFlag[SignatureScheme.ED25519];
         public static byte Secp256k1    => _signatureSchemeToFlag[SignatureScheme.Secp256k1];
         public static byte Secp256r1    => _signatureSchemeToFlag[SignatureScheme.Secp256r1];
         public static byte MultiSig     => _signatureSchemeToFlag[SignatureScheme.MultiSig];
         public static byte Zk           => _signatureSchemeToFlag[SignatureScheme.Zk];
+
+        /// <summary>
+        /// Returns the byte flag that matches the signature scheme.
+        /// </summary>
+        /// <param name="signatureScheme">The signature scheme.</param>
+        /// <returns></returns>
+        public static byte GetFlag(SignatureScheme signatureScheme)
+        {
+            return _signatureSchemeToFlag[signatureScheme];
+        }
+
     }
 
     /// <summary>
+    /// Utility class to map a signature scheme to it's signature byte size.
     /// Presently the Sui TypeScript SDK doesn't support Multisig and Zk signature-scheme-to-size
     /// </summary>
     public static class SignatureSchemeToSize
@@ -68,6 +78,17 @@ namespace Sui.Cryptography
             //{ SignatureScheme.Zk, __ }
         };
 
+        public static int ED25519       => _signatureSchemeToSize[SignatureScheme.ED25519];
+        public static int Secp256k1     => _signatureSchemeToSize[SignatureScheme.Secp256k1];
+        public static int Secp256r1     => _signatureSchemeToSize[SignatureScheme.Secp256r1];
+        //public static int MultiSig      => _signatureSchemeToSize[SignatureScheme.MultiSig];
+        //public static int Zk            => _signatureSchemeToSize[SignatureScheme.Zk];
+
+        /// <summary>
+        /// Returns the size of signature based on particular signature scheme.
+        /// </summary>
+        /// <param name="signatureScheme">The signature scheme.</param>
+        /// <returns></returns>
         public static int GetSize(SignatureScheme signatureScheme)
         {
             if (!_signatureSchemeToSize.ContainsKey(signatureScheme))
@@ -76,14 +97,11 @@ namespace Sui.Cryptography
             return _signatureSchemeToSize[signatureScheme];
         }
 
-        public static int ED25519       => _signatureSchemeToSize[SignatureScheme.ED25519];
-        public static int Secp256k1     => _signatureSchemeToSize[SignatureScheme.Secp256k1];
-        public static int Secp256r1     => _signatureSchemeToSize[SignatureScheme.Secp256r1];
-        //public static int MultiSig      => _signatureSchemeToSize[SignatureScheme.MultiSig];
-        //public static int Zk            => _signatureSchemeToSize[SignatureScheme.Zk];
-
     }
 
+    /// <summary>
+    /// Utility class to map a signature byte flag to it's signature scheme name.
+    /// </summary>
     public static class SignatureFlagToScheme
     {
         public static readonly Dictionary<byte, SignatureScheme> _signatureFlagToScheme = new()
@@ -95,15 +113,20 @@ namespace Sui.Cryptography
             { 0x05, SignatureScheme.Zk }
         };
 
-        public static SignatureScheme GetScheme(byte flagByte)
-        {
-            return _signatureFlagToScheme[flagByte];
-        }
-
         public static SignatureScheme FLAG_0x00     => _signatureFlagToScheme[0x00];
         public static SignatureScheme FLAG_0x01     => _signatureFlagToScheme[0x01];
         public static SignatureScheme FLAG_0x02     => _signatureFlagToScheme[0x02];
         public static SignatureScheme FLAG_0x03     => _signatureFlagToScheme[0x03];
         public static SignatureScheme FLAG_0x05     => _signatureFlagToScheme[0x05];
+
+        /// <summary>
+        /// Returns a signature scheme name from a byte flag.
+        /// </summary>
+        /// <param name="flagByte">The byte flag.</param>
+        /// <returns></returns>
+        public static SignatureScheme GetScheme(byte flagByte)
+        {
+            return _signatureFlagToScheme[flagByte];
+        }
     }
 }
