@@ -131,6 +131,12 @@ namespace Sui.Cryptography
         public string ToBase64() => KeyBase64;
 
         /// <summary>
+        /// Derives a public key from the current private key.
+        /// </summary>
+        /// <returns></returns>
+        public abstract PublicKeyBase PublicKey();
+
+        /// <summary>
         /// Comparator function.
         /// </summary>
         /// <param name="obj">Private key to compare to.</param>

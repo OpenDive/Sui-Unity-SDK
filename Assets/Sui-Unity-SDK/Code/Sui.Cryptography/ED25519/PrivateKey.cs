@@ -128,7 +128,14 @@ namespace Sui.Cryptography.Ed25519
         /// Derive public key from the private key.
         /// </summary>
         /// <returns></returns>
-        public PublicKey PublicKey()
+        //public PublicKey PublicKey()
+        //{
+        //    PublicKey publicKey = new PublicKey(
+        //        Chaos.NaCl.Ed25519.PublicKeyFromSeed(KeyBytes)
+        //    );
+        //    return publicKey;
+        //}
+        public override PublicKeyBase PublicKey()
         {
             PublicKey publicKey = new PublicKey(
                 Chaos.NaCl.Ed25519.PublicKeyFromSeed(KeyBytes)
