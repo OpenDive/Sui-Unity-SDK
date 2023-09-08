@@ -125,6 +125,11 @@ namespace Sui.Accounts
             return PrivateKey.Sign(message);
         }
 
+        public AccountAddress SuiAddress()
+        {
+            return PublicKey.ToSuiAddress();
+        }
+
         /// <summary>
         /// Sign messages with a specific intent. By combining
         /// the message bytes with the intent before hashing and signing,
