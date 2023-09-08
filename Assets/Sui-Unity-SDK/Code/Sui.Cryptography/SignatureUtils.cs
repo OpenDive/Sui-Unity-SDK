@@ -20,6 +20,29 @@ namespace Sui.Cryptography
             Zk
         }
 
+        public enum IntentScope
+        {
+            TransactionData = 0,
+            TransactionEffects = 1,
+            CheckpointSummary = 2,
+            PersonalMessage = 3,
+        }
+
+        public enum AppId
+        {
+            Sui = 0,
+        }
+
+        public enum IntentVersion
+        {
+            V0 = 0,
+        }
+
+        public static byte[] CreateIntentWithScope (IntentScope scope)
+        {
+            return new byte[] { (byte)scope, (byte)IntentVersion.V0, (byte)AppId.Sui };
+        }
+
         public static string ToSerializedSignature(SignatureBase signature)
         {
             throw new NotImplementedException();
