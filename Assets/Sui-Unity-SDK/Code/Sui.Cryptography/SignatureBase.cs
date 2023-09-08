@@ -126,6 +126,12 @@ namespace Sui.Cryptography
         public abstract SignatureBase Deserialize(string serializedSignature);
     }
 
+    public class SignatureWithBytes
+    {
+        public string Bytes { get; set; }
+	    public string Signature { get; set; } // SerializedSignature in the TypeScript SDK
+}
+
     /// <summary>
     /// Represents a Sui signature
     /// https://docs.sui.io/learn/cryptography/sui-signatures#user-signature

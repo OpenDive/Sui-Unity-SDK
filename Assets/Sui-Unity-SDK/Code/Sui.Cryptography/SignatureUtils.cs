@@ -11,6 +11,9 @@ namespace Sui.Cryptography
     /// </summary>
     public static class SignatureUtils
     {
+        /// <summary>
+        /// Signature schemes supported by Sui.
+        /// </summary>
         public enum SignatureScheme
         {
             ED25519,
@@ -20,6 +23,10 @@ namespace Sui.Cryptography
             Zk
         }
 
+        /// <summary>
+        /// Types of inten scope flags.
+        /// An intent is a domain separator.
+        /// </summary>
         public enum IntentScope
         {
             TransactionData = 0,
@@ -28,19 +35,45 @@ namespace Sui.Cryptography
             PersonalMessage = 3,
         }
 
+        /// <summary>
+        /// The app id.
+        /// </summary>
         public enum AppId
         {
             Sui = 0,
         }
 
+        /// <summary>
+        /// The intent version.
+        /// </summary>
         public enum IntentVersion
         {
             V0 = 0,
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="scope"></param>
+        /// <returns></returns>
         public static byte[] CreateIntentWithScope (IntentScope scope)
         {
             return new byte[] { (byte)scope, (byte)IntentVersion.V0, (byte)AppId.Sui };
+        }
+
+        /// <summary>
+        /// Inserts a domain separator for a message that is being signed
+        /// </summary>
+        /// <param name="scope"></param>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        public static byte[] CreateMessageWithIntent(IntentScope scope, byte[] message)
+        {
+            byte[] intent = CreateIntentWithScope(scope);
+            byte[] intentMessage = new byte[intent.Length + message.Length];
+            Array.Copy(intent, intentMessage, intent.Length);
+            Array.Copy(message, 0, intentMessage, intent.Length, message.Length);
+            return intentMessage;
         }
 
         public static string ToSerializedSignature(SignatureBase signature)
