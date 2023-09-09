@@ -15,8 +15,16 @@ namespace Sui.Transactions.Builder
         public int Version { get => 1;  }
         public AccountAddress Sender { get; set; }
 
+        /// <summary>
+        /// TODO: Implement
+        /// https://github.com/MystenLabs/sui/blob/3253d9a3c629fb142dbf492c22afca14114d1df8/sdk/typescript/src/builder/TransactionBlockData.ts#L156
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="gasConfig"></param>
         public TransactionBlockDataBuilder(
-            AccountAddress sender
+            AccountAddress sender,
+            GasConfig gasConfig
+
             )
         {
 
