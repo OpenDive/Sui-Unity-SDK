@@ -1,4 +1,5 @@
 using System;
+using OpenDive.BCS;
 using Chaos.NaCl;
 using Org.BouncyCastle.Crypto.Digests;
 using Sui.Cryptography;
@@ -18,7 +19,7 @@ namespace Sui.Accounts
     /// and MultiSig with corresponding flag bytes of 0x00, 0x01, 0x02, and 0x03, respectively.
     /// https://docs.sui.io/learn/cryptography/sui-wallet-specs#address-format
     /// </summary>
-    public class AccountAddress
+    public class AccountAddress : ISerializableTag
     {
         /// <summary>
         /// Length of a Sui account address.
@@ -160,6 +161,26 @@ namespace Sui.Accounts
         public override string ToString()
         {
             return ToBase64();
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static AccountAddress Deserialize(Deserialization deserializer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TypeTag Variant()
+        {
+            throw new NotImplementedException();
+        }
+
+        public object GetValue()
+        {
+            throw new NotImplementedException();
         }
     }
 }
