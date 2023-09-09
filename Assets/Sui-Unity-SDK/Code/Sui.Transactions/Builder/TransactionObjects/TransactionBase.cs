@@ -1,4 +1,4 @@
-namespace Sui.Transactions.Builder.TransactionObject
+namespace Sui.Transactions.Builder.TransactionObjects
 {
     public abstract class TransactionBase
     {

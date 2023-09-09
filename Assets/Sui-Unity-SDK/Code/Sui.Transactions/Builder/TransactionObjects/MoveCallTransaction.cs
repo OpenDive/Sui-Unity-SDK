@@ -1,11 +1,12 @@
-using System;
 using OpenDive.BCS;
 using Sui.Accounts;
 
-namespace Sui.Transactions.Builder.TransactionObject
+namespace Sui.Transactions.Builder.TransactionObjects
 {
     public class MoveCallTransaction : TransactionBase, ISerializable
     {
+        public string Kind { get => "MoveCall"; }
+
         /// <summary>
         /// The module id that contains the target function
         /// Represents the following:
