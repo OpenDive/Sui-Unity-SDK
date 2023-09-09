@@ -43,6 +43,12 @@ namespace Sui.Utilities
             return output;
         }
 
+
+        public static string ToString(this byte[] input)
+        {
+            return string.Join(", ", input);
+        }
+
         /// <summary>
         /// Check if it's a valid hex address.
         /// </summary>
