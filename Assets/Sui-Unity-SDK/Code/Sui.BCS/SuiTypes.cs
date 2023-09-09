@@ -1,14 +1,64 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using OpenDive.BCS;
 using Sui.Accounts;
+using Sui.Cryptography;
 using UnityEngine;
 
 namespace Sui.BCS
 {
     /// <summary>
-    /// SuiObjectRef is a Sui type that has the following format:
+    /// Base interfaces that both a SuiObjectRef and a SharedObjectRef must implement.
+    /// This is used to create an abstraction that will allow it to become an argument.
+    /// In the Sui TypeScript SDK this is referred to as an `ObjectArg`, it's schema
+    /// is below:
+    /// <code>
+	///	    ObjectArg: {
+	///		    ImmOrOwned: 'SuiObjectRef',
+	///		    Shared: 'SharedObjectRef',
+	///	    },
+    /// </code>
+    ///
+    /// This interface extends ISeriliazable which allows these objects that
+    /// implement the interface to be passed as arguments (`CallArgs` in Sui TypeScript)
+    /// </summary>
+    public interface ObjectRef : ISerializable
+    {
+        public string ObjectId { get; set; }
+    }
+
+    /// <summary>
+    /// A Sui type that represents a transaction call arguments.
+    /// A call arg can be a (1) vector / list of byte (BCS U8),
+    /// (2) an ObjectRef (also known as object arg, (3) or a vector / list of ObjectRef.
+    ///
+    /// The following is the TypeScript SDK schema
+    /// <code>
+    ///     CallArg: {
+	///		    Pure: [VECTOR, BCS.U8],
+	///		    Object: 'ObjectArg',
+	///		    ObjVec: [VECTOR, 'ObjectArg'],
+	///	    },
+    /// </code>
+    ///
+    /// In our implementation CallArg by default takes in a list of args / ISerializable object.
+    /// </summary>
+    public class CallArg : ISerializable
+    {
+        public ISerializable[] args;
+        public CallArg(ISerializable[] args)
+        {
+            this.args = args;
+        }
+        public void Serialize(Serialization serializer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// A Sui object can be immutable or owned.
+    /// A reference to this type of object has the following format:
 	/// <code>
     ///     SuiObjectRef: {
 	///		    objectId: BCS.ADDRESS,
@@ -19,11 +69,13 @@ namespace Sui.BCS
     /// Where `ObjectDigest` is a base58 BCS serialized string
     /// TODO: Look in BCS using base58
     /// </summary>
-    public class SuiObjectRef : ISerializable
+    public class SuiObjectRef : ObjectRef
     {
         public string objectId;
         public int version;
         public string digest;
+
+        public string ObjectId { get => objectId; set => objectId = value; }
 
         public SuiObjectRef(string objectId, int version, string digest)
         {
@@ -60,7 +112,9 @@ namespace Sui.BCS
     }
 
     /// <summary>
-    /// SharedObjectRef is a Sui type of the following format:
+    /// A shared object is a Sui object that can be accessed by others.
+    /// This type of object can also be mutated is allowed.
+    /// A reference to this type of object has the following format:
     /// <code>
     ///    SharedObjectRef: {
 	///		    objectId: BCS.ADDRESS,
@@ -104,6 +158,142 @@ namespace Sui.BCS
                 (int)initialSharedVersion.GetValue(),
                 (bool)mutable.GetValue()
             );
+        }
+    }
+
+    /// <summary>
+    ///    GasData: {
+	///	        payment: [VECTOR, 'SuiObjectRef'],
+	///	        owner: BCS.ADDRESS,
+	///	        price: BCS.U64,
+	///	        budget: BCS.U64,
+	///    },
+    /// </summary>
+    public class GasData : ISerializable
+    {
+        public List<SuiObjectRef> payment;
+        public string owner;
+        public int price;
+        public int budget;
+
+        public GasData(List<SuiObjectRef> payment, string owner, int price, int budget)
+        {
+            this.payment = payment;
+            this.owner = owner;
+            this.price = price;
+            this.budget = budget;
+        }
+        public void Serialize(Serialization serializer)
+        {
+            Sequence paymentSeq = new Sequence(this.payment.ToArray());
+            AccountAddress owner = AccountAddress.FromHex(this.owner);
+            U64 price = new U64((ulong) this.price);
+            U64 budget = new U64((ulong)this.budget);
+
+            paymentSeq.Serialize(serializer);
+            price.Serialize(serializer);
+            budget.Serialize(serializer);
+        }
+
+        // TODO: Implement GasData serialization
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    ///
+    /// Signed transaction data needed to generate transaction digest.
+    /// <code>
+    ///     SenderSignedData: {
+	///         data: 'TransactionData',
+	///		    txSignatures: [VECTOR, [VECTOR, BCS.U8]],
+	///     },
+    /// </code> 
+    /// </summary>
+    public class SenderSignedData : ISerializable
+    {
+        public TransactionDataV1 transactionData;
+        public List<byte[]> transactionSignatureBytes;
+
+        public SenderSignedData(TransactionDataV1 transactionData, List<byte[]> transactionSignatures)
+        {
+            this.transactionData = transactionData;
+            this.transactionSignatureBytes = transactionSignatures;
+        }
+
+        /// <summary>
+        /// TODO: Implement. Serialize signatures and put in list.
+        /// </summary>
+        /// <param name="transactionData"></param>
+        /// <param name="transactionSignatures"></param>
+        public SenderSignedData(TransactionDataV1 transactionData, List<SignatureBase> transactionSignatures)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    ///
+    /// <code>
+    ///     const TransactionDataV1 = {
+    ///         kind: 'TransactionKind',
+    ///         sender: BCS.ADDRESS,
+    ///         gasData: 'GasData',
+    ///         expiration: 'TransactionExpiration',
+    ///     };
+    /// </code>
+    /// </summary>
+    public class TransactionDataV1 : ISerializable
+    {
+        public string sender;
+        public GasData gasData;
+        public TransactionExpiration expiration;
+
+        public TransactionDataV1(string sender, GasData gasData, TransactionExpiration expiration)
+        {
+            this.sender = sender;
+            this.gasData = gasData;
+            this.expiration = expiration;
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Indicates the expiration time for a transaction.
+    /// This can be a null values, an object with property `None` or
+    /// an object with `Epoch` property.
+    /// 
+    /// TODO: Create a pull request in Sui GitHub to fix type in documentation
+    /// https://github.com/MystenLabs/sui/blob/948be00ce391e300b17cca9b74c2fc3981762b87/sdk/typescript/src/bcs/index.ts#L102C4-L102C54
+    /// <code>
+    /// export type TransactionExpiration = { None: null } | { Epoch: number };
+    /// </code>
+    /// </summary>
+    public class TransactionExpiration : ISerializable
+    {
+        public int epoch;
+        public TransactionExpiration(int epoch = -1)
+        {
+            if (epoch >= 0)
+            {
+                this.epoch = epoch;
+            }
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            throw new NotImplementedException();
         }
     }
 }
