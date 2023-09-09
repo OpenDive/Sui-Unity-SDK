@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Sui.Transactions.TransactionBlock
+namespace Sui.Transactions.Block
 {
     public class BuilidOptions
     {
