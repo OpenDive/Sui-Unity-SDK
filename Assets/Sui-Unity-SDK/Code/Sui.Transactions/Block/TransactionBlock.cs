@@ -40,7 +40,18 @@ namespace Sui.Transactions
         // transferObject(objects: [TransactionArgument], address: String) throws -> TransactionArgument
         // makeMoveVec(type: String? = nil, objects: [TransactionBlockInput]) throws -> TransactionArgument
 
-        /// PREPARRING TRANSACTION FUNCTIONS
+        /// TRANSACTION BUILDER TOOL FUNCTIONS
         // getConfig(key: LimitKey, buildOptions: BuildOptions) throws -> Int
+        // build(_ provider: SuiProvider, _ onlyTransactionKind: Bool? = nil) async throws -> Data
+        // getDigest(_ provider: SuiProvider) async throws -> String
+        // isMissingSender(_ onlyTransactionKind: Bool? = nil) -> Bool
+
+        /// TRANSACTION PREPARATION FUNCTIONS
+        // prepareGasPayment(provider: SuiProvider, onlyTransactionKind: Bool? = nil) async throws
+        // prepareGasPrice(provider: SuiProvider, onlyTransactionKind: Bool? = nil) async throws
+        // prepareTransactions(provider: SuiProvider) async throws
+
+        /// CORE PREPARE FUNCTION
+        // prepare(_ optionsPassed: BuildOptions) async throws
     }
 }
