@@ -1,5 +1,8 @@
+using System;
 using OpenDive.BCS;
 using Sui.Accounts;
+using Sui.Utilities;
+using UnityEngine;
 
 namespace Sui.Transactions.Builder.TransactionObjects
 {
@@ -24,7 +27,7 @@ namespace Sui.Transactions.Builder.TransactionObjects
         /// <summary>
         /// The target
         /// </summary>
-        public string Target { get; private set; }
+        public StructTag Target { get; private set; }
 
         /// <summary>
         ///
@@ -38,11 +41,11 @@ namespace Sui.Transactions.Builder.TransactionObjects
         public Sequence Arguments { get; private set; }
 
 
-        public MoveCallTransaction(ModuleId moduleId, string function, ISerializableTag[] typeArguments, ISerializable[] arguments)
+        public MoveCallTransaction(StructTag target, ISerializableTag[] typeArguments, ISerializable[] arguments)
         {
-            ModuleId = moduleId;
-            Function = function;
-            Target = ModuleId.ToString() + "::" + Function;
+            //ModuleId = moduleId;
+            //Function = function;
+            Target = target;
             TypeArguments = new TagSequence(typeArguments);
             Arguments = new Sequence(arguments);
         }
@@ -56,9 +59,21 @@ namespace Sui.Transactions.Builder.TransactionObjects
         {
             // Check for kind
             serializer.SerializeU8(0);
-            new BString(Target).Serialize(serializer);
+            Target.Serialize(serializer);
             TypeArguments.Serialize(serializer);
-            Arguments.Serialize(serializer);
+            //Arguments.Serialize(serializer);
+            // TODO: This fixes the extra bytes -- using ISerializable[] instead of sequence
+            // 2,4,99,97,112,121,4,67,97,112,121,0,1,2,
+            // 2,4,99,97,112,121,4,67,97,112,121,
+            serializer.Serialize((ISerializable[])Arguments.GetValue());
+
+            Debug.Log(" === MoveCallTransaction ::: ");
+            Serialization ser = new Serialization();
+            ser.SerializeU8(0);
+            Target.Serialize(ser);
+            TypeArguments.Serialize(ser);
+            Arguments.Serialize(ser);
+            Debug.Log(ser.GetBytes().ByteArrayToString());
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)
@@ -72,12 +87,14 @@ namespace Sui.Transactions.Builder.TransactionObjects
             ModuleId moduleId = new ModuleId(AccountAddress.FromHex(split[0]), split[1]);
             string function = split[2];
 
-            return new MoveCallTransaction(
-                moduleId,
-                function,
-                (ISerializableTag[])typeArguments.GetValue(),
-                (ISerializable[])arguments.GetValue()
-            );
+            //return new MoveCallTransaction(
+            //    moduleId,
+            //    function,
+            //    (ISerializableTag[])typeArguments.GetValue(),
+            //    (ISerializable[])arguments.GetValue()
+            //);
+
+            throw new NotImplementedException();
         }
     }
 }

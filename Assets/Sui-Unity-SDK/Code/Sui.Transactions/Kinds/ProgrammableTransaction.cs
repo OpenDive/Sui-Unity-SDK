@@ -1,6 +1,8 @@
 using System;
 using OpenDive.BCS;
 using Sui.Transactions.Builder.TransactionObjects;
+using Sui.Utilities;
+using UnityEngine;
 
 namespace Sui.Transactions.Kinds
 {
@@ -32,6 +34,13 @@ namespace Sui.Transactions.Kinds
             serializer.SerializeU8(0);
             serializer.Serialize(inputSeq);
             serializer.Serialize(transactionSeq);
+
+            Serialization ser = new Serialization();
+            ser.SerializeU8(0);
+            ser.Serialize(inputSeq);
+            ser.Serialize(transactionSeq);
+            Debug.Log("==== ProgrammableTransaction");
+            Debug.Log(ser.GetBytes().ByteArrayToString());
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)

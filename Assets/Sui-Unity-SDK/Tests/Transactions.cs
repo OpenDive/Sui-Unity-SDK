@@ -6,6 +6,7 @@ using Sui.Transactions.Builder;
 using Sui.Transactions.Builder.TransactionObjects;
 using Sui.Transactions.Kinds;
 using UnityEngine;
+using Sui.Utilities;
 
 namespace Sui.Tests
 {
@@ -24,6 +25,8 @@ namespace Sui.Tests
                 int.Parse("10000"),
                 "1Bhh3pU9gLXZhoVxkr5wyg9sX6"
             );
+            // TODO: THIS COULD BE WRONG. Check with Marcus
+            // TODO: Check in on serializing a struct tag, in Aptos implementation we add the typetag (7 for struct), but here it looks like it's not necessary
             string sui = "0x0000000000000000000000000000000000000000000000000000000000000002";
             AccountAddress suiAddress = AccountAddress.FromHex(sui);
 
@@ -38,9 +41,10 @@ namespace Sui.Tests
             ISerializable[] inputs = new ISerializable[] { paymentRef };
 
             MoveCallTransaction moveCallTransaction = new MoveCallTransaction(
-                new ModuleId(suiAddress, "display"), "new",
+                //new ModuleId(suiAddress, "display"), "new",
+                new StructTag(suiAddress, "display", "new", new ISerializableTag[0]),
                 //new ISerializableTag[] { StructTag.FromStr(suiAddress.ToString() + "::capy::Capy") },
-                new ISerializableTag[] { new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[] {}) },
+                new ISerializableTag[] { new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[0]) },
 
                 new ISerializable[] { new Input(0) }
             );
@@ -63,7 +67,9 @@ namespace Sui.Tests
 
             byte[] expected = new byte[] { 0, 0, 1, 1, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 39, 0, 0, 0, 0, 0, 0, 20, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 7, 100, 105, 115, 112, 108, 97, 121, 3, 110, 101, 119, 1, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 99, 97, 112, 121, 4, 67, 97, 112, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 173, 1, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 39, 0, 0, 0, 0, 0, 0, 20, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0, 0 };
 
-            Assert.AreEqual(expected, actual, actual.ToString());
+            Assert.AreEqual(expected, actual,
+                "ACTUAL LENGHT: " + actual.Length + "\n"
+                + "EXPECTED LENGTH: " + expected.Length + "\n" + actual.ByteArrayToString());
         }
     }
 }

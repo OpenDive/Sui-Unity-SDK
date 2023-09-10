@@ -44,7 +44,7 @@ namespace Sui.Utilities
         }
 
 
-        public static string ToString(this byte[] input)
+        public static string ByteArrayToString(this byte[] input)
         {
             return string.Join(", ", input);
         }

@@ -2,6 +2,8 @@ using System;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.BCS;
+using Sui.Utilities;
+using UnityEngine;
 
 namespace Sui.Transactions.Builder
 {
@@ -36,6 +38,16 @@ namespace Sui.Transactions.Builder
             Sender.Serialize(serializer);
             GasData.Serialize(serializer);
             Expiration.Serialize(serializer);
+
+            Serialization ser = new Serialization();
+            ser.SerializeU8(0); // We add the version number V1 - 0 byte
+            Transaction.Serialize(ser);
+            Sender.Serialize(ser);
+            GasData.Serialize(ser);
+            Expiration.Serialize(ser);
+
+            Debug.Log("===  TransactionData");
+            Debug.Log(ser.GetBytes().ByteArrayToString());
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)
