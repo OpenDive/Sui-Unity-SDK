@@ -19,7 +19,7 @@ namespace Sui.Transactions.Builder
     ///     transactions: TransactionType[];
     /// </code>
     /// </summary>
-    public class TransactionBlockDataBuilder
+    public class TransactionBlockDataBuilder : ISerializable
     {
         public int Version { get => 1;  }
         public TransactionExpiration Expiration;
@@ -136,6 +136,11 @@ namespace Sui.Transactions.Builder
             public static string GetDigestFromBytes(byte[] bytes)
         {
             //return new TransactionBlockDataBuilder();
+            throw new NotImplementedException();
+        }
+
+        public void Serialize(Serialization serializer)
+        {
             throw new NotImplementedException();
         }
     }
