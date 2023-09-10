@@ -5,6 +5,7 @@ using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.BCS;
 using Sui.Transactions.Builder.TransactionObjects;
+using Sui.Transactions.Kinds;
 
 namespace Sui.Transactions.Builder
 {
@@ -101,6 +102,14 @@ namespace Sui.Transactions.Builder
             {
                 throw new Exception("Missing gas price");
             }
+
+            TransactionData transactionData = new()
+            {
+                Sender = this.Sender,
+                Expiration = this.Expiration,
+                GasData = this.GasConfig,
+                Transaction = new ProgrammableTransaction(Inputs, Transactions)
+            };
 
             throw new NotImplementedException();
         }

@@ -22,7 +22,7 @@ namespace Sui.BCS
     /// This interface extends ISeriliazable which allows these objects that
     /// implement the interface to be passed as arguments (`CallArgs` in Sui TypeScript)
     /// </summary>
-    public interface ObjectRef : ISerializable
+    public interface IObjectRef : ISerializable
     {
         public string ObjectId { get; set; }
     }
@@ -45,7 +45,7 @@ namespace Sui.BCS
     /// </summary>
     public class CallArg : ISerializable
     {
-        public ISerializable[] args;
+        public ISerializable[] args; // Could be a Pure (native BCS type) or an IObjectRef type.
         public CallArg(ISerializable[] args)
         {
             this.args = args;
@@ -69,7 +69,7 @@ namespace Sui.BCS
     /// Where `ObjectDigest` is a base58 BCS serialized string
     /// TODO: Look in BCS using base58
     /// </summary>
-    public class SuiObjectRef : ObjectRef
+    public class SuiObjectRef : IObjectRef
     {
         public string objectId;
         public int version;
@@ -293,13 +293,22 @@ namespace Sui.BCS
     /// </summary>
     public class TransactionExpiration : ISerializable
     {
-        public int epoch;
-        public TransactionExpiration(int epoch = -1)
+        private bool None { get; set; }
+        private int Epoch { get; set; }
+
+        public TransactionExpiration()
         {
-            if (epoch >= 0)
-            {
-                this.epoch = epoch;
-            }
+            None = true;
+        }
+
+        /// <summary>
+        /// TODO: Inquire on validation for epoch number
+        /// </summary>
+        /// <param name="epoch"></param>
+        public TransactionExpiration(int epoch)
+        {
+            None = false;
+            Epoch = epoch;
         }
 
         public void Serialize(Serialization serializer)
