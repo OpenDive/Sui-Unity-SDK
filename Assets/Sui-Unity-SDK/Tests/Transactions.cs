@@ -14,7 +14,9 @@ namespace Sui.Tests
         [Test]
         public void TransactionDataSerialization()
         {
-            AccountAddress sender = AccountAddress.FromHex("0xBAD");
+            string test = "0x0000000000000000000000000000000000000000000000000000000000000BAD";
+
+            AccountAddress sender = AccountAddress.FromHex(test);
             TransactionExpiration expiration = new TransactionExpiration();
 
             SuiObjectRef paymentRef = new SuiObjectRef(
@@ -22,7 +24,6 @@ namespace Sui.Tests
                 int.Parse("10000"),
                 "1Bhh3pU9gLXZhoVxkr5wyg9sX6"
             );
-
             string sui = "0x0000000000000000000000000000000000000000000000000000000000000002";
             AccountAddress suiAddress = AccountAddress.FromHex(sui);
 
@@ -38,8 +39,10 @@ namespace Sui.Tests
 
             MoveCallTransaction moveCallTransaction = new MoveCallTransaction(
                 new ModuleId(suiAddress, "display"), "new",
-                new ISerializableTag[] { StructTag.FromStr(suiAddress + "::capy::Capy") },
-                new ISerializable[] { null }
+                //new ISerializableTag[] { StructTag.FromStr(suiAddress.ToString() + "::capy::Capy") },
+                new ISerializableTag[] { new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[] {}) },
+
+                new ISerializable[] { new Input(0) }
             );
 
             ITransaction[] transactions = new []{ moveCallTransaction };
