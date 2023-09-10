@@ -103,13 +103,20 @@ namespace Sui.Transactions.Builder
                 throw new Exception("Missing gas price");
             }
 
-            TransactionData transactionData = new()
-            {
-                Sender = this.Sender,
-                Expiration = this.Expiration,
-                GasData = this.GasConfig,
-                Transaction = new ProgrammableTransaction(Inputs, Transactions)
-            };
+            //TransactionData transactionData = new()
+            //{
+            //    Sender = this.Sender,
+            //    Expiration = this.Expiration,
+            //    GasData = this.GasConfig,
+            //    Transaction = new ProgrammableTransaction(Inputs, Transactions)
+            //};
+
+            TransactionData transactionData = new TransactionData(
+                Sender,
+                Expiration,
+                GasConfig,
+                new ProgrammableTransaction(Inputs, Transactions)
+            );
 
             Serialization serializer = new Serialization();
             serializer.Serialize(transactionData);

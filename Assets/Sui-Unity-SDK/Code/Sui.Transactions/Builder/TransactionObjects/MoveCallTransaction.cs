@@ -54,6 +54,8 @@ namespace Sui.Transactions.Builder.TransactionObjects
 
         public void Serialize(Serialization serializer)
         {
+            // Check for kind
+            serializer.SerializeU8(0);
             new BString(Target).Serialize(serializer);
             TypeArguments.Serialize(serializer);
             Arguments.Serialize(serializer);

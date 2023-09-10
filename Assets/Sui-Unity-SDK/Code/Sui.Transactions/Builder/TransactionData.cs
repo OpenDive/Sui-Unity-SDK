@@ -17,6 +17,17 @@ namespace Sui.Transactions.Builder
         /// </summary>
         public ITransactionKind Transaction { get; set; }
 
+        public TransactionData(
+            AccountAddress sender,
+            TransactionExpiration transactionExpiration,
+            GasConfig gasdata,
+            ITransactionKind transaction)
+        {
+            this.Sender = sender;
+            this.Expiration = transactionExpiration;
+            this.GasData = gasdata;
+            this.Transaction = transaction;
+        }
 
         public void Serialize(Serialization serializer)
         {

@@ -1,0 +1,66 @@
+using NUnit.Framework;
+using OpenDive.BCS;
+using Sui.Accounts;
+using Sui.BCS;
+using Sui.Transactions.Builder;
+using Sui.Transactions.Builder.TransactionObjects;
+using Sui.Transactions.Kinds;
+using UnityEngine;
+
+namespace Sui.Tests
+{
+    public class Transactions : MonoBehaviour
+    {
+        [Test]
+        public void TransactionDataSerialization()
+        {
+            AccountAddress sender = AccountAddress.FromHex("0xBAD");
+            TransactionExpiration expiration = new TransactionExpiration();
+
+            SuiObjectRef paymentRef = new SuiObjectRef(
+                "1000000000000000000000000000000000000000000000000000000000000000",
+                int.Parse("10000"),
+                "1Bhh3pU9gLXZhoVxkr5wyg9sX6"
+            );
+
+            string sui = "0x0000000000000000000000000000000000000000000000000000000000000002";
+            AccountAddress suiAddress = AccountAddress.FromHex(sui);
+
+            GasConfig gasData = new GasConfig(
+                "1000000",
+                "1",
+                new SuiObjectRef[] { paymentRef },
+                suiAddress
+            );
+
+
+            ISerializable[] inputs = new ISerializable[] { paymentRef };
+
+            MoveCallTransaction moveCallTransaction = new MoveCallTransaction(
+                new ModuleId(suiAddress, "display"), "new",
+                new ISerializableTag[] { StructTag.FromStr(suiAddress + "::capy::Capy") },
+                new ISerializable[] { null }
+            );
+
+            ITransaction[] transactions = new []{ moveCallTransaction };
+
+            ProgrammableTransaction programmableTransaction
+                = new ProgrammableTransaction(inputs, transactions);
+
+            TransactionData transactionData = new TransactionData(
+                sender,
+                expiration,
+                gasData,
+                programmableTransaction
+            );
+
+            Serialization serializer = new Serialization();
+            transactionData.Serialize(serializer);
+            byte[] actual = serializer.GetBytes();
+
+            byte[] expected = new byte[] { 0, 0, 1, 1, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 39, 0, 0, 0, 0, 0, 0, 20, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 7, 100, 105, 115, 112, 108, 97, 121, 3, 110, 101, 119, 1, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 99, 97, 112, 121, 4, 67, 97, 112, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 173, 1, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 39, 0, 0, 0, 0, 0, 0, 20, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0, 0 };
+
+            Assert.AreEqual(expected, actual, actual.ToString());
+        }
+    }
+}
