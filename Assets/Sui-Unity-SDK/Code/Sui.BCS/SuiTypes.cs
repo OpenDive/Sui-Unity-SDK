@@ -125,8 +125,19 @@ namespace Sui.BCS
     /// </summary>
     public class SharedObjectRef : ISerializable
     {
+        /// <summary>
+        /// Hex code as string representing the object id.
+        /// </summary>
         public string objectId;
+
+        /// <summary>
+        /// The version the object was shared at.
+        /// </summary>
         public int initialSharedVersion;
+
+        /// <summary>
+        /// Whether reference is mutable.
+        /// </summary>
         public bool mutable;
 
         public SharedObjectRef(string objectId, int initialSharedVersion, bool mutable)

@@ -3,7 +3,7 @@ using Sui.Accounts;
 
 namespace Sui.Transactions.Builder.TransactionObjects
 {
-    public class MoveCallTransaction : TransactionBase, ISerializable
+    public class MoveCallTransaction : ITransaction, ISerializable
     {
         public string Kind { get => "MoveCall"; }
 
@@ -47,7 +47,7 @@ namespace Sui.Transactions.Builder.TransactionObjects
             Arguments = new Sequence(arguments);
         }
 
-        public override string EncodeTransaction()
+        public string EncodeTransaction()
         {
             throw new System.NotImplementedException();
         }

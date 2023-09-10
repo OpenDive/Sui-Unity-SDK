@@ -3,9 +3,9 @@ using OpenDive.BCS;
 
 namespace Sui.Transactions.Builder.TransactionObjects
 {
-    public class TransferObjectsTransaction : TransactionBase, ISerializable
+    public class TransferObjectsTransaction : ITransaction, ISerializable
     {
-        public override string EncodeTransaction()
+        public string EncodeTransaction()
         {
             throw new System.NotImplementedException();
         }

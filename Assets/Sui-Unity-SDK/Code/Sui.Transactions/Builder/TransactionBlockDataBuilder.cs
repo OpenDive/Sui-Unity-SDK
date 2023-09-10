@@ -1,19 +1,38 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using OpenDive.BCS;
 using Sui.Accounts;
+using Sui.BCS;
+using Sui.Transactions.Builder.TransactionObjects;
 
 namespace Sui.Transactions.Builder
 {
+    /// <summary>
+    ///
+    /// <code>
+    ///     version = 1 as const;
+    ///     sender?: string;
+    ///     expiration?: TransactionExpiration;
+    ///     gasConfig: GasConfig;
+    ///     inputs: TransactionBlockInput[];
+    ///     transactions: TransactionType[];
+    /// </code>
+    /// </summary>
     public class TransactionBlockDataBuilder
     {
-        //   version = 1 as const;
-        //   sender?: string;
-	    //expiration?: TransactionExpiration;
-	    //gasConfig: GasConfig;
-	    //inputs: TransactionBlockInput[];
-	    //transactions: TransactionType[];
-
         public int Version { get => 1;  }
+        public TransactionExpiration Expiration;
         public AccountAddress Sender { get; set; }
+        public GasConfig GasConfig;
+        // TODO: Consider whether we actually need a TransactionBlockInput abstraction, otherwise just use Serializable
+        // public ISerializable[] transactionBlockInput; //TransactionBlockInput
+        public TransactionBlockInput[] Inputs;
+
+        /// <summary>
+        /// A list of transaction, e.g. MoveCallTransaction, TransferObjectTransaction, etc
+        /// </summary>
+        public ITransaction[] Transactions;
 
         /// <summary>
         /// TODO: Implement
@@ -23,12 +42,77 @@ namespace Sui.Transactions.Builder
         /// <param name="sender"></param>
         /// <param name="gasConfig"></param>
         public TransactionBlockDataBuilder(
-            AccountAddress sender,
-            GasConfig gasConfig
-
+            AccountAddress sender = null,
+            TransactionExpiration expiration = null,
+            GasConfig gasConfig = null,
+            TransactionBlockInput[] inputs = null,
+            ITransaction[] transactions = null
             )
         {
+            this.Sender = sender;
+            this.Expiration = expiration;
+            this.GasConfig = gasConfig;
+            this.Inputs = inputs;
+            this.Transactions = transactions;
+        }
 
+        public TransactionBlockDataBuilder()
+        {
+            new TransactionBlockDataBuilder(null, null, null, null, null);
+        }
+
+        public byte[] Build(
+            int maxSizeBytes,
+            AccountAddress sender = null,
+            GasConfig gasConfig = null,
+            TransactionExpiration expiration = null
+            )
+        {
+            // Resolve inputs down to values:
+            List<ISerializable> inputs = Inputs.Select(
+                x =>  x.Value
+            ).ToList();
+
+            if (IsOnlyTransactionKind())
+            {
+                // return builder.ser('TransactionKind', kind, { maxSize: maxSizeBytes }).toBytes();
+            }
+
+            Expiration = expiration != null ? expiration : Expiration;
+            Sender = sender != null ? sender : Sender;
+            GasConfig = gasConfig != null ? gasConfig : GasConfig;
+
+            if (Sender == null)
+            {
+                throw new Exception("Missing transaction sender");
+            }
+
+            if (GasConfig.budget == null)
+            {
+                throw new Exception("Missing gas budget");
+            }
+
+            if (GasConfig.payment == null)
+            {
+                throw new Exception("Missing gas payment");
+            }
+
+            if (GasConfig.price  == null)
+            {
+                throw new Exception("Missing gas price");
+            }
+
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Check if all TransactionBlockInput inputs are only of transaction
+        /// </summary>
+        /// <returns></returns>
+        private bool IsOnlyTransactionKind()
+        {
+            // Check value, etc
+            throw new NotImplementedException();
         }
 
         public static TransactionBlockDataBuilder FromKindBytes(byte[] bytes)
