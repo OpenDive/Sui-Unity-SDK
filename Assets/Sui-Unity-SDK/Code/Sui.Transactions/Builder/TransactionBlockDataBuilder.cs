@@ -128,7 +128,9 @@ namespace Sui.Transactions.Builder
 
         public static TransactionBlockDataBuilder FromKindBytes(byte[] bytes)
         {
-            //return new TransactionBlockDataBuilder();
+            Deserialization deserializer = new Deserialization(bytes);
+            ProgrammableTransaction programmableTx = (ProgrammableTransaction)ProgrammableTransaction.Deserialize(deserializer);
+
             throw new NotImplementedException();
         }
 
