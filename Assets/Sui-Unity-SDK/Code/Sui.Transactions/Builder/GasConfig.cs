@@ -13,8 +13,8 @@ namespace Sui.Transactions.Builder
     //});
     public class GasConfig : ISerializable
     {
-        public long? budget;
-        public long? price;
+        public long? budget;    // BigInt
+        public long? price;     // BigInt
         public SuiObjectRef[] payment;
         public AccountAddress owner;
 
@@ -25,12 +25,17 @@ namespace Sui.Transactions.Builder
             this.payment = payment;
             this.owner = owner;
         }
+
         public void Serialize(Serialization serializer)
         {
-            throw new System.NotImplementedException();
+            Sequence paymentSeq = new Sequence(payment);
+            serializer.Serialize(paymentSeq);
+            serializer.Serialize(owner);
+            serializer.SerializeU64((ulong)price);
+            serializer.SerializeU64((ulong)budget);
         }
 
-        public static ISerializable Deserialization(Deserialization deserialization)
+        public static ISerializable Deserialize(Deserialization deserializer)
         {
             throw new NotImplementedException();
         }
