@@ -111,7 +111,9 @@ namespace Sui.Transactions.Builder
                 Transaction = new ProgrammableTransaction(Inputs, Transactions)
             };
 
-            throw new NotImplementedException();
+            Serialization serializer = new Serialization();
+            serializer.Serialize(transactionData);
+            return serializer.GetBytes();
         }
 
         /// <summary>
