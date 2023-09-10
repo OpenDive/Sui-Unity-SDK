@@ -1,4 +1,5 @@
 ﻿using Sui.Accounts;
+using Sui.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -62,8 +63,8 @@ namespace OpenDive.BCS
             else if (variant == TypeTag.U256)
                 return U256.Deserialize(deserializer);
             // TODO: Clean up
-            //else if (variant == TypeTag.ACCOUNT_ADDRESS)
-            //    return AccountAddress.Deserialize(deserializer);
+            else if (variant == TypeTag.ACCOUNT_ADDRESS)
+                return AccountAddress.Deserialize(deserializer);
             else if (variant == TypeTag.SIGNER)
                 throw new NotImplementedException();
             else if (variant == TypeTag.VECTOR)
@@ -181,26 +182,30 @@ namespace OpenDive.BCS
         {
             serializer.SerializeU32AsUleb128((uint)this.values.Length);
 
-            foreach (ISerializable element in this.values)
+            // TODO: Check if adding this check prevent trying to iterate through empty sequences / arrays
+            if(this.values.Length > 0)
             {
-                Type elementType = element.GetType();
-                if (elementType == typeof(Sequence))
+                foreach (ISerializable element in this.values)
                 {
-                    Serialization seqSerializer = new Serialization();
-                    Sequence seq = (Sequence)element;
-                    seqSerializer.Serialize(seq);
+                    Type elementType = element.GetType();
+                    if (elementType == typeof(Sequence))
+                    {
+                        Serialization seqSerializer = new Serialization();
+                        Sequence seq = (Sequence)element;
+                        seqSerializer.Serialize(seq);
 
-                    byte[] elementsBytes = seqSerializer.GetBytes();
-                    int sequenceLen = elementsBytes.Length;
-                    serializer.SerializeU32AsUleb128((uint)sequenceLen);
-                    serializer.SerializeFixedBytes(elementsBytes);
-                }
-                else
-                {
-                    Serialization s = new Serialization();
-                    element.Serialize(s);
-                    byte[] b = s.GetBytes();
-                    serializer.SerializeBytes(b);
+                        byte[] elementsBytes = seqSerializer.GetBytes();
+                        int sequenceLen = elementsBytes.Length;
+                        serializer.SerializeU32AsUleb128((uint)sequenceLen);
+                        serializer.SerializeFixedBytes(elementsBytes);
+                    }
+                    else
+                    {
+                        Serialization s = new Serialization();
+                        element.Serialize(s);
+                        byte[] b = s.GetBytes();
+                        serializer.SerializeBytes(b);
+                    }
                 }
             }
         }
@@ -924,7 +929,8 @@ namespace OpenDive.BCS
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128((uint)this.Variant());
+            // TODO: Check on this. Was removed to prevents extra byte in Sui serialization
+            //serializer.SerializeU32AsUleb128((uint)this.Variant());
             this.address.Serialize(serializer);
             serializer.Serialize(this.module);
             serializer.Serialize(this.name);
@@ -932,6 +938,22 @@ namespace OpenDive.BCS
 
             for (int i = 0; i < this.typeArgs.Length; i++)
                 this.typeArgs[i].Serialize(serializer);
+
+
+            Serialization ser = new Serialization();
+            ser.SerializeU32AsUleb128((uint)this.Variant());
+            this.address.Serialize(ser);
+            ser.Serialize(this.module);
+            ser.Serialize(this.name);
+            ser.SerializeU32AsUleb128((uint)this.typeArgs.Length);
+
+            for (int i = 0; i < this.typeArgs.Length; i++)
+                this.typeArgs[i].Serialize(ser);
+
+
+            Debug.Log("===== StructTag ::: ");
+            Debug.Log(ser.GetBytes().ByteArrayToString());
+
         }
 
         public static StructTag Deserialize(Deserialization deserializer)
