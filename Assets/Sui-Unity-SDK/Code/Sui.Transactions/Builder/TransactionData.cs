@@ -1,3 +1,4 @@
+using System;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.BCS;
@@ -11,7 +12,7 @@ namespace Sui.Transactions.Builder
         public GasConfig GasData { get; set; }
 
         /// <summary>
-        /// This can be a ProgrammaleTransaction,
+        /// This can be a ProgrammableTransaction,
         /// or ChangeEpoch, Genesis, or ConsensusCommitPrologue
         /// </summary>
         public ITransactionKind Transaction { get; set; }
@@ -24,7 +25,11 @@ namespace Sui.Transactions.Builder
             Sender.Serialize(serializer);
             GasData.Serialize(serializer);
             Expiration.Serialize(serializer);
-            throw new System.NotImplementedException();
+        }
+
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            throw new NotImplementedException();
         }
     }
 }
