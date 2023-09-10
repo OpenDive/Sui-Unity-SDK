@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.Cryptography;
+using Sui.Utilities;
 using UnityEngine;
 
 namespace Sui.BCS
@@ -88,11 +89,23 @@ namespace Sui.BCS
         {
             AccountAddress objectId = AccountAddress.FromHex(this.objectId);
             U64 version = new U64((ulong)this.version);
-            BString digest = new BString(this.digest);
+
+            Base58Encoder decoder = new Base58Encoder();
+            byte[] decode = decoder.DecodeData(this.digest);
+
+            // TODO: Ask Marcus if SuiObjectReft also encodes an enum
+            //serializer.SerializeU8(0);
 
             objectId.Serialize(serializer);
             version.Serialize(serializer);
-            digest.Serialize(serializer);
+            serializer.Serialize(decode);
+
+            Serialization ser = new Serialization();
+            objectId.Serialize(ser);
+            version.Serialize(ser);
+            ser.Serialize(decode);
+            Debug.Log("===== SuiObjectRef ::: ");
+            Debug.Log(ser.GetBytes().ByteArrayToString());
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)
@@ -320,6 +333,9 @@ namespace Sui.BCS
                 serializer.SerializeU8(1);
                 serializer.SerializeU64((ulong)Epoch);
             }
+
+            Debug.Log("TransactionExpiration ::: ");
+            Debug.Log(serializer.GetBytes().ByteArrayToString());
         }
 
         public static ISerializable Deserialize(Deserialization deserialization)
