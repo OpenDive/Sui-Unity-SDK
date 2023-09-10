@@ -24,7 +24,7 @@ namespace Sui.Accounts
         /// <summary>
         /// Length of a Sui account address.
         /// </summary>
-        private static readonly int Length = 32;
+        public static readonly int Length = 32;
 
 
         private byte[] _addressBytes;
@@ -165,7 +165,7 @@ namespace Sui.Accounts
 
         public void Serialize(Serialization serializer)
         {
-            throw new NotImplementedException();
+            serializer.SerializeFixedBytes(this.AddressBytes);
         }
 
         public static AccountAddress Deserialize(Deserialization deserializer)
