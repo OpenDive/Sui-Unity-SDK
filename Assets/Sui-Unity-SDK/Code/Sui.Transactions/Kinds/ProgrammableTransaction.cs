@@ -1,3 +1,4 @@
+using System;
 using OpenDive.BCS;
 using Sui.Transactions.Builder.TransactionObjects;
 
@@ -11,6 +12,9 @@ namespace Sui.Transactions.Kinds
         /// </summary>
         public ISerializable[] Inputs { get; private set; }
 
+        /// <summary>
+        /// Holds a set of transactions, e.g. MoveCallTransaction, TransferObjectsTransaction, etc.
+        /// </summary>
         public ITransaction[] Transactions { get; private set; }
 
         public ProgrammableTransaction(ISerializable[] inputs, ITransaction[] transactions)
@@ -21,7 +25,18 @@ namespace Sui.Transactions.Kinds
 
         public void Serialize(Serialization serializer)
         {
-            throw new System.NotImplementedException();
+            Sequence inputSeq = new Sequence(Inputs);
+            Sequence transactionSeq = new Sequence(Transactions);
+
+            // Serialize the kind enum -- for programmable transaction  it's 0
+            serializer.SerializeU8(0);
+            serializer.Serialize(inputSeq);
+            serializer.Serialize(transactionSeq);
+        }
+
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            throw new NotImplementedException();
         }
     }
 }
