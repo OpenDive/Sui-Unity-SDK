@@ -313,6 +313,17 @@ namespace Sui.BCS
 
         public void Serialize(Serialization serializer)
         {
+            if (None == true)
+                serializer.SerializeU8(0); // Nothing
+            else
+            {
+                serializer.SerializeU8(1);
+                serializer.SerializeU64((ulong)Epoch);
+            }
+        }
+
+        public static ISerializable Deserialize(Deserialization deserialization)
+        {
             throw new NotImplementedException();
         }
     }

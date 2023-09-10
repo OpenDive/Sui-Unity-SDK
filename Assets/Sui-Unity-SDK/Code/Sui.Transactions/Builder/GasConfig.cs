@@ -1,4 +1,4 @@
-
+using System;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.BCS;
@@ -28,6 +28,11 @@ namespace Sui.Transactions.Builder
         public void Serialize(Serialization serializer)
         {
             throw new System.NotImplementedException();
+        }
+
+        public static ISerializable Deserialization(Deserialization deserialization)
+        {
+            throw new NotImplementedException();
         }
     }
 }
