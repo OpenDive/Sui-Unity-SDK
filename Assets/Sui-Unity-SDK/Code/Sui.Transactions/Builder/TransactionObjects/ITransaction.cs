@@ -1,6 +1,6 @@
 namespace Sui.Transactions.Builder.TransactionObjects
 {
-    public interface TransactionBase
+    public interface ITransaction
     {
         public string EncodeTransaction();
     }
