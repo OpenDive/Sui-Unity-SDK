@@ -183,8 +183,8 @@ namespace OpenDive.BCS
             serializer.SerializeU32AsUleb128((uint)this.values.Length);
 
             // TODO: Check if adding this check prevent trying to iterate through empty sequences / arrays
-            if(this.values.Length > 0)
-            {
+            //if(this.values.Length > 0)
+            //{
                 foreach (ISerializable element in this.values)
                 {
                     Type elementType = element.GetType();
@@ -207,7 +207,7 @@ namespace OpenDive.BCS
                         serializer.SerializeBytes(b);
                     }
                 }
-            }
+            //}
         }
 
         public static Sequence Deserialize(Deserialization deser)
@@ -930,30 +930,32 @@ namespace OpenDive.BCS
         public void Serialize(Serialization serializer)
         {
             // TODO: Check on this. Was removed to prevents extra byte in Sui serialization
-            //serializer.SerializeU32AsUleb128((uint)this.Variant());
+            serializer.SerializeU32AsUleb128((uint)this.Variant());
             this.address.Serialize(serializer);
             serializer.Serialize(this.module);
             serializer.Serialize(this.name);
+            // TODO: Find a way to implement a custom struct tag for Sui
             serializer.SerializeU32AsUleb128((uint)this.typeArgs.Length);
 
             for (int i = 0; i < this.typeArgs.Length; i++)
                 this.typeArgs[i].Serialize(serializer);
 
-
             Serialization ser = new Serialization();
             ser.SerializeU32AsUleb128((uint)this.Variant());
+            Debug.Log("===== StructTag ::: " + ser.GetBytes().ByteArrayToString());
             this.address.Serialize(ser);
+            Debug.Log("===== StructTag ::: " + ser.GetBytes().ByteArrayToString());
             ser.Serialize(this.module);
+            Debug.Log("===== StructTag ::: " + ser.GetBytes().ByteArrayToString());
             ser.Serialize(this.name);
-            ser.SerializeU32AsUleb128((uint)this.typeArgs.Length);
+            Debug.Log("===== StructTag ::: " + ser.GetBytes().ByteArrayToString());
+            //ser.SerializeU32AsUleb128((uint)this.typeArgs.Length);
 
-            for (int i = 0; i < this.typeArgs.Length; i++)
-                this.typeArgs[i].Serialize(ser);
+            //for (int i = 0; i < this.typeArgs.Length; i++)
+            //    this.typeArgs[i].Serialize(ser);
 
 
-            Debug.Log("===== StructTag ::: ");
-            Debug.Log(ser.GetBytes().ByteArrayToString());
-
+            Debug.Log("===== StructTag ::: " + module);
         }
 
         public static StructTag Deserialize(Deserialization deserializer)
@@ -1039,6 +1041,152 @@ namespace OpenDive.BCS
 
             string[] split = name.Split("::");
             return new StructTag(
+                AccountAddress.FromHex(split[0]),
+                split[1],
+                split[2],
+                new ISerializableTag[] { }
+            );
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+    }
+
+    public class SuiStructTag : ISerializableTag
+    {
+        AccountAddress address;
+        string module;
+        string name;
+        ISerializableTag[] typeArgs;
+
+        public SuiStructTag(AccountAddress address, string module, string name, ISerializableTag[] typeArgs)
+        {
+            this.address = address;
+            this.module = module;
+            this.name = name;
+            this.typeArgs = typeArgs;
+        }
+
+        public TypeTag Variant()
+        {
+            return TypeTag.STRUCT;
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            // TODO: Check on this. Was removed to prevents extra byte in Sui serialization
+            //serializer.SerializeU32AsUleb128((uint)this.Variant());
+            this.address.Serialize(serializer);
+            serializer.Serialize(this.module);
+            serializer.Serialize(this.name);
+            // TODO: Find a way to implement a custom struct tag for Sui
+            //serializer.SerializeU32AsUleb128((uint)this.typeArgs.Length);
+
+            //for (int i = 0; i < this.typeArgs.Length; i++)
+            //    this.typeArgs[i].Serialize(serializer);
+
+
+            Serialization ser = new Serialization();
+            //ser.SerializeU32AsUleb128((uint)this.Variant());
+            this.address.Serialize(ser);
+            ser.Serialize(this.module);
+            ser.Serialize(this.name);
+            //ser.SerializeU32AsUleb128((uint)this.typeArgs.Length);
+
+            //for (int i = 0; i < this.typeArgs.Length; i++)
+            //    this.typeArgs[i].Serialize(ser);
+
+
+            Debug.Log("===== StructTag ::: " + module);
+            Debug.Log(ser.GetBytes().ByteArrayToString());
+
+        }
+
+        public static SuiStructTag Deserialize(Deserialization deserializer)
+        {
+            AccountAddress address = AccountAddress.Deserialize(deserializer);
+            string module = deserializer.DeserializeString();
+            string name = deserializer.DeserializeString();
+
+            int length = deserializer.DeserializeUleb128();
+            List<ISerializableTag> typeArgsList = new List<ISerializableTag>();
+
+            while (typeArgsList.Count < length)
+            {
+                ISerializableTag val = ISerializableTag.DeserializeTag(deserializer);
+                typeArgsList.Add(val);
+            }
+
+            ISerializableTag[] typeArgsArr = typeArgsList.ToArray();
+
+            SuiStructTag structTag = new SuiStructTag(
+                address,
+                module,
+                name,
+                typeArgsArr
+            );
+
+            return structTag;
+        }
+
+        public object GetValue()
+        {
+            throw new NotSupportedException();
+        }
+
+        public override bool Equals(object other)
+        {
+            if (other is not SuiStructTag)
+                throw new NotImplementedException();
+
+            SuiStructTag otherStructTag = (SuiStructTag)other;
+
+            return (
+                this.address.Equals(otherStructTag.address)
+                && this.module.Equals(otherStructTag.module)
+                && this.name.Equals(otherStructTag.name)
+                && Enumerable.SequenceEqual(this.typeArgs, otherStructTag.typeArgs)
+            ); ;
+        }
+
+        public override string ToString()
+        {
+            string value = string.Format(
+                "{0}::{1}::{2}",
+                this.address.ToString(),
+                this.module.ToString(),
+                this.name.ToString()
+            );
+
+            if (this.typeArgs.Length > 0)
+            {
+                value += string.Format("<{0}", this.typeArgs[0].ToString());
+                foreach (ISerializableTag typeArg in this.typeArgs[1..])
+                    value += string.Format(", {0}", typeArg.ToString());
+                value += ">";
+            }
+            return value;
+        }
+
+        public static SuiStructTag FromStr(string typeTag)
+        {
+            string name = "";
+            int index = 0;
+            while (index < typeTag.Length)
+            {
+                char letter = typeTag[index];
+                index += 1;
+
+                if (letter.Equals("<"))
+                    throw new NotImplementedException();
+                else
+                    name += letter;
+            }
+
+            string[] split = name.Split("::");
+            return new SuiStructTag(
                 AccountAddress.FromHex(split[0]),
                 split[1],
                 split[2],
