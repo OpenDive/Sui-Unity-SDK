@@ -20,11 +20,12 @@ public class Input : ITransactionArgument
         // TODO: Ask Marcus if Input has an enum value
         // It seems like there should be some extra bytes
         //serializer.SerializeU8(0);
-
+        serializer.SerializeU8(1);
         serializer.SerializeU16((ushort)Value);
 
         Serialization ser = new Serialization();
         //ser.SerializeU8(0);
+        ser.SerializeU8(1);
         ser.SerializeU16((ushort)Value);
 
         Debug.Log("==== Input");

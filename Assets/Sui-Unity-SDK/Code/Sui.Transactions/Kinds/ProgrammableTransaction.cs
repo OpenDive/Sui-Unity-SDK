@@ -31,6 +31,7 @@ namespace Sui.Transactions.Kinds
             Sequence inputSeq = new Sequence(Inputs);
             Sequence transactionSeq = new Sequence(Transactions);
 
+            // TODO: Ask Marcus
             // Serialize the kind enum -- for programmable transaction  it's 0
             serializer.SerializeU8(0);
             serializer.Serialize(inputSeq);

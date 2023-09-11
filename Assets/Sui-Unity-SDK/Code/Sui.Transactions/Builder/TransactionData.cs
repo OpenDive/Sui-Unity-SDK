@@ -33,6 +33,7 @@ namespace Sui.Transactions.Builder
 
         public void Serialize(Serialization serializer)
         {
+            // TransactionaDat V1 == 0 enum // TODO: Create Enum
             serializer.SerializeU8(0); // We add the version number V1 - 0 byte
             Transaction.Serialize(serializer);
             Sender.Serialize(serializer);

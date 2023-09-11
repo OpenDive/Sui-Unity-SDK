@@ -6,6 +6,17 @@ using UnityEngine;
 
 namespace Sui.Transactions.Builder.TransactionObjects
 {
+    //public class NormalizedStructTag : StructTag
+    //{
+    //    public NormalizedStructTag(AccountAddress address, string module, string name, ISerializableTag[] typeArgs) : base()
+    //    {
+    //        this.address = address;
+    //        this.module = module;
+    //        this.name = name;
+    //        this.typeArgs = typeArgs;
+    //    }
+    //}
+
     public class MoveCallTransaction : ITransactionType, ISerializable
     {
         public string Kind { get => "MoveCall"; }
@@ -27,7 +38,7 @@ namespace Sui.Transactions.Builder.TransactionObjects
         /// <summary>
         /// The target
         /// </summary>
-        public StructTag Target { get; private set; }
+        public SuiStructTag Target { get; private set; }
 
         /// <summary>
         ///
@@ -41,7 +52,7 @@ namespace Sui.Transactions.Builder.TransactionObjects
         public Sequence Arguments { get; private set; }
 
 
-        public MoveCallTransaction(StructTag target, ISerializableTag[] typeArguments, ISerializable[] arguments)
+        public MoveCallTransaction(SuiStructTag target, ISerializableTag[] typeArguments, ISerializable[] arguments)
         {
             //ModuleId = moduleId;
             //Function = function;
@@ -60,20 +71,22 @@ namespace Sui.Transactions.Builder.TransactionObjects
             // Check for kind
             serializer.SerializeU8(0);
             Target.Serialize(serializer);
-            TypeArguments.Serialize(serializer);
+            //TypeArguments.Serialize(serializer);
+            serializer.Serialize((ISerializableTag[])TypeArguments.GetValue());
             //Arguments.Serialize(serializer);
             // TODO: This fixes the extra bytes -- using ISerializable[] instead of sequence
             // 2,4,99,97,112,121,4,67,97,112,121,0,1,2,
             // 2,4,99,97,112,121,4,67,97,112,121,
             serializer.Serialize((ISerializable[])Arguments.GetValue());
 
-            Debug.Log(" === MoveCallTransaction ::: ");
             Serialization ser = new Serialization();
             ser.SerializeU8(0);
             Target.Serialize(ser);
-            TypeArguments.Serialize(ser);
-            Arguments.Serialize(ser);
-            Debug.Log(ser.GetBytes().ByteArrayToString());
+            //TypeArguments.Serialize(ser);
+            //Arguments.Serialize(ser);
+            ser.Serialize((ISerializableTag[])TypeArguments.GetValue());
+            ser.Serialize((ISerializable[])Arguments.GetValue());
+            Debug.Log(" === MoveCallTransaction ::: " + ser.GetBytes().ByteArrayToString());
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)
