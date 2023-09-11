@@ -69,12 +69,12 @@ namespace Sui.Transactions.Builder
             TransactionExpiration expiration = null)
         {
             // Resolve inputs down to values:
-            List<ISerializable> inputs = Inputs.Select(
-                x =>  x.Value
-            ).ToList();
+            ICallArg[] inputs = (ICallArg[])Inputs.Select(
+                x => x.Value
+            );
 
             ProgrammableTransaction programmableTx
-                = new ProgrammableTransaction(Inputs, Transactions);
+                = new ProgrammableTransaction(inputs, Transactions);
 
             //if (IsOnlyTransactionKind())
             if(onlyTransactionKind)

@@ -23,7 +23,7 @@ namespace Sui.BCS
     /// This interface extends ISeriliazable which allows these objects that
     /// implement the interface to be passed as arguments (`CallArgs` in Sui TypeScript)
     /// </summary>
-    public interface IObjectRef : ISerializable
+    public interface IObjectRef : ICallArg
     {
         public string ObjectId { get; set; }
     }
@@ -44,17 +44,8 @@ namespace Sui.BCS
     ///
     /// In our implementation CallArg by default takes in a list of args / ISerializable object.
     /// </summary>
-    public class CallArg : ISerializable
+    public interface ICallArg : ISerializable
     {
-        public ISerializable[] args; // Could be a Pure (native BCS type) or an IObjectRef type.
-        public CallArg(ISerializable[] args)
-        {
-            this.args = args;
-        }
-        public void Serialize(Serialization serializer)
-        {
-            throw new NotImplementedException();
-        }
     }
 
     /// <summary>

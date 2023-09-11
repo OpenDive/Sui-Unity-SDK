@@ -37,8 +37,7 @@ namespace Sui.Tests
                 suiAddress
             );
 
-
-            ISerializable[] inputs = new ISerializable[] { paymentRef };
+            ICallArg[] inputs = new ICallArg[] { paymentRef };
 
             MoveCallTransaction moveCallTransaction = new MoveCallTransaction(
                 //new ModuleId(suiAddress, "display"), "new",

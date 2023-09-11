@@ -1,5 +1,6 @@
 using System;
 using OpenDive.BCS;
+using Sui.BCS;
 using Sui.Transactions.Builder.TransactionObjects;
 using Sui.Utilities;
 using UnityEngine;
@@ -12,14 +13,14 @@ namespace Sui.Transactions.Kinds
         /// Can be a pure type (native BCS), or a Sui object (shared, or ImmutableOwned)
         /// Both type extend ISerialzable interface.
         /// </summary>
-        public ISerializable[] Inputs { get; private set; }
+        public ICallArg[] Inputs { get; private set; }
 
         /// <summary>
         /// Holds a set of transactions, e.g. MoveCallTransaction, TransferObjectsTransaction, etc.
         /// </summary>
         public ITransactionType[] Transactions { get; private set; }
 
-        public ProgrammableTransaction(ISerializable[] inputs, ITransactionType[] transactions)
+        public ProgrammableTransaction(ICallArg[] inputs, ITransactionType[] transactions)
         {
             Inputs = inputs;
             Transactions = transactions;

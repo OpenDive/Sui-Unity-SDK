@@ -1,5 +1,6 @@
 
 using OpenDive.BCS;
+using Sui.BCS;
 
 namespace Sui.Transactions.Builder
 {
@@ -21,9 +22,9 @@ namespace Sui.Transactions.Builder
     {
         public static string Kind { get => "Input";  }
         public int Index { get; private set; }
-        public ISerializable Value { get; private set; } // An object ref, or a core type like address or u8
+        public ICallArg Value { get; private set; } // An object ref, or a core type like address or u8
 
-        public TransactionBlockInput(int index, ISerializable value)
+        public TransactionBlockInput(int index, ICallArg value)
         {
             this.Index = index;
             this.Value = value;
