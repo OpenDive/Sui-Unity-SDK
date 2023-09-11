@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Sui.Transactions.Builder.TransactionObjects
 {
-    public class MoveCallTransaction : ITransaction, ISerializable
+    public class MoveCallTransaction : ITransactionType, ISerializable
     {
         public string Kind { get => "MoveCall"; }
 

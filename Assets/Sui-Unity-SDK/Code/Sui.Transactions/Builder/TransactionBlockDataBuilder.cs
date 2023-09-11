@@ -6,6 +6,7 @@ using Sui.Accounts;
 using Sui.BCS;
 using Sui.Transactions.Builder.TransactionObjects;
 using Sui.Transactions.Kinds;
+using Sui.Utilities;
 
 namespace Sui.Transactions.Builder
 {
@@ -22,18 +23,18 @@ namespace Sui.Transactions.Builder
     /// </summary>
     public class TransactionBlockDataBuilder : ISerializable
     {
-        public int Version { get => 1;  }
+        public int Version { get; set; }
         public TransactionExpiration Expiration;
         public AccountAddress Sender { get; set; }
-        public GasConfig GasConfig;
+        public GasConfig GasConfig { get; set; }
         // TODO: Consider whether we actually need a TransactionBlockInput abstraction, otherwise just use Serializable
         // public ISerializable[] transactionBlockInput; //TransactionBlockInput
-        public TransactionBlockInput[] Inputs;
+        public TransactionBlockInput[] Inputs { get; set; }
 
         /// <summary>
         /// A list of transaction, e.g. MoveCallTransaction, TransferObjectTransaction, etc
         /// </summary>
-        public ITransaction[] Transactions;
+        public ITransactionType[] Transactions { get; set; }
 
         /// <summary>
         /// TODO: Implement
@@ -47,7 +48,7 @@ namespace Sui.Transactions.Builder
             TransactionExpiration expiration = null,
             GasConfig gasConfig = null,
             TransactionBlockInput[] inputs = null,
-            ITransaction[] transactions = null
+            ITransactionType[] transactions = null
             )
         {
             this.Sender = sender;
@@ -58,25 +59,31 @@ namespace Sui.Transactions.Builder
         }
 
         public TransactionBlockDataBuilder()
-        {
-            new TransactionBlockDataBuilder(null, null, null, null, null);
-        }
+            => new TransactionBlockDataBuilder(null, null, null, null, null);
 
         public byte[] Build(
-            int maxSizeBytes,
+            int? maxSizeBytes = null,
+            bool onlyTransactionKind = false,
             AccountAddress sender = null,
             GasConfig gasConfig = null,
-            TransactionExpiration expiration = null
-            )
+            TransactionExpiration expiration = null)
         {
             // Resolve inputs down to values:
             List<ISerializable> inputs = Inputs.Select(
                 x =>  x.Value
             ).ToList();
 
-            if (IsOnlyTransactionKind())
+            ProgrammableTransaction programmableTx
+                = new ProgrammableTransaction(Inputs, Transactions);
+
+            //if (IsOnlyTransactionKind())
+            if(onlyTransactionKind)
             {
                 // return builder.ser('TransactionKind', kind, { maxSize: maxSizeBytes }).toBytes();
+                Serialization ser = new Serialization();
+                //programmableTx.Serialize(ser);
+                ser.Serialize(programmableTx);
+                return ser.GetBytes();
             }
 
             Expiration = expiration != null ? expiration : Expiration;
@@ -115,7 +122,7 @@ namespace Sui.Transactions.Builder
                 Sender,
                 Expiration,
                 GasConfig,
-                new ProgrammableTransaction(Inputs, Transactions)
+                programmableTx
             );
 
             Serialization serializer = new Serialization();
@@ -133,30 +140,103 @@ namespace Sui.Transactions.Builder
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Deserializes a ITransactionKind, e.g. ProgrammableTransaction.
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
         public static TransactionBlockDataBuilder FromKindBytes(byte[] bytes)
         {
             Deserialization deserializer = new Deserialization(bytes);
             ProgrammableTransaction programmableTx = (ProgrammableTransaction)ProgrammableTransaction.Deserialize(deserializer);
 
+            // TODO: Implement checking whether the deserialization was succesfull, or I guess we don't care because "Deserialize" will break otherwise.
+            //const kind = builder.de('TransactionKind', bytes);
+            //const programmableTx = kind?.ProgrammableTransaction;
+            //if (!programmableTx)
+            //{
+            //    throw new Error('Unable to deserialize from bytes.');
+            //}
+
+
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Deserializes a TransactionData
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
         public static TransactionBlockDataBuilder FromBytes(byte[] bytes)
         {
-            //return new TransactionBlockDataBuilder();
+            Deserialization deserializer = new Deserialization(bytes);
+            TransactionData txData = (TransactionData)TransactionData.Deserialize(deserializer);
             throw new NotImplementedException();
         }
 
-        //public static TransactionBlockDataBuilder Restore(SerializedTransactionDataBuilder data)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-
-            public static string GetDigestFromBytes(byte[] bytes)
+        public static TransactionBlockDataBuilder Restore(TransactionBlockData data)
         {
-            //return new TransactionBlockDataBuilder();
-            throw new NotImplementedException();
+            TransactionBlockDataBuilder transactionBlockDataBuilder = new TransactionBlockDataBuilder();
+            transactionBlockDataBuilder.Version = data.Version;
+            transactionBlockDataBuilder.Sender = data.Sender;
+            transactionBlockDataBuilder.Expiration = data.Expiration;
+            transactionBlockDataBuilder.GasConfig = data.GasConfig;
+            transactionBlockDataBuilder.Inputs = data.Inputs;
+            transactionBlockDataBuilder.Transactions = data.Transactions;
+            return transactionBlockDataBuilder;
+        }
+
+        //export const SerializedTransactionDataBuilder = object({
+        //      version: literal(1),
+        //      sender: optional(string()),
+        //      expiration: TransactionExpiration,
+        //      gasConfig: GasConfig,
+        //      inputs: array(TransactionBlockInput),
+        //      transactions: array(TransactionType),
+        //});
+
+        // const serialized = create(
+        //	{
+        //		version: 1,
+        //      gasConfig: {},
+        //		inputs: programmableTx.inputs.map((value: unknown, index: number) =>
+        //			create(
+
+        //                      {
+        //                          kind: 'Input',
+        //					value,
+        //					index,
+        //					type: is (value, PureCallArg) ? 'pure' : 'object',
+        //				},
+        //				TransactionBlockInput,
+        //			),
+        //		),
+        //		transactions: programmableTx.transactions,
+        //	},
+        //	SerializedTransactionDataBuilder,
+        //);
+
+        /// <summary>
+        /// Get base58 digest of a full transaction kind, e.g. ProgrammableTransaction.
+        /// </summary>
+        /// <returns>Base58 hash</returns>
+        public string GetDigest()
+        {
+            byte[] bytes = this.Build(null, false, null, null, null);
+            return GetDigestFromBytes(bytes);
+        }
+
+        /// <summary>
+        /// Utility function to get a base58 digest from the TransactionData
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        public static string GetDigestFromBytes(byte[] bytes)
+        {
+            byte[] hash = Utilities.Utils.HashTypedData("TransactionData", bytes);
+            Base58Encoder encoder = new Base58Encoder();
+            string base58 = encoder.EncodeData(hash, 0, hash.Length);
+            return base58;
         }
 
         public void Serialize(Serialization serializer)

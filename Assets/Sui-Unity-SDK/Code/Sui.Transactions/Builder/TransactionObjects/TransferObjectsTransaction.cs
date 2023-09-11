@@ -3,7 +3,7 @@ using OpenDive.BCS;
 
 namespace Sui.Transactions.Builder.TransactionObjects
 {
-    public class TransferObjectsTransaction : ITransaction, ISerializable
+    public class TransferObjectsTransaction : ITransactionType, ISerializable
     {
         public string EncodeTransaction()
         {

@@ -49,7 +49,7 @@ namespace Sui.Tests
                 new ISerializable[] { new Input(0) }
             );
 
-            ITransaction[] transactions = new []{ moveCallTransaction };
+            ITransactionType[] transactions = new []{ moveCallTransaction };
 
             ProgrammableTransaction programmableTransaction
                 = new ProgrammableTransaction(inputs, transactions);

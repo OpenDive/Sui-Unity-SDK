@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
+using Org.BouncyCastle.Crypto.Digests;
 
 namespace Sui.Utilities
 {
@@ -90,9 +92,28 @@ namespace Sui.Utilities
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public static string ToReadableString(this byte[] input)
+        public static string ToReadableString(this byte[] input) => string.Join(", ", input);
+
+        /// <summary>
+        /// Generates a Blake2b hash of typed data as a base64 string.
+        /// </summary>
+        /// <param name="typeTag">type tag (e.g. TransactionData, SenderSignedData)</param>
+        /// <param name="data">data to hash</param>
+        /// <returns></returns>
+        public static byte[] HashTypedData(string typeTag, byte[] data)
         {
-            return string.Join(", ", input);
+            byte[] typeTagBytes = Encoding.ASCII.GetBytes(typeTag + "::");
+            byte[] dataWithTag = new byte[typeTagBytes.Length + data.Length];
+            Array.Copy(typeTagBytes, dataWithTag, typeTagBytes.Length);
+            Array.Copy(data, 0, dataWithTag, typeTagBytes.Length, data.Length);
+
+            // BLAKE2b hash
+            byte[] result = new byte[32];
+            Blake2bDigest blake2b = new(256);
+            blake2b.BlockUpdate(dataWithTag, 0, dataWithTag.Length);
+            blake2b.DoFinal(result, 0);
+
+            return result;
         }
     }
 }
