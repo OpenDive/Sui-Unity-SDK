@@ -49,7 +49,7 @@ namespace Sui.Transactions.Builder.TransactionObjects
         /// <summary>
         /// The sequence of arguments
         /// </summary>
-        public Sequence Arguments { get; private set; }
+        public ISerializable[] Arguments { get; private set; }
 
 
         public MoveCallTransaction(SuiStructTag target, ISerializableTag[] typeArguments, ISerializable[] arguments)
@@ -58,7 +58,7 @@ namespace Sui.Transactions.Builder.TransactionObjects
             //Function = function;
             Target = target;
             TypeArguments = new TagSequence(typeArguments);
-            Arguments = new Sequence(arguments);
+            Arguments = arguments;
         }
 
         public string EncodeTransaction()
@@ -70,22 +70,15 @@ namespace Sui.Transactions.Builder.TransactionObjects
         {
             // Check for kind
             serializer.SerializeU8(0);
-            Target.Serialize(serializer);
-            //TypeArguments.Serialize(serializer);
-            serializer.Serialize((ISerializableTag[])TypeArguments.GetValue());
-            //Arguments.Serialize(serializer);
-            // TODO: This fixes the extra bytes -- using ISerializable[] instead of sequence
-            // 2,4,99,97,112,121,4,67,97,112,121,0,1,2,
-            // 2,4,99,97,112,121,4,67,97,112,121,
-            serializer.Serialize((ISerializable[])Arguments.GetValue());
+            serializer.Serialize(Target);
+            serializer.Serialize(TypeArguments);
+            serializer.Serialize(Arguments);
 
             Serialization ser = new Serialization();
             ser.SerializeU8(0);
             Target.Serialize(ser);
-            //TypeArguments.Serialize(ser);
-            //Arguments.Serialize(ser);
             ser.Serialize((ISerializableTag[])TypeArguments.GetValue());
-            ser.Serialize((ISerializable[])Arguments.GetValue());
+            ser.Serialize(Arguments);
             Debug.Log(" === MoveCallTransaction ::: " + ser.GetBytes().ByteArrayToString());
         }
 
