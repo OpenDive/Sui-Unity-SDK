@@ -10,6 +10,16 @@ namespace Sui.Transactions.Builder
     /// <summary>
     /// Represents the input and output of the TransactionBlockDataBuilder
     /// In the TypeScript SDK, this would be `SerializedTransactionDataBuilder`
+    /// <code>
+    /// export const SerializedTransactionDataBuilder = object({
+    ///      version: literal(1),
+    ///       sender: optional(string()),
+    ///       expiration: TransactionExpiration,
+    ///       gasConfig: GasConfig,
+    ///      inputs: array(TransactionBlockInput),
+    ///      transactions: array(TransactionType),
+    /// });
+    /// </code>
     /// </summary>
     public class TransactionBlockData
     {

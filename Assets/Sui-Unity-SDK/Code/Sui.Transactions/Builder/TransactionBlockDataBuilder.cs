@@ -110,14 +110,6 @@ namespace Sui.Transactions.Builder
                 throw new Exception("Missing gas price");
             }
 
-            //TransactionData transactionData = new()
-            //{
-            //    Sender = this.Sender,
-            //    Expiration = this.Expiration,
-            //    GasData = this.GasConfig,
-            //    Transaction = new ProgrammableTransaction(Inputs, Transactions)
-            //};
-
             TransactionData transactionData = new TransactionData(
                 Sender,
                 Expiration,
@@ -128,16 +120,6 @@ namespace Sui.Transactions.Builder
             Serialization serializer = new Serialization();
             serializer.Serialize(transactionData);
             return serializer.GetBytes();
-        }
-
-        /// <summary>
-        /// Check if all TransactionBlockInput inputs are only of transaction
-        /// </summary>
-        /// <returns></returns>
-        private bool IsOnlyTransactionKind()
-        {
-            // Check value, etc
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -158,7 +140,6 @@ namespace Sui.Transactions.Builder
             //    throw new Error('Unable to deserialize from bytes.');
             //}
 
-
             throw new NotImplementedException();
         }
 
@@ -170,10 +151,33 @@ namespace Sui.Transactions.Builder
         public static TransactionBlockDataBuilder FromBytes(byte[] bytes)
         {
             Deserialization deserializer = new Deserialization(bytes);
-            TransactionData txData = (TransactionData)TransactionData.Deserialize(deserializer);
-            throw new NotImplementedException();
+            TransactionData data = (TransactionData)TransactionData.Deserialize(deserializer);
+            TransactionBlockDataBuilder txBlockDataBuilder = new TransactionBlockDataBuilder();
+            txBlockDataBuilder.Version = 1;
+            txBlockDataBuilder.Sender = data.Sender;
+            txBlockDataBuilder.Expiration = data.Expiration;
+            txBlockDataBuilder.GasConfig = data.GasData;
+
+            ProgrammableTransaction programmableTx = (ProgrammableTransaction)data.Transaction;
+            ICallArg[] callArgs = programmableTx.Inputs;
+            List<TransactionBlockInput> txBlockInputs = new List<TransactionBlockInput>();
+
+            for (int i = 0; i < callArgs.Length; i++)
+            {
+                TransactionBlockInput input = new TransactionBlockInput(i, callArgs[i]);
+            }
+
+            txBlockDataBuilder.Inputs = txBlockInputs.ToArray();
+            txBlockDataBuilder.Transactions = programmableTx.Transactions;
+
+            return txBlockDataBuilder;
         }
 
+        /// <summary>
+        /// Create a TransactionBlockdataBuilder object from a given TransactionBlockData
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static TransactionBlockDataBuilder Restore(TransactionBlockData data)
         {
             TransactionBlockDataBuilder transactionBlockDataBuilder = new TransactionBlockDataBuilder();
@@ -185,36 +189,6 @@ namespace Sui.Transactions.Builder
             transactionBlockDataBuilder.Transactions = data.Transactions;
             return transactionBlockDataBuilder;
         }
-
-        //export const SerializedTransactionDataBuilder = object({
-        //      version: literal(1),
-        //      sender: optional(string()),
-        //      expiration: TransactionExpiration,
-        //      gasConfig: GasConfig,
-        //      inputs: array(TransactionBlockInput),
-        //      transactions: array(TransactionType),
-        //});
-
-        // const serialized = create(
-        //	{
-        //		version: 1,
-        //      gasConfig: {},
-        //		inputs: programmableTx.inputs.map((value: unknown, index: number) =>
-        //			create(
-
-        //                      {
-        //                          kind: 'Input',
-        //					value,
-        //					index,
-        //					type: is (value, PureCallArg) ? 'pure' : 'object',
-        //				},
-        //				TransactionBlockInput,
-        //			),
-        //		),
-        //		transactions: programmableTx.transactions,
-        //	},
-        //	SerializedTransactionDataBuilder,
-        //);
 
         /// <summary>
         /// Get base58 digest of a full transaction kind, e.g. ProgrammableTransaction.
