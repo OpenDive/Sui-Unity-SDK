@@ -1,6 +1,6 @@
 namespace Sui.Transactions.Objects
 {
-    public class SplitCoins : TransactionBase
+    public class SplitCoins : ITransactionObject
     {
     }
 }
