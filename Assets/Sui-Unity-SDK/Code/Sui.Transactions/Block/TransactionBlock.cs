@@ -120,6 +120,75 @@ namespace Sui.Transactions
             return this;
         }
 
+        public TransactionBlock AddObjectRef()
+        {
+            return this;
+        }
+
+        public TransactionBlock AddSharedObjectRef()
+        {
+            return this;
+        }
+
+        public TransactionBlock AddPure()
+        {
+            return this;
+        }
+
+        public TransactionBlock Add()
+        {
+            return this;
+        }
+
+        /// <summary>
+        /// Add a SplitCoins transaction.
+        /// </summary>
+        /// <returns></returns>
+        public TransactionBlock AddSplitCoins()
+        {
+            return this;
+        }
+
+        public TransactionBlock AddMergeCoins()
+        {
+            return this;
+        }
+
+        public TransactionBlock AddPublish()
+        {
+            return this;
+        }
+
+        public TransactionBlock AddUpgrade()
+        {
+            return this;
+        }
+
+        public TransactionBlock AddMoveCall()
+        {
+            return this;
+        }
+
+        public TransactionBlock AddTransferObjects()
+        {
+            return this;
+        }
+
+        public TransactionBlock AddMoveVect()
+        {
+            return this;
+        }
+
+        private void GetConfig()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Validate()
+        {
+            throw new NotImplementedException();
+        }
+
         public void Serialize(Serialization serializer)
         {
             throw new System.NotImplementedException();
