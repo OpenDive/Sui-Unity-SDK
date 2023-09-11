@@ -95,17 +95,17 @@ namespace Sui.Transactions.Builder
                 throw new Exception("Missing transaction sender");
             }
 
-            if (GasConfig.budget == null)
+            if (GasConfig.Budget == null)
             {
                 throw new Exception("Missing gas budget");
             }
 
-            if (GasConfig.payment == null)
+            if (GasConfig.Payment == null)
             {
                 throw new Exception("Missing gas payment");
             }
 
-            if (GasConfig.price  == null)
+            if (GasConfig.Price  == null)
             {
                 throw new Exception("Missing gas price");
             }
@@ -211,6 +211,13 @@ namespace Sui.Transactions.Builder
             Base58Encoder encoder = new Base58Encoder();
             string base58 = encoder.EncodeData(hash, 0, hash.Length);
             return base58;
+        }
+
+        public TransactionBlockData Snapshot()
+        {
+            return new TransactionBlockData(
+                Version, Sender, Expiration, GasConfig, Inputs, Transactions
+            );
         }
 
         public void Serialize(Serialization serializer)

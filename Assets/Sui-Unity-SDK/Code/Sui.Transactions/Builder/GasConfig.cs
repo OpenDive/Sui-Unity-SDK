@@ -15,35 +15,35 @@ namespace Sui.Transactions.Builder
     //});
     public class GasConfig : ISerializable
     {
-        public long? budget;    // BigInt
-        public long? price;     // BigInt
-        public SuiObjectRef[] payment;
-        public AccountAddress owner;
+        public long? Budget { get; set; }    // BigInt
+        public long? Price { get; set; }     // BigInt
+        public SuiObjectRef[] Payment { get; set; }
+        public AccountAddress Owner { get; set; }
 
         public GasConfig(string budget = null, string price = null, SuiObjectRef[] payment = null, AccountAddress owner = null)
         {
-            this.budget = budget != null ? long.Parse(budget) : null;
-            this.price = price != null ? long.Parse(price) : null;
-            this.payment = payment;
-            this.owner = owner;
+            this.Budget = budget != null ? long.Parse(budget) : null;
+            this.Price = price != null ? long.Parse(price) : null;
+            this.Payment = payment;
+            this.Owner = owner;
         }
 
         public void Serialize(Serialization serializer)
         {
-            Sequence paymentSeq = new Sequence(payment);
+            Sequence paymentSeq = new Sequence(Payment);
             serializer.Serialize(paymentSeq);
             //paymentSeq.Serialize(serializer);
-            serializer.Serialize(owner);
-            serializer.SerializeU64((ulong)price);
-            serializer.SerializeU64((ulong)budget);
+            serializer.Serialize(Owner);
+            serializer.SerializeU64((ulong)Price);
+            serializer.SerializeU64((ulong)Budget);
 
             Serialization ser = new Serialization();
-            Sequence paymentSeq2 = new Sequence(payment);
+            Sequence paymentSeq2 = new Sequence(Payment);
             ser.Serialize(paymentSeq2);
             //paymentSeq.Serialize(serializer);
-            ser.Serialize(owner);
-            ser.SerializeU64((ulong)price);
-            ser.SerializeU64((ulong)budget);
+            ser.Serialize(Owner);
+            ser.SerializeU64((ulong)Price);
+            ser.SerializeU64((ulong)Budget);
 
             Debug.Log(" === GasConfig ::: ");
             Debug.Log(ser.GetBytes().ByteArrayToString());

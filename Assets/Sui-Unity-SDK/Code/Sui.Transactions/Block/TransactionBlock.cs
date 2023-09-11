@@ -1,7 +1,130 @@
+using System;
+using OpenDive.BCS;
+using Sui.Accounts;
+using Sui.BCS;
+using Sui.Transactions.Builder;
+
 namespace Sui.Transactions
 {
-    public class TransactionBlock
+    /// <summary>
+    /// A transaction block builder
+    /// </summary>
+    public class TransactionBlock : ISerializable
     {
+        public TransactionBlockDataBuilder txBlockDataBuilder { get; set; }
+
+        public TransactionBlock(TransactionBlock transactionBlock = null)
+        {
+            if (transactionBlock != null)
+                txBlockDataBuilder = transactionBlock.txBlockDataBuilder;
+            else
+                txBlockDataBuilder = new TransactionBlockDataBuilder();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <returns></returns>
+        public TransactionBlock SetSender(AccountAddress sender)
+        {
+            this.txBlockDataBuilder.Sender = sender;
+            return this;
+        }
+
+        public TransactionBlock SetSenderIfNotSet(AccountAddress sender)
+        {
+            if (this.txBlockDataBuilder.Sender == null)
+                return this.SetSender(sender);
+            return this;
+        }
+
+        public TransactionBlock SetExpiration(TransactionExpiration expiration)
+        {
+            this.txBlockDataBuilder.Expiration = expiration;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the gas price.
+        /// </summary>
+        /// <param name="price"></param>
+        /// <returns></returns>
+        public TransactionBlock SetGasPrice(int price)
+        {
+            this.txBlockDataBuilder.GasConfig.Price = price;
+            return this;
+        }
+
+        public TransactionBlock SetGasBudget(int budget)
+        {
+            this.txBlockDataBuilder.GasConfig.Budget = budget;
+            return this;
+        }
+
+        public TransactionBlock SetGasOwner(AccountAddress owner)
+        {
+            this.txBlockDataBuilder.GasConfig.Owner = owner;
+            return this;
+        }
+
+        public TransactionBlock SetGasPayment(SuiObjectRef[] payments)
+        {
+            this.txBlockDataBuilder.GasConfig.Payment = payments;
+            return this;
+        }
+
+        public TransactionBlockData GetBlockData()
+        {
+            return this.txBlockDataBuilder.Snapshot();
+        }
+
+        public TransactionArgument GetGas()
+        {
+            //get gas(): TransactionArgument {
+            //    return { kind: 'GasCoin' };
+            //}
+            throw new NotImplementedException();
+        }
+
+        ///**
+        // * Dynamically create a new input, which is separate from the `input`. This is important
+        // * for generated clients to be able to define unique inputs that are non-overlapping with the
+        // * defined inputs.
+        // *
+        // * For `Uint8Array` type automatically convert the input into a `Pure` CallArg, since this
+        // * is the format required for custom serialization.
+        // *
+        // */
+        //# input(type: 'object' | 'pure', value?: unknown) {
+        //        const index = this.#blockData.inputs.length;
+		      //  const input = create(
+			     //   {
+				    //    kind: 'Input',
+        //                // bigints can't be serialized to JSON, so just string-convert them here:
+        //                value: typeof value === 'bigint' ? String(value) : value,
+        //                index,
+        //                type,
+
+        //            },
+			     //   TransactionBlockInput,
+		      //  );
+
+        //        this.#blockData.inputs.push(input);
+		      //  return input;
+
+        //    }
+
+        public TransactionBlock AddObject()
+        {
+            return this;
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            throw new System.NotImplementedException();
+        }
+
         /// VARIABLES
         // blockData: TransactionBlockDataBuilder
         // defaultOfflineLimits: [String: Int]
