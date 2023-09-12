@@ -289,16 +289,19 @@ namespace OpenDive.BCS
         /// <returns>The current Serialization object.</returns>
         public Serialization SerializeU16(ushort num)
         {
-            //byte lower = (byte)(num & 0xFF);
-            //byte upper = (byte)(num >> 8 & 0xFF);
-            //output.Write(new[] { upper, lower });
-            //return this;
-
-            byte[] bytes = BitConverter.GetBytes(num);
-            if (!BitConverter.IsLittleEndian)
-                Array.Reverse(bytes); //reverse it so we get big endian.
+            byte lower = (byte)(num & 0xFF);
+            byte upper = (byte)(num >> 8 & 0xFF);
+            byte[] bytes = new byte[] { upper, lower };
+            Array.Reverse(bytes); // We need to reverse the order for little endian
             output.Write(bytes);
+            //output.Write(new[] { upper, lower });
             return this;
+
+            //byte[] bytes = BitConverter.GetBytes(num);
+            //if (!BitConverter.IsLittleEndian)
+            //    Array.Reverse(bytes); //reverse it so we get big endian.
+            //output.Write(bytes);
+            //return this;
         }
 
         /// <summary>
