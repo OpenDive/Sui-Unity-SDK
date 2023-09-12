@@ -5,4 +5,11 @@ using UnityEngine;
 
 public interface ITransactionArgument : ISerializable
 {
+    public enum Type
+    {
+        GasCoin,
+        Input,
+        Result,
+        NestedResult
+    }
 }

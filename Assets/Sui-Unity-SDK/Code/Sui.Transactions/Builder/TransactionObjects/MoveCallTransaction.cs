@@ -76,10 +76,13 @@ namespace Sui.Transactions.Builder.TransactionObjects
 
             Serialization ser = new Serialization();
             ser.SerializeU8(0);
+            Debug.Log(" === MoveCallTransaction ::: 1 :: " + ser.GetBytes().ByteArrayToString());
             Target.Serialize(ser);
+            Debug.Log(" === MoveCallTransaction ::: 2 :: " + ser.GetBytes().ByteArrayToString());
             ser.Serialize((ISerializableTag[])TypeArguments.GetValue());
+            Debug.Log(" === MoveCallTransaction ::: 3 :: " + ser.GetBytes().ByteArrayToString());
             ser.Serialize(Arguments);
-            Debug.Log(" === MoveCallTransaction ::: " + ser.GetBytes().ByteArrayToString());
+            Debug.Log(" === MoveCallTransaction ::: 4 :: " + ser.GetBytes().ByteArrayToString());
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)
