@@ -89,6 +89,15 @@ namespace Sui.Transactions
         //    throw new NotImplementedException();
         //}
 
+        /// <summary>
+        /// Add a new object input to the transaction.
+        /// </summary>
+        /// <returns></returns>
+        public TransactionBlock AddObject()
+        {
+            throw new NotImplementedException();
+        }
+
         ///**
         // * Dynamically create a new input, which is separate from the `input`. This is important
         // * for generated clients to be able to define unique inputs that are non-overlapping with the

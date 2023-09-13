@@ -20,7 +20,10 @@ namespace Sui.Transactions.Types
 
     public class MoveCall : ITransaction, ISerializable
     {
-        public string Kind { get => "MoveCall"; }
+        public ITransaction.Kind Kind
+        {
+            get => ITransaction.Kind.MoveCall;
+        }
 
         /// <summary>
         /// The module id that contains the target function

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Sui.Accounts;
 using Sui.BCS;
 using Sui.Transactions.Types;
+using Sui.Transactions.Types.Arguments;
 using UnityEngine;
 
 namespace Sui.Transactions.Builder

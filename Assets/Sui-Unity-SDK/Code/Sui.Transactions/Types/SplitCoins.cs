@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using OpenDive.BCS;
-using Sui.Transactions.Types.Arguments;
 
 namespace Sui.Transactions.Types
 {
@@ -9,14 +8,34 @@ namespace Sui.Transactions.Types
     /// SplitCoins transaction.
     /// Note that a ITransactionType is also an ITransactionArgument,
     /// which means that it can be used as an input into other transactions
+    /// <code>
+	///     const tx = new TransactionBlock();
+    ///     const coin = tx.add(Transactions.SplitCoins(tx.gas, [tx.pure(100)]));
+    ///     tx.add(Transactions.TransferObjects([coin], tx.object ('0x2')));
+    /// </code>
     /// </summary>
     public class SplitCoins : ITransaction
     {
-        //public ITransactionArgument Coin;
+        /// <summary>
+        /// SplitCoins transaction kind.
+        /// </summary>
+        public ITransaction.Kind Kind { get => ITransaction.Kind.SplitCoins; }
+
+        /// <summary>
+        /// Coin transaction argument.
+        /// </summary>
         public ITransaction Coin;
-        //public U64[] Amounts;
+
+        /// <summary>
+        /// Amount of coins to use to split into.
+        /// </summary>
         public ulong[] Amounts;
 
+        /// <summary>
+        /// Create a SplitCoins transaction.
+        /// </summary>
+        /// <param name="coin"></param>
+        /// <param name="amounts"></param>
         public SplitCoins(ITransaction coin, ulong[] amounts)
         {
             // Check that it's an actual in or U16, U32, U64 wrapped

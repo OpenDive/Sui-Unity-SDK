@@ -3,7 +3,7 @@ using OpenDive.BCS;
 using Sui.BCS;
 using Sui.Transactions.Types.Arguments;
 
-namespace Sui.Transactions.Builder
+namespace Sui.Transactions.Types.Arguments
 {
     /// <summary>
     /// An abstraction of a Transaction block input.
@@ -21,10 +21,30 @@ namespace Sui.Transactions.Builder
     /// </summary>
     public class TransactionBlockInput : ITransactionArgument
     {
-        public static string Kind { get => "Input";  }
+        /// <summary>
+        /// Transaction block input kind.
+        /// </summary>
+        public ITransactionArgument.Type Kind {
+            get => ITransactionArgument.Type.Input;
+        }
+        //public ITransactionArgument.Type Kind => ITransactionArgument.Type.Input;
+
+
+        /// <summary>
+        /// The index within the programmable block transaction input list.
+        /// </summary>
         public int Index { get; private set; }
+
+        /// <summary>
+        /// The value of this transaction input.
+        /// </summary>
         public ICallArg Value { get; private set; } // An object ref, or a core type like address or u8
 
+        /// <summary>
+        /// Create a TransactionBlockInput object
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="value"></param>
         public TransactionBlockInput(int index, ICallArg value)
         {
             this.Index = index;

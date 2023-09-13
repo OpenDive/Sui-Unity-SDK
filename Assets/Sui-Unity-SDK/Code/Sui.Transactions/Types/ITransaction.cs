@@ -7,7 +7,7 @@ namespace Sui.Transactions.Types
     /// MakeMove, MergeCoin, MoveCall, Publish, SplitCOins, TransferObject, Upgrade
     /// </summary>
     public interface ITransaction : ITransactionArgument {
-        //public enum Type
+        //public enum Kind
         //{
         //    MoveCallTransaction,
         //    TransferObjectsTransaction,
@@ -17,5 +17,16 @@ namespace Sui.Transactions.Types
         //    UpgradeTransaction,
         //    MakeMoveVecTransaction,
         //}
+
+        public enum Kind
+        {
+            MoveCall,
+            TransferObjects,
+            SplitCoins,
+            MergeCoins,
+            Publish,
+            Upgrade,
+            MakeMoveVec,
+        }
     }
 }

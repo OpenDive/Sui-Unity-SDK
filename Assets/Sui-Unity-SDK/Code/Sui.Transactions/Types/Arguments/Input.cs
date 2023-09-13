@@ -13,6 +13,11 @@ namespace Sui.Transactions.Types.Arguments
 {
     public class Input : ITransactionArgument
     {
+        public ITransactionArgument.Type Kind
+        {
+            get => ITransactionArgument.Type.Input;
+        }
+
         public int Index;
         public ISerializable Value; // Only used to prepare the transaction
 

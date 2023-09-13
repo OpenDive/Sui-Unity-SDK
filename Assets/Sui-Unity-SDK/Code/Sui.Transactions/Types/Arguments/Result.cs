@@ -9,6 +9,11 @@ namespace Sui.Transactions.Types.Arguments
 {
     public class Result : ITransactionArgument
     {
+        public ITransactionArgument.Type Kind
+        {
+            get => ITransactionArgument.Type.Result;
+        }
+
         public int Index { get; private set; }
         public Result(int index)
         {

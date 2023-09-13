@@ -4,6 +4,11 @@ namespace Sui.Transactions.Types
 {
     public class MergeCoins : ITransaction
     {
+        public MergeCoins()
+        {
+
+        }
+
         public void Serialize(Serialization serializer)
         {
             throw new System.NotImplementedException();
