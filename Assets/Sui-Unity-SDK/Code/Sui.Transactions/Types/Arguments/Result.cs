@@ -5,7 +5,7 @@ using OpenDive.BCS;
 using Sui.Utilities;
 using UnityEngine;
 
-namespace Sui.Transactions.Builder
+namespace Sui.Transactions.Types.Arguments
 {
     public class Result : ITransactionArgument
     {

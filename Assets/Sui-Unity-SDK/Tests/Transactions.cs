@@ -7,6 +7,7 @@ using Sui.Transactions.Kinds;
 using UnityEngine;
 using Sui.Utilities;
 using Sui.Transactions.Types;
+using Sui.Transactions.Types.Arguments;
 
 namespace Sui.Tests
 {
@@ -46,7 +47,7 @@ namespace Sui.Tests
                 new ISerializableTag[] { new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[0]) },
 
                 //new ISerializable[] { new Input(0) }
-                new ISerializable[] { new Input(0), new Input(1), new Result(2) }
+                new ISerializable[] { new Sui.Transactions.Types.Arguments.Input(0), new Sui.Transactions.Types.Arguments.Input(1), new Result(2) }
             );
 
             Sui.Transactions.Types.ITransactionType[] transactions = new []{ moveCallTransaction };
