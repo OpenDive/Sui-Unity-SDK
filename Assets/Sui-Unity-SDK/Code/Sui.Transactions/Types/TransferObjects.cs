@@ -1,5 +1,6 @@
 using OpenDive.BCS;
 using Sui.Accounts;
+using Sui.Transactions.Builder;
 
 namespace Sui.Transactions.Types
 {
@@ -13,18 +14,22 @@ namespace Sui.Transactions.Types
         /// <summary>
         /// 
         /// </summary>
-        public AccountAddress Address { get; set; }
+        //public AccountAddress Address { get; set; }
+        public TransactionBlockInput Address { get; set; }
 
         /// <summary>
-        /// 
+        /// Creates TransferObjects transaction.
         /// </summary>
-        /// <param name="objects"></param>
-        /// <param name="address"></param>
-        public TransferObjects(ITransactionType[] objects, AccountAddress address)
+        /// <param name="objects">Objects that we are transferring.</param>
+        /// <param name="address">The recepient address nested withing the TransactionBlockInput.
+        /// This will be what Sui refers to as "Pure". TODO: Check if we need to simply encode it as byte array.
+        /// </param>
+        public TransferObjects(ITransactionType[] objects, TransactionBlockInput address)
         {
             Objects = objects;
             Address = address;
         }
+
         public void Serialize(Serialization serializer)
         {
             serializer.Serialize(Objects);
