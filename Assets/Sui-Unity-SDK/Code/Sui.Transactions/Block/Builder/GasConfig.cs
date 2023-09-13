@@ -32,7 +32,6 @@ namespace Sui.Transactions.Builder
         {
             Sequence paymentSeq = new Sequence(Payment);
             serializer.Serialize(paymentSeq);
-            //paymentSeq.Serialize(serializer);
             serializer.Serialize(Owner);
             serializer.SerializeU64((ulong)Price);
             serializer.SerializeU64((ulong)Budget);
@@ -40,7 +39,6 @@ namespace Sui.Transactions.Builder
             Serialization ser = new Serialization();
             Sequence paymentSeq2 = new Sequence(Payment);
             ser.Serialize(paymentSeq2);
-            //paymentSeq.Serialize(serializer);
             ser.Serialize(Owner);
             ser.SerializeU64((ulong)Price);
             ser.SerializeU64((ulong)Budget);
