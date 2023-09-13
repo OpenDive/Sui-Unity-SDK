@@ -6,12 +6,12 @@ using Sui.Transactions.Builder;
 
 namespace Sui.Transactions.Types
 {
-    public class TransferObjects : ITransactionType
+    public class TransferObjects : ITransaction
     {
         /// <summary>
         /// 
         /// </summary>
-        public ITransactionType[] Objects { get; set; }
+        public ITransaction[] Objects { get; set; }
 
         /// <summary>
         /// 
@@ -26,7 +26,7 @@ namespace Sui.Transactions.Types
         /// <param name="address">The recepient address (AccountAddress) nested within the TransactionBlockInput.
         /// This will be what Sui refers to as "Pure". TODO: Check if we need to simply encode it as byte array.
         /// </param>
-        public TransferObjects(ITransactionType[] objects, TransactionBlockInput address)
+        public TransferObjects(ITransaction[] objects, TransactionBlockInput address)
         {
             Objects = objects;
 

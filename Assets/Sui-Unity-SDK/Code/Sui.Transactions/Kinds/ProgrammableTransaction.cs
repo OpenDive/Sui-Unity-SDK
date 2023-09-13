@@ -18,9 +18,9 @@ namespace Sui.Transactions.Kinds
         /// <summary>
         /// Holds a set of transactions, e.g. MoveCallTransaction, TransferObjectsTransaction, etc.
         /// </summary>
-        public ITransactionType[] Transactions { get; private set; }
+        public ITransaction[] Transactions { get; private set; }
 
-        public ProgrammableTransaction(ICallArg[] inputs, ITransactionType[] transactions)
+        public ProgrammableTransaction(ICallArg[] inputs, ITransaction[] transactions)
         {
             Inputs = inputs;
             Transactions = transactions;

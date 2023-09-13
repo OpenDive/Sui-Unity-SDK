@@ -34,7 +34,7 @@ namespace Sui.Transactions.Builder
         /// <summary>
         /// A list of transaction, e.g. MoveCallTransaction, TransferObjectTransaction, etc
         /// </summary>
-        public ITransactionType[] Transactions { get; set; }
+        public ITransaction[] Transactions { get; set; }
 
         /// <summary>
         /// TODO: Implement
@@ -48,7 +48,7 @@ namespace Sui.Transactions.Builder
             TransactionExpiration expiration = null,
             GasConfig gasConfig = null,
             TransactionBlockInput[] inputs = null,
-            ITransactionType[] transactions = null
+            ITransaction[] transactions = null
             )
         {
             this.Sender = sender;

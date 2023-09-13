@@ -2,7 +2,7 @@ using OpenDive.BCS;
 
 namespace Sui.Transactions.Types
 {
-    public class MakeMoveVec : ITransactionType
+    public class MakeMoveVec : ITransaction
     {
         public void Serialize(Serialization serializer)
         {

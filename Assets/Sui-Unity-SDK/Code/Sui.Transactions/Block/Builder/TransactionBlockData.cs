@@ -28,11 +28,11 @@ namespace Sui.Transactions.Builder
         public TransactionExpiration Expiration { get; private set; }
         public GasConfig GasConfig { get; private set; }
         public TransactionBlockInput[] Inputs { get; private set; }
-        public ITransactionType[] Transactions { get; private set; }
+        public ITransaction[] Transactions { get; private set; }
 
         public TransactionBlockData(int version, AccountAddress sender,
             TransactionExpiration expiration, GasConfig gasConfig,
-            TransactionBlockInput[] inputs, ITransactionType[] transactions)
+            TransactionBlockInput[] inputs, ITransaction[] transactions)
         {
             this.Version = version;
             this.Sender = sender;

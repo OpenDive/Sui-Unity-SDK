@@ -1,6 +1,7 @@
 
 using OpenDive.BCS;
 using Sui.BCS;
+using Sui.Transactions.Types.Arguments;
 
 namespace Sui.Transactions.Builder
 {
@@ -18,7 +19,7 @@ namespace Sui.Transactions.Builder
     ///     });
     /// </code>
     /// </summary>
-    public class TransactionBlockInput : ISerializable
+    public class TransactionBlockInput : ITransactionArgument
     {
         public static string Kind { get => "Input";  }
         public int Index { get; private set; }

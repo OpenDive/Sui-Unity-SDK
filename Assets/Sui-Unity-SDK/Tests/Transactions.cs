@@ -50,7 +50,7 @@ namespace Sui.Tests
                 new ITransactionArgument[] { new Sui.Transactions.Types.Arguments.Input(0), new Sui.Transactions.Types.Arguments.Input(1), new Result(2) }
             );
 
-            Sui.Transactions.Types.ITransactionType[] transactions = new []{ moveCallTransaction };
+            Sui.Transactions.Types.ITransaction[] transactions = new []{ moveCallTransaction };
 
             ProgrammableTransaction programmableTransaction
                 = new ProgrammableTransaction(inputs, transactions);
