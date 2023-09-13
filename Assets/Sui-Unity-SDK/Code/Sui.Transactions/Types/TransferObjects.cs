@@ -3,12 +3,12 @@ using Sui.Accounts;
 
 namespace Sui.Transactions.Objects
 {
-    public class TransferObjects : ITransactionObject
+    public class TransferObjects : ITransactionType
     {
         /// <summary>
         /// 
         /// </summary>
-        public ITransactionObject[] Objects { get; set; }
+        public ITransactionType[] Objects { get; set; }
 
         /// <summary>
         /// 
@@ -20,7 +20,7 @@ namespace Sui.Transactions.Objects
         /// </summary>
         /// <param name="objects"></param>
         /// <param name="address"></param>
-        public TransferObjects(ITransactionObject[] objects, AccountAddress address)
+        public TransferObjects(ITransactionType[] objects, AccountAddress address)
         {
             Objects = objects;
             Address = address;

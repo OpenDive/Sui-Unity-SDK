@@ -2,7 +2,7 @@ using OpenDive.BCS;
 
 namespace Sui.Transactions.Objects
 {
-    public class MergeCoins : ITransactionObject
+    public class MergeCoins : ITransactionType
     {
         public void Serialize(Serialization serializer)
         {
