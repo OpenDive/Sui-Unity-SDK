@@ -1,6 +1,7 @@
 using System;
 using OpenDive.BCS;
 using Sui.Accounts;
+using Sui.Transactions.Types.Arguments;
 using Sui.Utilities;
 using UnityEngine;
 
@@ -52,7 +53,7 @@ namespace Sui.Transactions.Types
         public ISerializable[] Arguments { get; private set; }
 
 
-        public MoveCallTransaction(SuiStructTag target, ISerializableTag[] typeArguments, ISerializable[] arguments)
+        public MoveCallTransaction(SuiStructTag target, ISerializableTag[] typeArguments, ITransactionArgument[] arguments)
         {
             //ModuleId = moduleId;
             //Function = function;

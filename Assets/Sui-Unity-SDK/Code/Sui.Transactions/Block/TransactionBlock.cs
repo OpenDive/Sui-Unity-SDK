@@ -79,13 +79,15 @@ namespace Sui.Transactions
             return this.txBlockDataBuilder.Snapshot();
         }
 
-        public TransactionArgument GetGas()
-        {
-            //get gas(): TransactionArgument {
-            //    return { kind: 'GasCoin' };
-            //}
-            throw new NotImplementedException();
-        }
+        // Should either be an ITransactionArgument, or simply a GasCoin object
+        // which is an ITransactionArgument
+        //public TransactionArgument GetGas()
+        //{
+        //    //get gas(): TransactionArgument {
+        //    //    return { kind: 'GasCoin' };
+        //    //}
+        //    throw new NotImplementedException();
+        //}
 
         ///**
         // * Dynamically create a new input, which is separate from the `input`. This is important
