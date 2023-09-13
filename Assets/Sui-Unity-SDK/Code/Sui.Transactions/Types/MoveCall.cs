@@ -18,7 +18,7 @@ namespace Sui.Transactions.Types
     //    }
     //}
 
-    public class MoveCallTransaction : ITransaction, ISerializable
+    public class MoveCall : ITransaction, ISerializable
     {
         public string Kind { get => "MoveCall"; }
 
@@ -53,7 +53,7 @@ namespace Sui.Transactions.Types
         public ISerializable[] Arguments { get; private set; }
 
 
-        public MoveCallTransaction(SuiStructTag target,
+        public MoveCall(SuiStructTag target,
             ISerializableTag[] typeArguments, ITransactionArgument[] arguments)
         {
             //ModuleId = moduleId;

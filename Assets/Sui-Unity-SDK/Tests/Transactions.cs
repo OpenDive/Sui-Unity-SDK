@@ -40,7 +40,7 @@ namespace Sui.Tests
 
             ICallArg[] inputs = new ICallArg[] { new ObjectCallArg(paymentRef) };
 
-            MoveCallTransaction moveCallTransaction = new MoveCallTransaction(
+            MoveCall moveCallTransaction = new MoveCall(
                 //new ModuleId(suiAddress, "display"), "new",
                 new SuiStructTag(suiAddress, "display", "new", new ISerializableTag[0]), // TODO: THIS IS A NORMALIZED STRUCT
                 //new ISerializableTag[] { StructTag.FromStr(suiAddress.ToString() + "::capy::Capy") },
