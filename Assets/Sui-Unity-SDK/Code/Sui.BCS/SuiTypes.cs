@@ -26,6 +26,12 @@ namespace Sui.BCS
     /// </summary>
     public interface ICallArg : ISerializable
     {
+        public enum Type
+        {
+            Pure,
+            Object,
+            ObjectVec
+        }
     }
 
     /// <summary>
@@ -45,7 +51,7 @@ namespace Sui.BCS
         public void Serialize(Serialization serializer)
         {
             // TODO: Add enum byte of Pure - 0, ObjectRef - 1
-            serializer.SerializeU32AsUleb128(0);
+            serializer.SerializeU32AsUleb128((uint)ICallArg.Type.Pure);
             serializer.Serialize(Value);
         }
     }
@@ -95,20 +101,23 @@ namespace Sui.BCS
             ObjectArg = objectArg;
         }
 
+        public enum Type
+        {
+            ImmOrOwned,     // SuiObjectRef
+            Shared          // SharedObjectRef
+        }
+
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128(1);
+            serializer.SerializeU32AsUleb128((uint)ICallArg.Type.Object);
 
-            Type objectType = ObjectArg.GetType();
+            System.Type objectType = ObjectArg.GetType();
 
             if (objectType == typeof(SuiObjectRef))
-            {
-                serializer.SerializeU32AsUleb128(0);
-            }
+                serializer.SerializeU32AsUleb128((uint)ObjectCallArg.Type.ImmOrOwned);
             else
-            {
-                serializer.SerializeU32AsUleb128(0);
-            }
+                serializer.SerializeU32AsUleb128((uint)ObjectCallArg.Type.Shared);
+
             serializer.Serialize(ObjectArg);
         }
     }
