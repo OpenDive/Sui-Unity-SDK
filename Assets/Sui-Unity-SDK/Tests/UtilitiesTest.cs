@@ -39,5 +39,15 @@ namespace Sui.Tests.Cryptography
             Debug.Log(bytes.ToReadableString());
             Debug.Log(Encoding.UTF8.GetBytes(typeTag).ToReadableString());
         }
+
+        [Test]
+        public void Base58()
+        {
+            byte[] bytes = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            Base58Encoder encoder = new Base58Encoder();
+            string base58 = encoder.EncodeData(bytes);
+            Debug.Log("BASE58: " + base58);
+            Debug.Log("BYTES: " + encoder.DecodeData(base58).ByteArrayToString());
+        }
     }
 }
