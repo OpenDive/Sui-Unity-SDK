@@ -1,6 +1,6 @@
 using OpenDive.BCS;
 
-namespace Sui.Transactions.Objects
+namespace Sui.Transactions.Types
 {
     /// <summary>
     /// A TransactionObject can be:

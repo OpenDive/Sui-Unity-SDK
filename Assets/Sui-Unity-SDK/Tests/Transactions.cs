@@ -3,10 +3,10 @@ using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.BCS;
 using Sui.Transactions.Builder;
-using Sui.Transactions.Builder.TransactionObjects;
 using Sui.Transactions.Kinds;
 using UnityEngine;
 using Sui.Utilities;
+using Sui.Transactions.Types;
 
 namespace Sui.Tests
 {
@@ -49,7 +49,7 @@ namespace Sui.Tests
                 new ISerializable[] { new Input(0), new Input(1), new Result(2) }
             );
 
-            ITransactionType[] transactions = new []{ moveCallTransaction };
+            Sui.Transactions.Types.ITransactionType[] transactions = new []{ moveCallTransaction };
 
             ProgrammableTransaction programmableTransaction
                 = new ProgrammableTransaction(inputs, transactions);

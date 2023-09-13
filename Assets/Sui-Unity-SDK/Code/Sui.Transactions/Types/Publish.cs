@@ -1,6 +1,6 @@
 using OpenDive.BCS;
 
-namespace Sui.Transactions.Objects
+namespace Sui.Transactions.Types
 {
     public class Publish : ITransactionType
     {

@@ -1,7 +1,7 @@
 using OpenDive.BCS;
 using Sui.Accounts;
 
-namespace Sui.Transactions.Objects
+namespace Sui.Transactions.Types
 {
     public class TransferObjects : ITransactionType
     {

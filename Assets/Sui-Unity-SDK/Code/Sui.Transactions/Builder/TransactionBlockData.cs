@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Sui.Accounts;
 using Sui.BCS;
-using Sui.Transactions.Builder.TransactionObjects;
+using Sui.Transactions.Types;
 using UnityEngine;
 
 namespace Sui.Transactions.Builder
