@@ -23,8 +23,8 @@ namespace Sui.Rpc
     }
 
     public class Connection {
-        string FULL_NODE { set; get; }
-        string FAUCET { set; get; }
+        public string FULL_NODE { set; get; }
+        public string FAUCET { set; get; }
 
         public Connection(string fullNodeUrl, string faucet = null)
         {
