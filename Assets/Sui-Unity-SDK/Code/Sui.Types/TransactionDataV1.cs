@@ -3,7 +3,6 @@ using OpenDive.BCS;
 
 namespace Sui.Types
 {
-
     /// <summary>
     ///
     /// <code>
