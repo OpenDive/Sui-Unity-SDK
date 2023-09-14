@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenDive.BCS;
 using Sui.Accounts;
-using Sui.BCS;
 using Sui.Transactions.Types;
 using Sui.Transactions.Kinds;
 using Sui.Utilities;

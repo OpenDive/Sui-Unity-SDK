@@ -1,7 +1,6 @@
 using NUnit.Framework;
 using OpenDive.BCS;
 using Sui.Accounts;
-using Sui.BCS;
 using Sui.Transactions.Builder;
 using Sui.Transactions.Kinds;
 using UnityEngine;

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using OpenDive.BCS;
 using Sui.Accounts;
-using Sui.BCS;
 using Sui.Transactions.Builder;
 using Sui.Transactions.Types;
 using Sui.Transactions.Types.Arguments;

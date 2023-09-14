@@ -1,6 +1,5 @@
 using System;
 using OpenDive.BCS;
-using Sui.BCS;
 
 namespace Sui.Types
 {
