@@ -1,5 +1,5 @@
 using OpenDive.BCS;
-using Sui.BCS;
+using Sui.Types;
 
 namespace Sui.Transactions.Types
 {
