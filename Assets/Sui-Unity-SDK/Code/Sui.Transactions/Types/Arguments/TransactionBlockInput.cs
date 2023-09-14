@@ -7,6 +7,10 @@ namespace Sui.Transactions.Types.Arguments
 {
     /// <summary>
     /// An abstraction of a Transaction block input.
+    /// A transaction block input is a:
+    /// a TransactionInput,
+    ///
+    /// 
     /// In the TypeScript SDK the explicity define whether it's a pure or object,
     /// but in this SDK it automatically infers its own type, and also knows its "kind".
     /// 

@@ -50,7 +50,7 @@ namespace Sui.BCS
         }
         public void Serialize(Serialization serializer)
         {
-            // TODO: Add enum byte of Pure - 0, ObjectRef - 1
+            // TODO: Add enum byte of Pure => 0, ObjectRef => 1
             serializer.SerializeU32AsUleb128((uint)ICallArg.Type.Pure);
             serializer.Serialize(Value);
         }
@@ -124,7 +124,8 @@ namespace Sui.BCS
     }
 
     /// <summary>
-    /// A Sui object can be immutable or owned.
+    /// A Sui object can be immutable or owned (`ImmOrOwned`).
+    /// 
     /// A reference to this type of object has the following format:
 	/// <code>
     ///     SuiObjectRef: {

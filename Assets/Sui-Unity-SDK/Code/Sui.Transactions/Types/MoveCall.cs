@@ -86,8 +86,8 @@ namespace Sui.Transactions.Types
         /// <param name="target"></param>
         /// <param name="typeArguments"></param>
         /// <param name="arguments"></param>
-        public MoveCall(SuiStructTag target, ISerializableTag[] typeArguments,
-            ITransactionArgument[] arguments)
+        public MoveCall(SuiStructTag target, ISerializableTag[] typeArguments = null,
+            ITransactionArgument[] arguments = null)
         {
             //ModuleId = moduleId;
             //Function = function;

@@ -14,6 +14,9 @@ namespace Sui.Transactions
     /// </summary>
     public class TransactionBlock : ISerializable
     {
+        /// <summary>
+        /// The transaction block builder.
+        /// </summary>
         public TransactionBlockDataBuilder TxBlockDataBuilder { get; set; }
 
         /// <summary>
@@ -23,6 +26,10 @@ namespace Sui.Transactions
         /// </summary>
         public List<ITransaction> Transactions { get; set; }
 
+        /// <summary>
+        /// Creates a TransactionBlock object from an existing TransactionBlock.
+        /// </summary>
+        /// <param name="transactionBlock"></param>
         public TransactionBlock(TransactionBlock transactionBlock = null)
         {
             if (transactionBlock != null)
@@ -32,7 +39,7 @@ namespace Sui.Transactions
         }
 
         /// <summary>
-        /// 
+        /// Set the sender for the programmable transaction block.
         /// </summary>
         /// <param name="sender"></param>
         /// <returns></returns>
@@ -42,6 +49,11 @@ namespace Sui.Transactions
             return this;
         }
 
+        /// <summary>
+        /// The the Sender, if it has not been set in the programmable transaction.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <returns></returns>
         public TransactionBlock SetSenderIfNotSet(AccountAddress sender)
         {
             if (this.TxBlockDataBuilder.Sender == null)
@@ -49,6 +61,11 @@ namespace Sui.Transactions
             return this;
         }
 
+        /// <summary>
+        /// Set expiration for the programmable transaction.
+        /// </summary>
+        /// <param name="expiration"></param>
+        /// <returns></returns>
         public TransactionBlock SetExpiration(TransactionExpiration expiration)
         {
             this.TxBlockDataBuilder.Expiration = expiration;
@@ -66,65 +83,56 @@ namespace Sui.Transactions
             return this;
         }
 
+        /// <summary>
+        /// Set the gas budget for the programmable transaction block.
+        /// </summary>
+        /// <param name="budget"></param>
+        /// <returns></returns>
         public TransactionBlock SetGasBudget(int budget)
         {
             this.TxBlockDataBuilder.GasConfig.Budget = budget;
             return this;
         }
 
+        /// <summary>
+        /// Set the gas owner for the programmable transaction block.
+        /// </summary>
+        /// <param name="owner"></param>
+        /// <returns></returns>
         public TransactionBlock SetGasOwner(AccountAddress owner)
         {
             this.TxBlockDataBuilder.GasConfig.Owner = owner;
             return this;
         }
 
+        /// <summary>
+        /// Set the gas payment for the programmable transaction block.
+        /// </summary>
+        /// <param name="payments"></param>
+        /// <returns></returns>
         public TransactionBlock SetGasPayment(SuiObjectRef[] payments)
         {
             this.TxBlockDataBuilder.GasConfig.Payment = payments;
             return this;
         }
 
+        /// <summary>
+        /// Gets the programmable transaction block data.
+        /// </summary>
+        /// <returns></returns>
         public TransactionBlockData GetBlockData()
         {
             return this.TxBlockDataBuilder.Snapshot();
         }
 
-        // Should either be an ITransactionArgument, or simply a GasCoin object
-        // which is an ITransactionArgument
-        //public TransactionArgument GetGas()
-        //{
-        //    //get gas(): TransactionArgument {
-        //    //    return { kind: 'GasCoin' };
-        //    //}
-        //    throw new NotImplementedException();
-        //}
-
-
-
         /// <summary>
-        /// Add a new object input to the transaction.
-        /// In the TypeScript SDK this is: `object(value: string | ObjectCallArg)`
-        /// <code>
-        ///     const coins = await toolbox.getGasObjectsOwnedByAddress();
-        ///     const tx = new TransactionBlock();
-        ///     const coin_0 = coins[0].data as SuiObjectData;
-        /// 
-        ///     const coin = tx.splitCoins(tx.object(coin_0.objectId), [tx.pure(DEFAULT_GAS_BUDGET * 2)]);
-        ///     tx.transferObjects([coin], tx.pure(toolbox.address()));
-        /// </code>
+        /// Add an object ref to the list of inputs in the programmable transaction block.
         /// </summary>
+        /// <param name="objectRef"></param>
         /// <returns></returns>
-        public TransactionBlockInput AddObjectInput(string objectId)
-        {
-            // https://github.com/MystenLabs/sui/blob/main/sdk/typescript/src/builder/Inputs.ts#L65
-            PureCallArg pureCallArg = new PureCallArg(new BString(objectId));
-            // return normalizeSuiAddress(objectId);
-            throw new NotImplementedException();
-        }
-
         public TransactionBlockInput AddObjectInput(IObjectRef objectRef)
         {
-            System.Type objectType = objectRef.GetType();
+            Type objectType = objectRef.GetType();
             string newObjectId = "";
             if (objectType == typeof(SuiObjectRef))
             {
@@ -137,13 +145,10 @@ namespace Sui.Transactions
                 newObjectId = sharedObjectRef.ObjectId;
             }
 
-            // Create ObjectCallArg which will add the appropriate byte when serializing
-            ObjectCallArg newObjCallArg = new ObjectCallArg(objectRef);
-            TransactionBlockInput newTxBlockInput = new TransactionBlockInput(0, null);
+            List<TransactionBlockInput> inputs = this.TxBlockDataBuilder.Inputs;
 
-            List<TransactionBlockInput> inputs = TxBlockDataBuilder.Inputs;
-
-            TransactionBlockInput inserted = inputs.Find((blockInput) => {
+            TransactionBlockInput inserted = inputs.Find((blockInput) =>
+            {
                 Type blockInputValueType = blockInput.Value.GetType();
                 if (blockInputValueType == typeof(ObjectCallArg))
                 {
@@ -158,9 +163,9 @@ namespace Sui.Transactions
             if (inserted != null)
                 return inserted;
 
-            return AddCreateInput(newObjCallArg);
-
-            throw new NotImplementedException();
+            // Create ObjectCallArg which will add the appropriate byte when serializing
+            ObjectCallArg newObjCallArg = new ObjectCallArg(objectRef);
+            return this.CreateAddInput(newObjCallArg);
         }
 
         /// <summary>
@@ -176,23 +181,73 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="value">Can be a `PureCallArg` or an `ObjectCallArg`</param>
         /// <returns></returns>
-        private TransactionBlockInput AddCreateInput(ICallArg value)
+        private TransactionBlockInput CreateAddInput(ICallArg value)
         {
             int index = this.TxBlockDataBuilder.Inputs.Count;
-
             TransactionBlockInput input = new TransactionBlockInput(index, value);
             this.TxBlockDataBuilder.Inputs.Add(input);
             return input;
         }
 
-        public TransactionBlock AddObjectRef()
+        /// <summary>
+        /// Add a new object ref (`ImmOrOwned`) input to the transaction
+        /// using the fully-resolved object reference.
+        /// If you only have an object ID, use `builder.object(id)` instead.
+        ///
+        /// In the TypeScript SDK, this is:
+        /// <code>
+        /// objectRef(...args: Parameters<(typeof Inputs)['ObjectRef']>) {
+        /// </code>
+        /// </summary>
+        /// <param name="objectId"></param>
+        /// <param name="version"></param>
+        /// <param name="digest"></param>
+        /// <returns></returns>
+        public TransactionBlockInput AddObjectRefInput(string objectId,
+            int version, string digest)
         {
-            return this;
+            SuiObjectRef objectRef = new SuiObjectRef(objectId, version, digest);
+            return this.AddObjectRefInput(objectRef);
         }
 
-        public TransactionBlock AddSharedObjectRef()
+        /// <summary>
+        /// Adds a Sui Object Ref (`ImmOrOwned`) to the inputs of
+        /// a programmable transaction.
+        /// </summary>
+        /// <param name="objectRef"></param>
+        /// <returns></returns>
+        public TransactionBlockInput AddObjectRefInput(SuiObjectRef objectRef)
         {
-            return this;
+            return this.AddObjectInput(objectRef);
+        }
+
+        /// <summary>
+        /// Add a new shared object input to the transaction using
+        /// the fully-resolved shared object reference.
+        ///
+        /// If you only have an object ID, use `builder.object(id)` instead.
+        /// </summary>
+        /// <param name="objectId"></param>
+        /// <param name="initialSharedVersion"></param>
+        /// <param name="mutable"></param>
+        /// <returns></returns>
+        public TransactionBlockInput AddSharedObjectRefInput(string objectId,
+            int initialSharedVersion, bool mutable)
+        {
+            SharedObjectRef sharedObjectRef = new SharedObjectRef(objectId,
+                initialSharedVersion, mutable);
+            return this.AddSharedObjectRefInput(sharedObjectRef);
+        }
+
+        /// <summary>
+        /// Add a new shared object input to the programmable transaction.
+        /// </summary>
+        /// <param name="sharedObjectRef"></param>
+        /// <returns></returns>
+        public TransactionBlockInput AddSharedObjectRefInput(
+            SharedObjectRef sharedObjectRef)
+        {
+            return this.AddObjectInput(sharedObjectRef);
         }
 
         /// <summary>
@@ -206,15 +261,33 @@ namespace Sui.Transactions
         public TransactionBlockInput AddPureInput(ISerializable value)
         {
             PureCallArg pureCallArg = new PureCallArg(value);
-            return this.AddCreateInput(pureCallArg);
+            return this.CreateAddInput(pureCallArg);
         }
 
+        /// <summary>
+        /// Adds a transaction to the programmable transaction block.
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="resultsLength"></param>
+        /// <returns></returns>
         public List<TransactionResult> AddTx(ITransaction transaction, int resultsLength = 0)
         {
-            Transactions.Add(transaction);
+            this.Transactions.Add(transaction);
+            int index = this.Transactions.Count;
+
+            TransactionResult txResult =  this.CreateTransactionResult(index - 1);
             List<TransactionResult> txResults = new List<TransactionResult>();
-            int index = txResults.Count;
             return txResults;
+        }
+
+        /// <summary>
+        /// Creates a TransactionResult object for the given transaction index.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public TransactionResult CreateTransactionResult(int index)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -260,8 +333,26 @@ namespace Sui.Transactions
             return this;
         }
 
-        public TransactionBlock AddMoveCall()
+        /// <summary>
+        /// <code>
+        ///     const [nft1, nft2] = txb.moveCall({ target: "0x2::nft::mint_many" });
+        ///     txb.transferObjects([nft1, nft2], txb.pure(address));
+        ///
+        /// const coin = tx.splitCoins(tx.gas, [tx.pure(amount)]);
+        /// tx.moveCall({
+        ///     target: `${SUI_SYSTEM_ADDRESS}::${SUI_SYSTEM_MODULE_NAME}::${ ADD_STAKE_FUN_NAME}`,
+        ///     arguments:[tx.object(SUI_SYSTEM_STATE_OBJECT_ID), coin, tx.pure(validatorAddress)],
+        /// })
+        /// </code>
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="typeArguments"></param>
+        /// <param name="arguments"></param>
+        /// <returns></returns>
+        public TransactionBlock AddMoveCall(SuiStructTag target,
+            ISerializableTag[] typeArguments = null, ITransactionArgument[] arguments = null)
         {
+            MoveCall moveCallTx = new MoveCall(target, typeArguments, arguments);
             return this;
         }
 
