@@ -1,13 +1,14 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using OpenDive.BCS;
 using Sui.Utilities;
 using UnityEngine;
 
 namespace Sui.Transactions.Types.Arguments
 {
-    public class Result : ITransactionArgument
+    /// <summary>
+    /// The result of another transaction (from `ProgrammableTransactionBlock` transactions)
+    /// </summary>
+    public class TransactionResult : ITransactionArgument
     {
         public ITransactionArgument.Type Kind
         {
@@ -15,7 +16,7 @@ namespace Sui.Transactions.Types.Arguments
         }
 
         public int Index { get; private set; }
-        public Result(int index)
+        public TransactionResult(int index)
         {
             Index = index;
         }

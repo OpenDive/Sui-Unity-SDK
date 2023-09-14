@@ -30,7 +30,7 @@ namespace Sui.Transactions.Builder
         public GasConfig GasConfig { get; set; }
         // TODO: Consider whether we actually need a TransactionBlockInput abstraction, otherwise just use Serializable
         // public ISerializable[] transactionBlockInput; //TransactionBlockInput
-        public TransactionBlockInput[] Inputs { get; set; }
+        public List<TransactionBlockInput> Inputs { get; set; }
 
         /// <summary>
         /// A list of transaction, e.g. MoveCallTransaction, TransferObjectTransaction, etc
@@ -48,7 +48,7 @@ namespace Sui.Transactions.Builder
             AccountAddress sender = null,
             TransactionExpiration expiration = null,
             GasConfig gasConfig = null,
-            TransactionBlockInput[] inputs = null,
+            List<TransactionBlockInput> inputs = null,
             ITransaction[] transactions = null
             )
         {
@@ -168,7 +168,7 @@ namespace Sui.Transactions.Builder
                 TransactionBlockInput input = new TransactionBlockInput(i, callArgs[i]);
             }
 
-            txBlockDataBuilder.Inputs = txBlockInputs.ToArray();
+            txBlockDataBuilder.Inputs = txBlockInputs;
             txBlockDataBuilder.Transactions = programmableTx.Transactions;
 
             return txBlockDataBuilder;

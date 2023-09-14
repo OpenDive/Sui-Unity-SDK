@@ -18,6 +18,31 @@ namespace Sui.Transactions.Types
     //    }
     //}
 
+    /// <summary>
+    ///
+    /// <code>
+    ///     Executes a Move call. Returns whatever the Sui Move call returns.
+    ///     txb.moveCall({ target, arguments, typeArguments  })
+    ///
+    ///     Example: 
+    ///     txb.moveCall({ target: '0x2::devnet_nft::mint', arguments: [txb.pure(name), txb.pure(description), txb.pure(image)] }
+    /// 
+    ///     // Split a coin object off of the gas object:
+    ///     const [coin] = txb.splitCoins(txb.gas, [txb.pure(100)]);
+    ///     // Transfer the resulting coin object:
+    ///     txb.transferObjects([coin], txb.pure(address));
+    /// 
+    ///     // Destructuring (preferred, as it gives you logical local names):
+    ///     const [nft1, nft2] = txb.moveCall({ target: "0x2::nft::mint_many" });
+    ///     txb.transferObjects([nft1, nft2], txb.pure(address));
+    ///
+    ///     //Array indexes:
+    ///     const mintMany = txb.moveCall({ target: "0x2::nft::mint_many" });
+    ///     txb.transferObjects([mintMany[0], mintMany[1]], txb.pure(address));
+    /// </code> 
+    ///
+    /// https://github.com/MystenLabs/sui/blob/main/doc/src/build/prog-trans-ts-sdk.md
+    /// </summary>
     public class MoveCall : ITransaction, ISerializable
     {
         public ITransaction.Kind Kind
@@ -55,9 +80,14 @@ namespace Sui.Transactions.Types
         /// </summary>
         public ISerializable[] Arguments { get; private set; }
 
-
-        public MoveCall(SuiStructTag target,
-            ISerializableTag[] typeArguments, ITransactionArgument[] arguments)
+        /// <summary>
+        /// Create a MoveCall transaction
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="typeArguments"></param>
+        /// <param name="arguments"></param>
+        public MoveCall(SuiStructTag target, ISerializableTag[] typeArguments,
+            ITransactionArgument[] arguments)
         {
             //ModuleId = moduleId;
             //Function = function;

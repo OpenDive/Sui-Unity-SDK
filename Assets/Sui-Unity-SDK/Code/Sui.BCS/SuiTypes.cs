@@ -90,12 +90,13 @@ namespace Sui.BCS
 
     public interface IObjectRef : ISerializable
     {
-
+        public String ObjectId { get; set; }
     }
 
     public class ObjectCallArg : ICallArg
     {
         public IObjectRef ObjectArg { get; set; }
+
         public ObjectCallArg(IObjectRef objectArg)
         {
             ObjectArg = objectArg;
@@ -137,7 +138,7 @@ namespace Sui.BCS
     /// </summary>
     public class SuiObjectRef : IObjectRef
     {
-        public string objectId;
+        private string objectId;
         public int version;
         public string digest;
 
@@ -201,34 +202,36 @@ namespace Sui.BCS
 	///    },
     /// </code>
     /// </summary>
-    public class SharedObjectRef : ISerializable
+    public class SharedObjectRef : IObjectRef
     {
         /// <summary>
         /// Hex code as string representing the object id.
         /// </summary>
-        public string objectId;
+        private string objectId;
 
         /// <summary>
         /// The version the object was shared at.
         /// </summary>
-        public int initialSharedVersion;
+        public int InitialSharedVersion;
 
         /// <summary>
         /// Whether reference is mutable.
         /// </summary>
         public bool mutable;
 
+        public string ObjectId { get => objectId; set => objectId = value; }
+
         public SharedObjectRef(string objectId, int initialSharedVersion, bool mutable)
         {
-            this.objectId = objectId;
-            this.initialSharedVersion = initialSharedVersion;
+            this.ObjectId = objectId;
+            this.InitialSharedVersion = initialSharedVersion;
             this.mutable = mutable;
         }
 
         public void Serialize(Serialization serializer)
         {
-            AccountAddress objectId = AccountAddress.FromHex(this.objectId);
-            U64 initialSharedVersion = new U64((ulong)this.initialSharedVersion);
+            AccountAddress objectId = AccountAddress.FromHex(this.ObjectId);
+            U64 initialSharedVersion = new U64((ulong)this.InitialSharedVersion);
             Bool mutable = new Bool(this.mutable);
 
             objectId.Serialize(serializer);

@@ -11,7 +11,7 @@ using UnityEngine;
 /// </summary>
 namespace Sui.Transactions.Types.Arguments
 {
-    public class Input : ITransactionArgument
+    public class TransactionInput : ITransactionArgument
     {
         public ITransactionArgument.Type Kind
         {
@@ -21,7 +21,7 @@ namespace Sui.Transactions.Types.Arguments
         public int Index;
         public ISerializable Value; // Only used to prepare the transaction
 
-        public Input(int index, ISerializable value = null)
+        public TransactionInput(int index, ISerializable value = null)
         {
             Index = index;
             Value = null;

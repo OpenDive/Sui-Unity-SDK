@@ -11,31 +11,33 @@ using Sui.Transactions.Types.Arguments;
 
 namespace Sui.Tests
 {
-    public class Transactions : MonoBehaviour
+    public class TransactionsTest : MonoBehaviour
     {
-        string test     = "0x0000000000000000000000000000000000000000000000000000000000000BAD";
-        string objectId = "1000000000000000000000000000000000000000000000000000000000000000";
-        int version     = int.Parse("10000");
-        string digest   = "1Bhh3pU9gLXZhoVxkr5wyg9sX6";
-        string suiAddressHex = "0x0000000000000000000000000000000000000000000000000000000000000002";
+        string test             = "0x0000000000000000000000000000000000000000000000000000000000000BAD";
+        string objectId         = "1000000000000000000000000000000000000000000000000000000000000000";
+        int version             = int.Parse("10000");
+        string digest           = "1Bhh3pU9gLXZhoVxkr5wyg9sX6";
+        string suiAddressHex    = "0x0000000000000000000000000000000000000000000000000000000000000002";
 
         [Test]
         public void TransactionDataSerializationSingleInput()
         {
             AccountAddress suiAddress = AccountAddress.FromHex(suiAddressHex);
 
-            // Inputs
+            // ////////////////////////////////////////
+            // Programmable Transaction Block -- Inputs
             SuiObjectRef paymentRef = new SuiObjectRef(objectId, version, digest);
             ICallArg[] inputs = new ICallArg[] { new ObjectCallArg(paymentRef) };
 
             MoveCall moveCallTransaction = new MoveCall(
                 new SuiStructTag(suiAddress, "display", "new", new ISerializableTag[0]), // TODO: THIS IS A NORMALIZED STRUCT
                 new ISerializableTag[] { new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[0]) },
-                new ITransactionArgument[] { new Sui.Transactions.Types.Arguments.Input(0) }
+                new ITransactionArgument[] { new TransactionInput(0) }
             );
             ITransaction[] transactions = new[] { moveCallTransaction };
 
-            // Transactions
+            // ////////////////////////////////////////
+            // Programmable Transaction Block --  Transactions
             TransactionData transactionData = new TransactionData(
                 AccountAddress.FromHex(test),
                 new TransactionExpiration(),
@@ -90,7 +92,7 @@ namespace Sui.Tests
                 new ISerializableTag[] { new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[0]) },
 
                 //new ISerializable[] { new Input(0) }
-                new ITransactionArgument[] { new Sui.Transactions.Types.Arguments.Input(0), new Sui.Transactions.Types.Arguments.Input(1), new Result(2) }
+                new ITransactionArgument[] { new TransactionInput(0), new TransactionInput(1), new TransactionResult(2) }
             );
 
             Sui.Transactions.Types.ITransaction[] transactions = new []{ moveCallTransaction };
