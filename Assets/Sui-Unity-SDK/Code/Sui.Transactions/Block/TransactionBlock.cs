@@ -6,6 +6,7 @@ using Sui.BCS;
 using Sui.Transactions.Builder;
 using Sui.Transactions.Types;
 using Sui.Transactions.Types.Arguments;
+using Sui.Types;
 
 namespace Sui.Transactions
 {

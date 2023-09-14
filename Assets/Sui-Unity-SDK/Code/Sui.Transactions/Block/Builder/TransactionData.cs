@@ -1,7 +1,7 @@
 using System;
 using OpenDive.BCS;
 using Sui.Accounts;
-using Sui.BCS;
+using Sui.Types;
 using Sui.Utilities;
 using UnityEngine;
 

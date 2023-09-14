@@ -1,9 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using Sui.Accounts;
-using Sui.BCS;
 using Sui.Transactions.Types;
 using Sui.Transactions.Types.Arguments;
+using Sui.Types;
 using UnityEngine;
 
 namespace Sui.Transactions.Builder

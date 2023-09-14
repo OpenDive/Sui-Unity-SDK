@@ -8,6 +8,7 @@ using UnityEngine;
 using Sui.Utilities;
 using Sui.Transactions.Types;
 using Sui.Transactions.Types.Arguments;
+using Sui.Types;
 
 namespace Sui.Tests
 {

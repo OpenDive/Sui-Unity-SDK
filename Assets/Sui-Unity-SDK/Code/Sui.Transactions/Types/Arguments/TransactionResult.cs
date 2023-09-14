@@ -16,6 +16,12 @@ namespace Sui.Transactions.Types.Arguments
         }
 
         public int Index { get; private set; }
+
+        /// <summary>
+        /// Represents a result from a given transaction.
+        /// The index is the location of the result within the
+        /// </summary>
+        /// <param name="index"></param>
         public TransactionResult(int index)
         {
             Index = index;
