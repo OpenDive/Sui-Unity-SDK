@@ -18,7 +18,7 @@ namespace Sui.Clients
     ///     }'
     /// </code>
     /// </summary>
-public class FaucetClient
+    public class FaucetClient
     {
         public async Task<bool> AirdropGasAsync(string recipient)
         {

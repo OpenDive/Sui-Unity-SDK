@@ -54,7 +54,6 @@ namespace Sui.Transactions.Types
         /// The module id that contains the target function
         /// Represents the following:
         /// address_hex::module::name
-        ///
         /// new ModuleId(AccountAddress.FromHex("0x4"), "aptos_token"), "burn"
         /// </summary>
         public ModuleId ModuleId { get; private set; }
@@ -85,15 +84,20 @@ namespace Sui.Transactions.Types
         /// </summary>
         /// <param name="target"></param>
         /// <param name="typeArguments"></param>
-        /// <param name="arguments"></param>
-        public MoveCall(SuiStructTag target, ISerializableTag[] typeArguments = null,
+        /// <param name="arguments">
+        ///     These will be either `Result` or `TransactionBlockInput`:
+        ///     
+        ///     We should check whether it's not a 'Result'
+        ///     and convert it to `TransactionBlockInput`.
+        /// </param>
+        public MoveCall(
+            SuiStructTag target,
+            ISerializableTag[] typeArguments = null,
             ITransactionArgument[] arguments = null)
         {
-            //ModuleId = moduleId;
-            //Function = function;
-            Target = target;
-            TypeArguments = new TagSequence(typeArguments);
-            Arguments = arguments;
+            Target          = target;
+            TypeArguments   = new TagSequence(typeArguments);
+            Arguments       = arguments;
         }
 
         public string EncodeTransaction()

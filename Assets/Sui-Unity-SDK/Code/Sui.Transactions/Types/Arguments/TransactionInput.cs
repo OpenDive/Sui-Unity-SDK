@@ -5,27 +5,38 @@ using OpenDive.BCS;
 using Sui.Utilities;
 using UnityEngine;
 
-/// <summary>
-/// TODO: Consider renaming to TransactionBlockInput
-/// TODO: Missing implementation
-/// </summary>
 namespace Sui.Transactions.Types.Arguments
 {
+    /// <summary>
+    /// A transaction input represents anything from the list of `inputs`
+    /// in the programmable transaction block,
+    /// e.g. `pure` BCS value such as BString, U63, AccountAddress
+    /// or a Sui object, e.g. ImmOrOwned Object Ref, Shared Object Ref
+    /// https://github.com/MystenLabs/sui/blob/main/sdk/typescript/src/builder/Transactions.ts#L29
+    /// </summary>
     public class TransactionInput : ITransactionArgument
     {
-        public ITransactionArgument.Type Kind
-        {
-            get => ITransactionArgument.Type.Input;
-        }
+        public ITransactionArgument.Type Kind => ITransactionArgument.Type.Input;
 
+        /// <summary>
+        /// The index of 
+        /// </summary>
         public int Index;
         public ISerializable Value; // Only used to prepare the transaction
 
+        /// <summary>
+        /// Creates a TransactionInput object.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="value">The value inside the TransactionInput
+        /// 
+        /// </param>
         public TransactionInput(int index, ISerializable value = null)
         {
             Index = index;
-            Value = null;
+            Value = value;
         }
+
         public void Serialize(Serialization serializer)
         {
             serializer.SerializeU32AsUleb128((uint)ITransactionArgument.Type.Input);

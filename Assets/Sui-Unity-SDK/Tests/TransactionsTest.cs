@@ -32,12 +32,15 @@ namespace Sui.Tests
             MoveCall moveCallTransaction = new MoveCall(
                 new SuiStructTag(suiAddress, "display", "new", new ISerializableTag[0]), // TODO: THIS IS A NORMALIZED STRUCT
                 new ISerializableTag[] { new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[0]) },
-                new ITransactionArgument[] { new TransactionInput(0) }
+                new ITransactionArgument[] { new TransactionInput(0) } // TODO: We should not use this abstract, this should be a "pure" or an "object.
             );
+
             ITransaction[] transactions = new[] { moveCallTransaction };
 
             // ////////////////////////////////////////
             // Programmable Transaction Block --  Transactions
+            // This is createdi in "build"
+            // ////////////////////////////////////////
             TransactionData transactionData = new TransactionData(
                 AccountAddress.FromHex(test),
                 new TransactionExpiration(),
@@ -47,7 +50,10 @@ namespace Sui.Tests
                     new SuiObjectRef[] { paymentRef },
                     suiAddress
                 ),
-                new ProgrammableTransaction(inputs, transactions)
+                new ProgrammableTransaction(
+                    inputs,
+                    transactions
+                )
             );
 
             Serialization serializer = new Serialization();

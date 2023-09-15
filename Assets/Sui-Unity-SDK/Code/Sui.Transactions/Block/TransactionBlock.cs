@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using OpenDive.BCS;
 using Sui.Accounts;
@@ -6,18 +7,19 @@ using Sui.Transactions.Builder;
 using Sui.Transactions.Types;
 using Sui.Transactions.Types.Arguments;
 using Sui.Types;
+using UnityEngine;
 
 namespace Sui.Transactions
 {
     /// <summary>
-    /// A transaction block builder
+    /// A transaction block builder.
     /// </summary>
     public class TransactionBlock : ISerializable
     {
         /// <summary>
         /// The transaction block builder.
         /// </summary>
-        public TransactionBlockDataBuilder TxBlockDataBuilder { get; set; }
+        public TransactionBlockDataBuilder BlockDataBuilder { get; set; }
 
         /// <summary>
         /// The list of transaction the "transaction builder" will use to create
@@ -33,9 +35,9 @@ namespace Sui.Transactions
         public TransactionBlock(TransactionBlock transactionBlock = null)
         {
             if (transactionBlock != null)
-                TxBlockDataBuilder = transactionBlock.TxBlockDataBuilder;
+                BlockDataBuilder = transactionBlock.BlockDataBuilder;
             else
-                TxBlockDataBuilder = new TransactionBlockDataBuilder();
+                BlockDataBuilder = new TransactionBlockDataBuilder();
         }
 
         /// <summary>
@@ -45,7 +47,7 @@ namespace Sui.Transactions
         /// <returns></returns>
         public TransactionBlock SetSender(AccountAddress sender)
         {
-            this.TxBlockDataBuilder.Sender = sender;
+            this.BlockDataBuilder.Sender = sender;
             return this;
         }
 
@@ -56,7 +58,7 @@ namespace Sui.Transactions
         /// <returns></returns>
         public TransactionBlock SetSenderIfNotSet(AccountAddress sender)
         {
-            if (this.TxBlockDataBuilder.Sender == null)
+            if (this.BlockDataBuilder.Sender == null)
                 return this.SetSender(sender);
             return this;
         }
@@ -68,7 +70,7 @@ namespace Sui.Transactions
         /// <returns></returns>
         public TransactionBlock SetExpiration(TransactionExpiration expiration)
         {
-            this.TxBlockDataBuilder.Expiration = expiration;
+            this.BlockDataBuilder.Expiration = expiration;
             return this;
         }
 
@@ -79,7 +81,7 @@ namespace Sui.Transactions
         /// <returns></returns>
         public TransactionBlock SetGasPrice(int price)
         {
-            this.TxBlockDataBuilder.GasConfig.Price = price;
+            this.BlockDataBuilder.GasConfig.Price = price;
             return this;
         }
 
@@ -90,7 +92,7 @@ namespace Sui.Transactions
         /// <returns></returns>
         public TransactionBlock SetGasBudget(int budget)
         {
-            this.TxBlockDataBuilder.GasConfig.Budget = budget;
+            this.BlockDataBuilder.GasConfig.Budget = budget;
             return this;
         }
 
@@ -101,7 +103,7 @@ namespace Sui.Transactions
         /// <returns></returns>
         public TransactionBlock SetGasOwner(AccountAddress owner)
         {
-            this.TxBlockDataBuilder.GasConfig.Owner = owner;
+            this.BlockDataBuilder.GasConfig.Owner = owner;
             return this;
         }
 
@@ -112,7 +114,7 @@ namespace Sui.Transactions
         /// <returns></returns>
         public TransactionBlock SetGasPayment(SuiObjectRef[] payments)
         {
-            this.TxBlockDataBuilder.GasConfig.Payment = payments;
+            this.BlockDataBuilder.GasConfig.Payment = payments;
             return this;
         }
 
@@ -122,11 +124,18 @@ namespace Sui.Transactions
         /// <returns></returns>
         public TransactionBlockData GetBlockData()
         {
-            return this.TxBlockDataBuilder.Snapshot();
+            return this.BlockDataBuilder.Snapshot();
         }
 
         /// <summary>
         /// Add an object ref to the list of inputs in the programmable transaction block.
+        ///
+        /// <code>
+        ///     // In TypeScript SDK
+        ///     txb.object(object_id)
+        ///
+        ///     object(value: string | ObjectCallArg)
+        /// </code>
         /// </summary>
         /// <param name="objectRef"></param>
         /// <returns></returns>
@@ -134,19 +143,23 @@ namespace Sui.Transactions
         {
             Type objectType = objectRef.GetType();
             string newObjectId = "";
-            if (objectType == typeof(SuiObjectRef))
-            {
-                SuiObjectRef ImmObjectRef =  (SuiObjectRef)objectRef;
-                newObjectId = ImmObjectRef.ObjectId;
-            }
-            else
-            {
-                SharedObjectRef sharedObjectRef = (SharedObjectRef)objectRef;
-                newObjectId = sharedObjectRef.ObjectId;
-            }
+            //if (objectType == typeof(SuiObjectRef))
+            //{
+            //    SuiObjectRef ImmObjectRef =  (SuiObjectRef)objectRef;
+            //    newObjectId = ImmObjectRef.ObjectId;
+            //}
+            //else
+            //{
+            //    SharedObjectRef sharedObjectRef = (SharedObjectRef)objectRef;
+            //    newObjectId = sharedObjectRef.ObjectId;
+            //}
 
-            List<TransactionBlockInput> inputs = this.TxBlockDataBuilder.Inputs;
+            newObjectId = objectRef.ObjectId;
 
+            List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
+
+            // Search through the list of inputs in the transaction block
+            // for a block input that has the name id as a `newObjectId`
             TransactionBlockInput inserted = inputs.Find((blockInput) =>
             {
                 Type blockInputValueType = blockInput.Value.GetType();
@@ -160,10 +173,13 @@ namespace Sui.Transactions
                 return false;
             });
 
+            // If it it's already in the list of inputs, then don't insert it
             if (inserted != null)
                 return inserted;
 
-            // Create ObjectCallArg which will add the appropriate byte when serializing
+            // Otherwise,
+            // create ObjectCallArg which will add the appropriate byte when serializing
+            // then add it to the list of inputs
             ObjectCallArg newObjCallArg = new ObjectCallArg(objectRef);
             return this.CreateAddInput(newObjCallArg);
         }
@@ -183,9 +199,13 @@ namespace Sui.Transactions
         /// <returns></returns>
         private TransactionBlockInput CreateAddInput(ICallArg value)
         {
-            int index = this.TxBlockDataBuilder.Inputs.Count;
-            TransactionBlockInput input = new TransactionBlockInput(index, value);
-            this.TxBlockDataBuilder.Inputs.Add(input);
+            // Get the index of of the legth of inputs, and use it as an index
+            int index = this.BlockDataBuilder.Inputs.Count;
+            TransactionBlockInput input = new TransactionBlockInput(
+                index,
+                value
+            );
+            this.BlockDataBuilder.Inputs.Add(input);
             return input;
         }
 
@@ -196,7 +216,7 @@ namespace Sui.Transactions
         ///
         /// In the TypeScript SDK, this is:
         /// <code>
-        /// objectRef(...args: Parameters<(typeof Inputs)['ObjectRef']>) {
+        ///     objectRef(...args: Parameters<(typeof Inputs)['ObjectRef']>) {
         /// </code>
         /// </summary>
         /// <param name="objectId"></param>
@@ -206,7 +226,11 @@ namespace Sui.Transactions
         public TransactionBlockInput AddObjectRefInput(string objectId,
             int version, string digest)
         {
-            SuiObjectRef objectRef = new SuiObjectRef(objectId, version, digest);
+            SuiObjectRef objectRef = new SuiObjectRef(
+                objectId,
+                version,
+                digest
+            );
             return this.AddObjectRefInput(objectRef);
         }
 
@@ -234,8 +258,11 @@ namespace Sui.Transactions
         public TransactionBlockInput AddSharedObjectRefInput(string objectId,
             int initialSharedVersion, bool mutable)
         {
-            SharedObjectRef sharedObjectRef = new SharedObjectRef(objectId,
-                initialSharedVersion, mutable);
+            SharedObjectRef sharedObjectRef = new SharedObjectRef(
+                objectId,
+                initialSharedVersion,
+                mutable
+            );
             return this.AddSharedObjectRefInput(sharedObjectRef);
         }
 
@@ -251,11 +278,13 @@ namespace Sui.Transactions
         }
 
         /// <summary>
-        /// 
+        /// Add a new non-object input to the transaction.
         /// </summary>
-        /// <param name="value">Can be a BString, Bytes, U8, U64, AccountAddress
-        /// The pure value that will be used as the input value. If this is a Uint8Array, then the value
-        /// is assumed to be raw bytes, and will be used directly.
+        /// <param name="value">
+        ///     Can be a BString, Bytes, U8, U64, AccountAddress
+        ///     The pure value that will be used as the input value.
+        ///     If this is a Uint8Array, then the value is assumed
+        ///     to be raw bytes, and will be used directly.
         /// </param>
         /// <returns></returns>
         public TransactionBlockInput AddPureInput(ISerializable value)
@@ -306,6 +335,10 @@ namespace Sui.Transactions
         ///     const txb = new TransactionBlock();
         ///     const [coin] = txb.splitCoins(txb.gas, [txb.pure(1)]);
         ///     txb.transferObjects([coin], txb.pure(currentAccount!.address));
+        ///
+        ///     // Another example of transferring many objects to one address.
+        ///     const [nft1, nft2] = txb.moveCall({ target: '0x2::nft::mint_many' });
+        ///     txb.transferObjects([nft1, nft2], txb.pure(address));
         /// </code>
         /// </summary>
         /// <param name="coin">GasCoin is a type of `TransactionArgument`.</param>
@@ -318,17 +351,17 @@ namespace Sui.Transactions
 
         }
 
-        public TransactionBlock AddMergeCoins()
+        public TransactionBlock AddMergeCoinsTx()
         {
             return this;
         }
 
-        public TransactionBlock AddPublish()
+        public TransactionBlock AddPublishTx()
         {
             return this;
         }
 
-        public TransactionBlock AddUpgrade()
+        public TransactionBlock AddUpgradeTx()
         {
             return this;
         }
@@ -349,19 +382,19 @@ namespace Sui.Transactions
         /// <param name="typeArguments"></param>
         /// <param name="arguments"></param>
         /// <returns></returns>
-        public TransactionBlock AddMoveCall(SuiStructTag target,
+        public TransactionBlock AddMoveCallTx(SuiStructTag target,
             ISerializableTag[] typeArguments = null, ITransactionArgument[] arguments = null)
         {
             MoveCall moveCallTx = new MoveCall(target, typeArguments, arguments);
             return this;
         }
 
-        public TransactionBlock AddTransferObjects()
+        public TransactionBlock AddTransferObjectsTx()
         {
             return this;
         }
 
-        public TransactionBlock AddMoveVect()
+        public TransactionBlock AddMoveVectTx()
         {
             return this;
         }
@@ -374,6 +407,38 @@ namespace Sui.Transactions
         private void Validate()
         {
             throw new NotImplementedException();
+        }
+
+        public byte[] Build(Block.BuilidOptions options)
+        {
+            // Coroutine _prepare = new Coroutine(PrepareCor(options));
+            // await _prepare;
+
+            // int maxSizeBytes = this.getConfig("maxTxSizeBytes, options);
+            // bool onlyTransactionKind = options.OnlyTransactionKin
+
+            //return this.BlockDataBuilder.Build(maxSizeBytes, onlyTransactionKind);
+            throw new NotImplementedException();
+        }
+
+        public IEnumerator PrepareCor(Block.BuilidOptions options)
+        {
+            if(!options.OnlyTransactionKind && this.BlockDataBuilder.Sender != null)
+            {
+                throw new ArgumentException("Missing transaction sender.");
+            }
+
+            //const client = options.client || options.provider;
+            bool client = true;
+
+            // TODO: Fix the limits arg
+            if(options.ProtocolConfigArg == null && options.LimitsArg == null && client)
+            {
+                // TODO: RPC Call to get protocol config
+                //options.ProtocolConfigArg = await client.getProtocolConfig()
+            }
+
+            yield return true;
         }
 
         public void Serialize(Serialization serializer)

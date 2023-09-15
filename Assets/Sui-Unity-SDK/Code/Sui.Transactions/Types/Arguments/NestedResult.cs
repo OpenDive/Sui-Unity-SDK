@@ -7,6 +7,21 @@ namespace Sui.Transactions.Types.Arguments
     /// Like a `Result` (`TransactionResult` but it accesses a nested result.
     /// Currently, the only usage of this is to access a value from
     /// a Move call with multiple return values.
+    ///
+    /// <code>
+    ///     // Schema
+    ///     NestedResult: {
+    ///         index: BCS.U16,
+    ///         resultIndex: BCS.U16
+    ///     },
+    ///
+    ///     // Object definition
+    /// 	object({
+    /// 	    kind: literal('NestedResult'),
+    /// 	    index: integer(),
+    /// 	    resultIndex: integer(),
+    /// 	}),
+    /// </code>
     /// </summary>
     public class NestedResult : ITransactionArgument
     {
