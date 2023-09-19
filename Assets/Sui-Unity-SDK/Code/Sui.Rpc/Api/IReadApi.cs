@@ -41,8 +41,19 @@ namespace Sui.Rpc.Api
         /// Return a structured representation of Move function
         /// https://docs.sui.io/sui-jsonrpc#sui_getNormalizedMoveFunction
         /// </summary>
+        /// <param name="package">ObjectID / package name</param>
+        /// <param name="moduleName"></param>
+        /// <param name="functionName"></param>
         /// <returns></returns>
-        Task<RpcResult<NormalizedMoveFunctionResponse>> GetNormalizedMoveFunction();
+        Task<RpcResult<NormalizedMoveFunctionResponse>> GetNormalizedMoveFunction(string package, string moduleName, string functionName);
+
+        /// <summary>
+        /// TODO: Needs to be tested
+        /// </summary>
+        /// <param name="objectIds"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        Task<RpcResult<IEnumerable<SuiObjectResponse>>> GetObjectsAsync(IEnumerable<string> objectIds, ObjectDataOptions options);
 
         /// <summary>
         /// Return all Coin<`coin_type`> objects owned by an address.

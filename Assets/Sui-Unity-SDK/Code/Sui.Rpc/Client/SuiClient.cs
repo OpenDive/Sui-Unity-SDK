@@ -42,9 +42,10 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<BigInteger>("suix_getReferenceGasPrice");
         }
 
-        public async Task<RpcResult<NormalizedMoveFunctionResponse>> GetNormalizedMoveFunction()
+        public async Task<RpcResult<NormalizedMoveFunctionResponse>> GetNormalizedMoveFunction(string package, string moduleName, string functionName)
         {
-            return await SendRpcRequestAsync<NormalizedMoveFunctionResponse>("sui_getNormalizedMoveFunction");
+            return await SendRpcRequestAsync<NormalizedMoveFunctionResponse>("sui_getNormalizedMoveFunction",
+                ArgumentBuilder.BuildArguments(package, moduleName, functionName));
         }
 
         public async Task<RpcResult<CoinPage>> GetCoins(
@@ -58,6 +59,13 @@ namespace Sui.Rpc
         {
             return await SendRpcRequestAsync<TransactionBlockResponse>("sui_dryRunTransactionBlock",
                 ArgumentBuilder.BuildArguments(txBytesBase64));
+        }
+
+        public async Task<RpcResult<IEnumerable<SuiObjectResponse>>> GetObjectsAsync(IEnumerable<string> objectIds, ObjectDataOptions options)
+        {
+            //throw new System.NotImplementedException();
+            return await SendRpcRequestAsync<IEnumerable<SuiObjectResponse>>("sui_multiGetObjects",
+                ArgumentBuilder.BuildArguments(objectIds, options));
         }
     }
 }

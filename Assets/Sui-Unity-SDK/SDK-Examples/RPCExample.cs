@@ -13,7 +13,7 @@ namespace Sui.Rpc
         // Start is called before the first frame update
         void Start()
         {
-            //_ = TestClientTaskTwo();
+            //_ = GetProtocolConfig();
             //_ = GetReferenceGasPrice();
             //_ = GetCoins();
             _ = DryTransactionBlock();
@@ -30,7 +30,7 @@ namespace Sui.Rpc
             Debug.Log("IRVIN:::: " + rpcResult.Result);
         }
 
-        private async Task TestClientTaskTwo()
+        private async Task GetProtocolConfig()
         {
             string rpcUri = Constants.DevnetConnection.FULL_NODE;
             UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
@@ -55,6 +55,19 @@ namespace Sui.Rpc
 
             RpcResult<BigInteger> rpcResult = await client.GetReferenceGasPriceAsync();
             BigInteger result = rpcResult.Result;
+            Debug.Log("IRVIN:::: " + result);
+        }
+
+        private async Task GetNormalizedMoveTransaction()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+
+            RpcResult<NormalizedMoveFunctionResponse> rpcResult
+                = await client.GetNormalizedMoveFunction("", "", "");
+            NormalizedMoveFunctionResponse result = rpcResult.Result;
             Debug.Log("IRVIN:::: " + result);
         }
 
