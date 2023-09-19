@@ -1,0 +1,63 @@
+using System.Collections.Generic;
+using System.Numerics;
+using System.Threading.Tasks;
+using Sui.Rpc.Api;
+using Sui.Rpc.Models;
+
+namespace Sui.Rpc
+{
+    public class SuiClient : IReadApi
+    {
+        private UnityRpcClient _rpcClient;
+        public SuiClient(UnityRpcClient rpcClient)
+        {
+            _rpcClient = rpcClient;
+        }
+
+        private async Task<RpcResult<T>> SendRpcRequestAsync<T>(string method)
+        {
+            RpcRequest request = new RpcRequest(method, null);
+            return await _rpcClient.SendAsync<T>(request);
+        }
+
+        private async Task<RpcResult<T>> SendRpcRequestAsync<T>(string method, IEnumerable<object> @params)
+        {
+            //var request = BuildRequest<T>(method, @params);
+            RpcRequest request = new RpcRequest(method, @params);
+            return await _rpcClient.SendAsync<T>(request);
+        }
+
+        public async Task<RpcResult<BigInteger>> GetTotalTransactionBlocksAsync()
+        {
+            return await SendRpcRequestAsync<BigInteger>("sui_getTotalTransactionBlocks");
+        }
+
+        public async Task<RpcResult<ProtocolConfig>> GetProtocolConfigAsync()
+        {
+            return await SendRpcRequestAsync<ProtocolConfig>("sui_getProtocolConfig");
+        }
+
+        public async Task<RpcResult<BigInteger>> GetReferenceGasPriceAsync()
+        {
+            return await SendRpcRequestAsync<BigInteger>("suix_getReferenceGasPrice");
+        }
+
+        public async Task<RpcResult<NormalizedMoveFunctionResponse>> GetNormalizedMoveFunction()
+        {
+            return await SendRpcRequestAsync<NormalizedMoveFunctionResponse>("sui_getNormalizedMoveFunction");
+        }
+
+        public async Task<RpcResult<CoinPage>> GetCoins(
+            string owner, string coinType, string objectId, int limit)
+        {
+            return await SendRpcRequestAsync<CoinPage>("suix_getCoins",
+                ArgumentBuilder.BuildArguments(owner, coinType, objectId, limit));
+        }
+
+        public async Task<RpcResult<TransactionBlockResponse>> DryRunTransactionBlock(string txBytesBase64)
+        {
+            return await SendRpcRequestAsync<TransactionBlockResponse>("sui_dryRunTransactionBlock",
+                ArgumentBuilder.BuildArguments(txBytesBase64));
+        }
+    }
+}
