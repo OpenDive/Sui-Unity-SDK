@@ -80,7 +80,6 @@ namespace Sui.Types
     /// implement the interface to be passed as arguments (`CallArgs` in Sui TypeScript)
     /// </summary>
     ///
-
     public class ObjectCallArg : ICallArg
     {
         public IObjectRef ObjectArg { get; set; }

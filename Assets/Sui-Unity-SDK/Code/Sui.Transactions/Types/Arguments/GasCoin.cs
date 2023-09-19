@@ -10,15 +10,13 @@ namespace Sui.Transactions.Types.Arguments
     /// </summary>
     public class GasCoin : ITransactionArgument
     {
-        public ITransactionArgument.Type Kind {
-            get => ITransactionArgument.Type.GasCoin;
-        }
+        public Kind Kind => Kind.GasCoin;
 
         public GasCoin() { }
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128((uint)ITransactionArgument.Type.GasCoin); ;
+            serializer.SerializeU32AsUleb128((uint)Kind.GasCoin); ;
         }
     }
 }

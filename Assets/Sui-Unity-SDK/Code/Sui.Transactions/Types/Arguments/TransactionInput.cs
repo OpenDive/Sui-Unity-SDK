@@ -16,13 +16,13 @@ namespace Sui.Transactions.Types.Arguments
     /// </summary>
     public class TransactionInput : ITransactionArgument
     {
-        public ITransactionArgument.Type Kind => ITransactionArgument.Type.Input;
-
         /// <summary>
         /// The index of 
         /// </summary>
         public int Index;
         public ISerializable Value; // Only used to prepare the transaction
+
+        public Kind Kind => Kind.Input;
 
         /// <summary>
         /// Creates a TransactionInput object.
@@ -39,11 +39,11 @@ namespace Sui.Transactions.Types.Arguments
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128((uint)ITransactionArgument.Type.Input);
+            serializer.SerializeU32AsUleb128((uint)Kind.Input);
             serializer.SerializeU16(Convert.ToUInt16(Index));
 
             Serialization ser = new Serialization();
-            ser.SerializeU32AsUleb128((uint)ITransactionArgument.Type.Input);
+            ser.SerializeU32AsUleb128((uint)Kind.Input);
             ser.SerializeU16(Convert.ToUInt16(Index));
 
             Debug.Log("==== Input");

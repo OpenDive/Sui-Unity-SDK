@@ -1,13 +1,19 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using System.Threading.Tasks;
 using OpenDive.BCS;
 using Sui.Accounts;
+using Sui.Rpc;
+using Sui.Rpc.Models;
 using Sui.Transactions.Builder;
 using Sui.Transactions.Types;
 using Sui.Transactions.Types.Arguments;
 using Sui.Types;
 using UnityEngine;
+using Kind = Sui.Transactions.Types.Kind;
 
 namespace Sui.Transactions
 {
@@ -79,7 +85,7 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="price"></param>
         /// <returns></returns>
-        public TransactionBlock SetGasPrice(int price)
+        public TransactionBlock SetGasPrice(BigInteger price)
         {
             this.BlockDataBuilder.GasConfig.Price = price;
             return this;
@@ -112,7 +118,7 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="payments"></param>
         /// <returns></returns>
-        public TransactionBlock SetGasPayment(SuiObjectRef[] payments)
+        public TransactionBlock SetGasPayment(Sui.Types.SuiObjectRef[] payments)
         {
             this.BlockDataBuilder.GasConfig.Payment = payments;
             return this;
@@ -122,7 +128,7 @@ namespace Sui.Transactions
         /// Gets the programmable transaction block data.
         /// </summary>
         /// <returns></returns>
-        public TransactionBlockData GetBlockData()
+        public Builder.TransactionBlockData GetBlockData()
         {
             return this.BlockDataBuilder.Snapshot();
         }
@@ -139,22 +145,54 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="objectRef"></param>
         /// <returns></returns>
-        public TransactionBlockInput AddObjectInput(IObjectRef objectRef)
-        {
-            Type objectType = objectRef.GetType();
-            string newObjectId = "";
-            //if (objectType == typeof(SuiObjectRef))
-            //{
-            //    SuiObjectRef ImmObjectRef =  (SuiObjectRef)objectRef;
-            //    newObjectId = ImmObjectRef.ObjectId;
-            //}
-            //else
-            //{
-            //    SharedObjectRef sharedObjectRef = (SharedObjectRef)objectRef;
-            //    newObjectId = sharedObjectRef.ObjectId;
-            //}
+        //public TransactionBlockInput AddObjectInput(IObjectRef objectRef)
+        //{
+        //    Type objectType = objectRef.GetType();
+        //    string newObjectId = "";
+        //    //if (objectType == typeof(SuiObjectRef))
+        //    //{
+        //    //    SuiObjectRef ImmObjectRef =  (SuiObjectRef)objectRef;
+        //    //    newObjectId = ImmObjectRef.ObjectId;
+        //    //}
+        //    //else
+        //    //{
+        //    //    SharedObjectRef sharedObjectRef = (SharedObjectRef)objectRef;
+        //    //    newObjectId = sharedObjectRef.ObjectId;
+        //    //}
 
-            newObjectId = objectRef.ObjectId;
+        //    newObjectId = objectRef.ObjectId;
+
+        //    List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
+
+        //    // Search through the list of inputs in the transaction block
+        //    // for a block input that has the name id as a `newObjectId`
+        //    TransactionBlockInput inserted = inputs.Find((blockInput) =>
+        //    {
+        //        Type blockInputValueType = blockInput.Value.GetType();
+        //        if (blockInputValueType == typeof(ObjectCallArg))
+        //        {
+        //            ObjectCallArg _objCallArg = (ObjectCallArg)blockInput.Value;
+        //            IObjectRef _objectRef = _objCallArg.ObjectArg;
+
+        //            return newObjectId == _objectRef.ObjectId;
+        //        }
+        //        return false;
+        //    });
+
+        //    // If it it's already in the list of inputs, then don't insert it
+        //    if (inserted != null)
+        //        return inserted;
+
+        //    // Otherwise,
+        //    // create ObjectCallArg which will add the appropriate byte when serializing
+        //    // then add it to the list of inputs
+        //    ObjectCallArg newObjCallArg = new ObjectCallArg(objectRef);
+        //    return this.CreateAddInput(newObjCallArg);
+        //}
+
+        public TransactionBlockInput AddObjectInput(ObjectCallArg objectCallArg)
+        {
+            string newObjectId = objectCallArg.ObjectArg.ObjectId;
 
             List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
 
@@ -180,8 +218,7 @@ namespace Sui.Transactions
             // Otherwise,
             // create ObjectCallArg which will add the appropriate byte when serializing
             // then add it to the list of inputs
-            ObjectCallArg newObjCallArg = new ObjectCallArg(objectRef);
-            return this.CreateAddInput(newObjCallArg);
+            return this.CreateAddInput(objectCallArg);
         }
 
         /// <summary>
@@ -226,7 +263,7 @@ namespace Sui.Transactions
         public TransactionBlockInput AddObjectRefInput(string objectId,
             int version, string digest)
         {
-            SuiObjectRef objectRef = new SuiObjectRef(
+            Sui.Types.SuiObjectRef objectRef = new Sui.Types.SuiObjectRef(
                 objectId,
                 version,
                 digest
@@ -240,9 +277,10 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="objectRef"></param>
         /// <returns></returns>
-        public TransactionBlockInput AddObjectRefInput(SuiObjectRef objectRef)
+        public TransactionBlockInput AddObjectRefInput(Sui.Types.SuiObjectRef objectRef)
         {
-            return this.AddObjectInput(objectRef);
+            ObjectCallArg newObjCallArg = new ObjectCallArg(objectRef);
+            return this.AddObjectInput(newObjCallArg);
         }
 
         /// <summary>
@@ -274,7 +312,8 @@ namespace Sui.Transactions
         public TransactionBlockInput AddSharedObjectRefInput(
             SharedObjectRef sharedObjectRef)
         {
-            return this.AddObjectInput(sharedObjectRef);
+            ObjectCallArg objectCallArg = new ObjectCallArg(sharedObjectRef);
+            return this.AddObjectInput(objectCallArg);
         }
 
         /// <summary>
@@ -419,6 +458,150 @@ namespace Sui.Transactions
 
             //return this.BlockDataBuilder.Build(maxSizeBytes, onlyTransactionKind);
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Queries RPC for reference gas price, then sets the price to the
+        /// transaction builder.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public async Task PrepareGasPriceAsync(Block.BuilidOptions options)
+        {
+            if(options.OnlyTransactionKind || this.BlockDataBuilder.GasConfig.Price != null) {
+                return;
+            }
+
+            RpcResult<BigInteger> referenceGasPrice = await options.Client.GetReferenceGasPriceAsync();
+            BigInteger gasPrice = referenceGasPrice.Result;
+            this.SetGasPrice(gasPrice);
+        }
+
+        public async Task PrepareTransactions(Block.BuilidOptions options)
+        {
+            List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
+            ITransaction[] transactions = this.BlockDataBuilder.Transactions;
+
+            List<MoveCall> moveModulesToResolve = new List<MoveCall>();
+            List<ObjectToResolve> objectsToResolve = new List<ObjectToResolve>();
+
+            foreach(ITransaction transaction in transactions)
+            {
+                // Special case move call:
+                if(transaction.Kind == Kind.MoveCall)
+                {
+                    // Determine if any of the arguments require encoding.
+                    // - If they don't, then this is good to go.
+                    // - If they do, then we need to fetch the normalized move module.
+                    MoveCall moveTx = (MoveCall)transaction;
+                    ITransactionArgument[] arguments = moveTx.Arguments;
+
+                    bool needsResolution = arguments.Any(arg => {
+                        bool isInput = arg.Kind == Types.Arguments.Kind.Input;
+                        if(isInput)
+                        {
+                            TransactionBlockInput argInput = (TransactionBlockInput)arg;
+                            int index = argInput.Index;
+
+                            // Is it a PureCallArg or ObjectCallArg?
+                            bool isBuilderCallArg = inputs[index].Value.GetType() == typeof(ICallArg);
+                            return isBuilderCallArg;
+                        }
+                        return false;
+                    });
+
+                    if(needsResolution)
+                    {
+                        moveModulesToResolve.Add(moveTx);
+                    }
+                    continue;
+                }
+
+                // TODO: IRVIN, continue implementation
+            }
+
+            if(moveModulesToResolve.Count > 0)
+            {
+                foreach(MoveCall moveCall in moveModulesToResolve)
+                {
+                    string packageId = moveCall.Target.address.ToHex();
+                    string moduleName = moveCall.Target.module;
+                    string functionName = moveCall.Target.name;
+
+                    // RPC Call
+                    RpcResult<NormalizedMoveFunctionResponse> result
+                        = await options.Client.GetNormalizedMoveFunction(packageId, moduleName, functionName);
+                    NormalizedMoveFunctionResponse normalized = result.Result;
+
+                    // Entry functions can have a mutable reference to an instance of the TxContext
+                    // struct defined in the TxContext module as the last parameter. The caller of
+                    // the function does not need to pass it in as an argument.
+
+                    bool hasTxContext = normalized.Parameters.Count > 0 && IsTxContext(new SuiStructTag(normalized.Parameters.Last()));
+
+                    List<string> moduleParams = (List<string>)(hasTxContext ? normalized.Parameters.Take(normalized.Parameters.Count - 1) : normalized.Parameters);
+
+                    if(moduleParams.Count != moveCall.Arguments.Length)
+                    {
+                        throw new Exception("Incorrect number of arguments.");
+                    }
+
+                    for(int i = 0; i < moduleParams.Count; i++)
+                    {
+                        string param = moduleParams[i];
+
+                        ITransactionArgument arg = moveCall.Arguments[i];
+                        if(arg.Kind != Types.Arguments.Kind.Input) continue;
+
+                        TransactionBlockInput inputArg = (TransactionBlockInput)arg;
+
+                        TransactionBlockInput input = inputs[inputArg.Index];
+                        // Skip if the input is already resolved
+                        if (input.Value.GetType() == typeof(ICallArg)) continue;
+
+                        ICallArg inputValue = input.Value;
+                        // Check if param received from RPC is Pure serializable
+                        Serialization ser = new Serialization();
+                        input.Value.Serialize(ser);
+                        //input.Value = new Bytes(ser.GetBytes());
+                    }
+                }
+            }
+        }
+
+        private class ObjectToResolve
+        {
+            string id { get; set; }
+            TransactionBlockInput input { get; set; }
+            ISerializable? normalizedType; // SuiNo SuiMoveNormalizedType
+
+            ObjectToResolve(string id, TransactionBlockInput input, ISerializable? normalizedType)
+            {
+                this.id = id;
+                this.input = input;
+                this.normalizedType = normalizedType;
+            }
+        }
+
+        private string GetPureSeralizationTYpe(string normalizedType, ICallArg argVal)
+        {
+            bool isPure = Enum.IsDefined(typeof(AllowedTypes), normalizedType);
+
+            if (isPure)
+            {
+                string[] uTypes = new string[]{ "U8", "U16", "U32", "U64", "U128", "U256" };
+
+                if (uTypes.Contains(normalizedType))
+                {
+
+                }
+            }
+            throw new NotImplementedException();
+        }
+
+        private bool IsTxContext(SuiStructTag @struct)
+        {
+            return @struct.address.ToHex().Equals("0x2") && @struct.module.Equals("tx_context") && @struct.name.Equals("TxContext");
         }
 
         public IEnumerator PrepareCor(Block.BuilidOptions options)

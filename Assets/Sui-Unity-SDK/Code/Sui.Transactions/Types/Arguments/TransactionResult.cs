@@ -10,10 +10,7 @@ namespace Sui.Transactions.Types.Arguments
     /// </summary>
     public class TransactionResult : ITransactionArgument
     {
-        public ITransactionArgument.Type Kind
-        {
-            get => ITransactionArgument.Type.Result;
-        }
+        Kind ITransactionArgument.Kind => Kind.Result;
 
         public int Index { get; private set; }
 
@@ -29,11 +26,11 @@ namespace Sui.Transactions.Types.Arguments
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128((uint)ITransactionArgument.Type.Result);
+            serializer.SerializeU32AsUleb128((uint)Kind.Result);
             serializer.SerializeU16(Convert.ToUInt16(Index));
 
             Serialization ser = new Serialization();
-            ser.SerializeU32AsUleb128((uint)ITransactionArgument.Type.Result);
+            ser.SerializeU32AsUleb128((uint)Kind.Result);
             ser.SerializeU16(Convert.ToUInt16(Index));
             Debug.Log("==== Result "  + ser.GetBytes().ByteArrayToString());
         }

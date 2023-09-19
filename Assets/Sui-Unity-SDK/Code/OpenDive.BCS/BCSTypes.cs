@@ -1056,10 +1056,10 @@ namespace OpenDive.BCS
 
     public class SuiStructTag : ISerializableTag
     {
-        AccountAddress address;
-        string module;
-        string name;
-        ISerializableTag[] typeArgs;
+        public AccountAddress address;
+        public string module;
+        public string name;
+        public ISerializableTag[] typeArgs;
 
         public SuiStructTag(AccountAddress address, string module, string name, ISerializableTag[] typeArgs)
         {
@@ -1072,6 +1072,14 @@ namespace OpenDive.BCS
         public TypeTag Variant()
         {
             return TypeTag.STRUCT;
+        }
+
+        public SuiStructTag(string suiStructTag)
+        {
+            string[] split = suiStructTag.Split("::");
+            this.address = AccountAddress.FromHex(split[0]);
+            this.module = split[1];
+            this.name = split[2];
         }
 
         public void Serialize(Serialization serializer)

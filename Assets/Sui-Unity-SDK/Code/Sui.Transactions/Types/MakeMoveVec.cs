@@ -6,6 +6,8 @@ namespace Sui.Transactions.Types
 {
     public class MakeMoveVec : ITransaction
     {
+        public Kind Kind => Kind.MakeMoveVec;
+
         public IObjectRef[] Objects;
         public string Type;
 

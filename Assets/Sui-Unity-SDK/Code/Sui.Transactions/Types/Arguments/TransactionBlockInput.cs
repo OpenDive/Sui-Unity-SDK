@@ -27,11 +27,7 @@ namespace Sui.Transactions.Types.Arguments
         /// <summary>
         /// Transaction block input kind.
         /// </summary>
-        public ITransactionArgument.Type Kind {
-            get => ITransactionArgument.Type.Input;
-        }
-        //public ITransactionArgument.Type Kind => ITransactionArgument.Type.Input;
-
+        public Kind Kind => Kind.Input;
 
         /// <summary>
         /// The index within the programmable block transaction input list.
@@ -41,7 +37,7 @@ namespace Sui.Transactions.Types.Arguments
         /// <summary>
         /// The value of this transaction input.
         /// </summary>
-        public ICallArg Value { get; private set; } // An object ref, or a core type like address or u8
+        public ICallArg Value { get; set; } // An object ref, or a core type like address or u8
 
         /// <summary>
         /// Create a TransactionBlockInput object
@@ -56,7 +52,9 @@ namespace Sui.Transactions.Types.Arguments
 
         public void Serialize(Serialization serializer)
         {
-            throw new System.NotImplementedException();
+            serializer.SerializeU32AsUleb128((uint)Kind.Input);
+            //serializer.SerializeU16(Convert.ToUInt16(Index));
+
         }
     }
 }

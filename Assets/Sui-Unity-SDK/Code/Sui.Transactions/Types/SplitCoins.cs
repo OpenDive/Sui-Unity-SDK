@@ -27,7 +27,7 @@ namespace Sui.Transactions.Types
         /// <summary>
         /// SplitCoins transaction kind.
         /// </summary>
-        public ITransaction.Kind Kind { get => ITransaction.Kind.SplitCoins; }
+        public Kind Kind => Kind.SplitCoins;
 
         /// <summary>
         /// Coin transaction argument.

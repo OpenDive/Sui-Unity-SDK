@@ -23,6 +23,8 @@ namespace Sui.Transactions.Types
     /// </summary>
 public class TransferObjects : ITransaction
     {
+        public Kind Kind => Kind.TransferObjects;
+
         /// <summary>
         /// 
         /// </summary>
@@ -32,6 +34,7 @@ public class TransferObjects : ITransaction
         /// 
         /// </summary>
         public AccountAddress Address { get; set; }
+
         //public TransactionBlockInput Address { get; set; }
 
         /// <summary>

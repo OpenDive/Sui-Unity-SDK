@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.Types;
@@ -16,14 +17,14 @@ namespace Sui.Transactions.Builder
     public class GasConfig : ISerializable
     {
         public long? Budget { get; set; }    // BigInt
-        public long? Price { get; set; }     // BigInt
+        public BigInteger? Price { get; set; }     // BigInt
         public SuiObjectRef[] Payment { get; set; }
         public AccountAddress Owner { get; set; }
 
         public GasConfig(string budget = null, string price = null, SuiObjectRef[] payment = null, AccountAddress owner = null)
         {
             this.Budget = budget != null ? long.Parse(budget) : null;
-            this.Price = price != null ? long.Parse(price) : null;
+            this.Price = price != null ? BigInteger.Parse(price) : null;
             this.Payment = payment;
             this.Owner = owner;
         }

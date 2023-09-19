@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using Sui.Rpc;
 
 namespace Sui.Transactions.Block
 {
     public class BuilidOptions
     {
-        // public SuiClient Client { get; private set; } // TODO: Implement Sui Client
+         public SuiClient Client { get; private set; } // TODO: Implement Sui Client
         public bool OnlyTransactionKind { get; private set; }
         public ProtocolConfig ProtocolConfigArg { get; private set; }
         public Limits LimitsArg { get; private set; }

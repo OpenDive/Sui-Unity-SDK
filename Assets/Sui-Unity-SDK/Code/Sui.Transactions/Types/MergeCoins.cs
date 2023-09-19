@@ -5,6 +5,8 @@ namespace Sui.Transactions.Types
 {
     public class MergeCoins : ITransaction
     {
+        public Kind Kind => Kind.MergeCoins;
+
         IObjectRef Destination;
         IObjectRef[] Sources;
         public MergeCoins(IObjectRef destination, IObjectRef[] sources)

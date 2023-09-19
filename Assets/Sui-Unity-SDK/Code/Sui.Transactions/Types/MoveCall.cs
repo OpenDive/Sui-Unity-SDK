@@ -45,9 +45,9 @@ namespace Sui.Transactions.Types
     /// </summary>
     public class MoveCall : ITransaction, ISerializable
     {
-        public ITransaction.Kind Kind
+        public Kind Kind
         {
-            get => ITransaction.Kind.MoveCall;
+            get => Kind.MoveCall;
         }
 
         /// <summary>
@@ -77,7 +77,7 @@ namespace Sui.Transactions.Types
         /// <summary>
         /// The sequence of arguments
         /// </summary>
-        public ISerializable[] Arguments { get; private set; }
+        public ITransactionArgument[] Arguments { get; private set; }
 
         /// <summary>
         /// Create a MoveCall transaction

@@ -16,7 +16,7 @@ namespace Sui.Rpc.Models
         public List<TypeParameter> TypeParameters { get; set; }
 
         [JsonProperty("parameters")]
-        public List<string> Paramters { get; set; }
+        public List<string> Parameters { get; set; }
 
         [JsonProperty("return")]
         public List<string> Return { get; set; }

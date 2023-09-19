@@ -5,10 +5,13 @@ namespace Sui.Transactions.Types
 {
     public class Upgrade : ITransaction
     {
+        public Kind Kind => Kind.Upgrade;
+
         public Upgrade()
         {
             throw new NotImplementedException();
         }
+
         public void Serialize(Serialization serializer)
         {
             throw new System.NotImplementedException();

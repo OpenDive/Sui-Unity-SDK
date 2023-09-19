@@ -28,19 +28,17 @@ namespace Sui.Transactions.Types.Arguments
         public int Index;
         public int ResultIndex;
 
+        public Kind Kind => Kind.NestedResult;
+
         public NestedResult(int index, int resultIndex)
         {
             Index = index;
             ResultIndex = resultIndex;
         }
-        public ITransactionArgument.Type Kind
-        {
-            get => ITransactionArgument.Type.NestedResult;
-        }
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128((uint)ITransactionArgument.Type.NestedResult);
+            serializer.SerializeU32AsUleb128((uint)Kind.NestedResult);
             serializer.SerializeU16(Convert.ToUInt16(Index));
             serializer.SerializeU16(Convert.ToUInt16(ResultIndex));
         }
