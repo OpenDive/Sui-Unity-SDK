@@ -5,6 +5,8 @@ using Org.BouncyCastle.Crypto.Digests;
 using Sui.Cryptography;
 using Sui.Utilities;
 using static Sui.Cryptography.SignatureUtils;
+using Newtonsoft.Json;
+using Sui.Rpc.Models;
 
 namespace Sui.Accounts
 {
@@ -19,6 +21,7 @@ namespace Sui.Accounts
     /// and MultiSig with corresponding flag bytes of 0x00, 0x01, 0x02, and 0x03, respectively.
     /// https://docs.sui.io/learn/cryptography/sui-wallet-specs#address-format
     /// </summary>
+    [JsonConverter(typeof(SuiAddressJsonConverter))]
     public class AccountAddress : ISerializableTag
     {
         /// <summary>

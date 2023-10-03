@@ -537,7 +537,8 @@ namespace Sui.Transactions
                     // struct defined in the TxContext module as the last parameter. The caller of
                     // the function does not need to pass it in as an argument.
 
-                    bool hasTxContext = normalized.Parameters.Count > 0 && IsTxContext(new SuiStructTag(normalized.Parameters.Last()));
+                    bool hasTxContext = normalized.Parameters.Count > 0
+                        && IsTxContext(new SuiStructTag(normalized.Parameters.Last()));
 
                     List<string> moduleParams = (List<string>)(hasTxContext ? normalized.Parameters.Take(normalized.Parameters.Count - 1) : normalized.Parameters);
 
@@ -559,11 +560,13 @@ namespace Sui.Transactions
                         // Skip if the input is already resolved
                         if (input.Value.GetType() == typeof(ICallArg)) continue;
 
-                        ICallArg inputValue = input.Value;
-                        // Check if param received from RPC is Pure serializable
-                        Serialization ser = new Serialization();
-                        input.Value.Serialize(ser);
-                        //input.Value = new Bytes(ser.GetBytes());
+                        ISerializable inputValue = input.Value;
+
+                        //ICallArg inputValue = input.Value;
+                        //// Check if param received from RPC is Pure serializable
+                        //Serialization ser = new Serialization();
+                        //input.Value.Serialize(ser);
+                        ////input.Value = new Bytes(ser.GetBytes());
                     }
                 }
             }
@@ -575,7 +578,7 @@ namespace Sui.Transactions
             TransactionBlockInput input { get; set; }
             ISerializable? normalizedType; // SuiNo SuiMoveNormalizedType
 
-            ObjectToResolve(string id, TransactionBlockInput input, ISerializable? normalizedType)
+            ObjectToResolve(string id, TransactionBlockInput input, ISerializable? normalizedType) 
             {
                 this.id = id;
                 this.input = input;
@@ -583,19 +586,46 @@ namespace Sui.Transactions
             }
         }
 
-        private string GetPureSeralizationTYpe(string normalizedType, ICallArg argVal)
+        private string GetPureSeralizationTYpe(string normalizedType, ISerializable argVal)
         {
             bool isPure = Enum.IsDefined(typeof(AllowedTypes), normalizedType);
 
             if (isPure)
             {
-                string[] uTypes = new string[]{ "U8", "U16", "U32", "U64", "U128", "U256" };
+                //string[] uTypes = new string[] { "U8", "U16", "U32", "U64", "U128", "U256" };
+                //if (uTypes.Contains(normalizedType))
+                //{
+                //    Type argValType = argVal.GetType();
+                //}
+                //else if (normalizedType.Equals("Bool"))
+                //{
+                //    //bool booleanValue;
+                //    //if (bool.TryParse(pureArgVal.Value, out booleanValue))
+                //    //{
+                //    //    Console.WriteLine($"Conversion successful: '{value}' to {booleanValue}.\n");
+                //    //}
+                //    //else
+                //    //{
+                //    //    Console.WriteLine($"Conversion Failed: '{value}' to {booleanValue}.\n");
+                //    //}
+                //}
+                //else if (normalizedType.Equals("Address"))
+                //{
 
-                if (uTypes.Contains(normalizedType))
-                {
+                //}
+                return normalizedType.ToLower();
 
-                }
             }
+            else if(normalizedType.Equals("string"))
+            {
+                throw new Exception("Unknown pure normalized type: " + normalizedType);
+            }
+
+            if (normalizedType.Equals("Vector"))
+            {
+
+            }
+
             throw new NotImplementedException();
         }
 

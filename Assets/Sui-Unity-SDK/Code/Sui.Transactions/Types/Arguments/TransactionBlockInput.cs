@@ -37,14 +37,17 @@ namespace Sui.Transactions.Types.Arguments
         /// <summary>
         /// The value of this transaction input.
         /// </summary>
-        public ICallArg Value { get; set; } // An object ref, or a core type like address or u8
+        /// TODO: Look into this
+        //public ICallArg Value { get; set; } // An object ref, or a core type like address or u8
+        public ISerializable Value { get; set; } // An object ref, or a core type like address or u8
 
         /// <summary>
         /// Create a TransactionBlockInput object
         /// </summary>
         /// <param name="index"></param>
         /// <param name="value"></param>
-        public TransactionBlockInput(int index, ICallArg value)
+        //public TransactionBlockInput(int index, ICallArg value) TODO: Look into this
+        public TransactionBlockInput(int index, ISerializable value)
         {
             this.Index = index;
             this.Value = value;

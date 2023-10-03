@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using static Sui.Cryptography.SignatureUtils;
@@ -29,10 +28,10 @@ namespace Sui.Cryptography
         /// </summary>
         public enum IntentScope
         {
-            TransactionData = 0,
-            TransactionEffects = 1,
-            CheckpointSummary = 2,
-            PersonalMessage = 3,
+            TransactionData     = 0,
+            TransactionEffects  = 1,
+            CheckpointSummary   = 2,
+            PersonalMessage     = 3,
         }
 
         /// <summary>
@@ -40,7 +39,7 @@ namespace Sui.Cryptography
         /// </summary>
         public enum AppId
         {
-            Sui = 0,
+            Sui = 0
         }
 
         /// <summary>
@@ -48,7 +47,7 @@ namespace Sui.Cryptography
         /// </summary>
         public enum IntentVersion
         {
-            V0 = 0,
+            V0 = 0
         }
 
         /// <summary>
