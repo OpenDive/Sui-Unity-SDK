@@ -67,5 +67,10 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<IEnumerable<SuiObjectResponse>>("sui_multiGetObjects",
                 ArgumentBuilder.BuildArguments(objectIds, options));
         }
+
+        public async Task<RpcResult<string>> GetChainIdentifier()
+        {
+            return await SendRpcRequestAsync<string>("sui_getChainIdentifier");
+        }
     }
 }

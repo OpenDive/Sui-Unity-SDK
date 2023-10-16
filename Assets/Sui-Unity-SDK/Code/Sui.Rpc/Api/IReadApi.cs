@@ -74,5 +74,12 @@ namespace Sui.Rpc.Api
         /// <param name="txBytes"></param>
         /// <returns></returns>
         Task<RpcResult<TransactionBlockResponse>> DryRunTransactionBlock(string txBytesBase64);
+
+        /// <summary>
+        /// Return the first four bytes of the chain's genesis checkpoint digest.
+        /// https://docs.sui.io/sui-jsonrpc#sui_getChainIdentifier
+        /// </summary>
+        /// <returns></returns>
+        Task<RpcResult<string>> GetChainIdentifier();
     }
 }

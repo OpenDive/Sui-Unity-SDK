@@ -16,7 +16,18 @@ namespace Sui.Rpc
             //_ = GetProtocolConfig();
             //_ = GetReferenceGasPrice();
             //_ = GetCoins();
-            _ = DryTransactionBlock();
+            //_ = DryTransactionBlock();
+            _ = GetChainId();
+        }
+
+        private async Task GetChainId()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            RpcResult<string> rpcResult = await client.GetChainIdentifier();
+            Debug.Log($"MARCUS:::: {rpcResult.Result}");
         }
 
         private async Task TestClientTask()
