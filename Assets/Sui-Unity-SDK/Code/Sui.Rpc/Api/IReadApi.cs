@@ -81,5 +81,13 @@ namespace Sui.Rpc.Api
         /// </summary>
         /// <returns></returns>
         Task<RpcResult<string>> GetChainIdentifier();
+
+        /// <summary>
+        /// Return a checkpoint
+        /// https://docs.sui.io/sui-jsonrpc#sui_getCheckpoint
+        /// </summary>
+        /// <param name="id">Checkpoint identifier, can use either checkpoint digest, or checkpoint sequence number as input.</param>
+        /// <returns></returns>
+        Task<RpcResult<Checkpoint>> GetCheckpoint(string id);
     }
 }

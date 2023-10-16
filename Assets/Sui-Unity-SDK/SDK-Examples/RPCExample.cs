@@ -17,7 +17,18 @@ namespace Sui.Rpc
             //_ = GetReferenceGasPrice();
             //_ = GetCoins();
             //_ = DryTransactionBlock();
-            _ = GetChainId();
+            //_ = GetChainId();
+            _ = GetCheckpoint();
+        }
+
+        private async Task GetCheckpoint()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            RpcResult<Checkpoint> rpcResult = await client.GetCheckpoint("26178");
+            Debug.Log($"MARCUS:::: {rpcResult.Result}");
         }
 
         private async Task GetChainId()

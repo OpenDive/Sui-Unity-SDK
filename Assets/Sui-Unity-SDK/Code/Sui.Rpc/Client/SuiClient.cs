@@ -72,5 +72,11 @@ namespace Sui.Rpc
         {
             return await SendRpcRequestAsync<string>("sui_getChainIdentifier");
         }
+
+        public async Task<RpcResult<Checkpoint>> GetCheckpoint(string id)
+        {
+            return await SendRpcRequestAsync<Checkpoint>("sui_getCheckpoint",
+                ArgumentBuilder.BuildArguments(id));
+        }
     }
 }
