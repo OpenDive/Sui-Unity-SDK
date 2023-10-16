@@ -1,7 +1,7 @@
 ---
 name: RPC call and model
 about: This is a template for RPC calls and models
-title: "[RPC]  "
+title: "[RPC] "
 labels: data model, rpc
 assignees: ''
 
