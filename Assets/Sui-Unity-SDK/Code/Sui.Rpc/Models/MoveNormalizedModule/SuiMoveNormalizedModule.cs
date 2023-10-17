@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System.Numerics;
 using OpenDive.BCS;
+using Sui.Accounts;
 
 namespace Sui.Rpc.Models
 {
@@ -9,7 +10,7 @@ namespace Sui.Rpc.Models
     public class SuiMoveNormalizedModule
 	{
         [JsonProperty("address")]
-        public string Address { get; set; }
+        public AccountAddress Address { get; set; }
 
         [JsonProperty("name")]
         public string Name { get; set; }
@@ -78,6 +79,6 @@ namespace Sui.Rpc.Models
         // - Vector: SuiMoveNormalizedType
         // - SuiMoveNormalizedStructType
         [JsonProperty("type")]
-        public ISerializable[] Type { get; set; }
+        public ISerializable Type { get; set; }
     }
 }
