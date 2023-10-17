@@ -84,5 +84,10 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<Checkpoints>("sui_getCheckpoints",
                 ArgumentBuilder.BuildArguments(cursor, limit, descendingOrder));
         }
+
+        public async Task<RpcResult<string>> GetLatestCheckpointSequenceNumber()
+        {
+            return await SendRpcRequestAsync<string>("sui_getLatestCheckpointSequenceNumber");
+        }
     }
 }

@@ -99,5 +99,12 @@ namespace Sui.Rpc.Api
         /// <param name="descendingOrder">query result ordering, default to false (ascending order), oldest record first.</param>
         /// <returns></returns>
         Task<RpcResult<Checkpoints>> GetCheckpoints(string cursor, int limit, bool descendingOrder);
+
+        /// <summary>
+        /// Return the sequence number of the latest checkpoint that has been executed
+        /// https://docs.sui.io/sui-jsonrpc#sui_getLatestCheckpointSequenceNumber
+        /// </summary>
+        /// <returns></returns>
+        Task<RpcResult<string>> GetLatestCheckpointSequenceNumber();
     }
 }
