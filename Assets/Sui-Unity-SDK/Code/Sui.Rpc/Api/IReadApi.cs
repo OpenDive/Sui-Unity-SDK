@@ -106,5 +106,14 @@ namespace Sui.Rpc.Api
         /// </summary>
         /// <returns></returns>
         Task<RpcResult<string>> GetLatestCheckpointSequenceNumber();
+
+        /// <summary>
+        /// Return a structured representation of Move module
+        /// https://docs.sui.io/sui-jsonrpc#sui_getNormalizedMoveModule
+        /// </summary>
+        /// <param name="package"></param>
+        /// <param name="moduleName"></param>
+        /// <returns></returns>
+        Task<RpcResult<SuiMoveNormalizedModule>> GetNormalizedMoveModule(string package, string moduleName);
     }
 }

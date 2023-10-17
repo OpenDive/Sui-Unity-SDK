@@ -19,7 +19,20 @@ namespace Sui.Rpc
             //_ = DryTransactionBlock();
             //_ = GetChainId();
             //_ = GetCheckpoint();
-            _ = GetCheckpoints();
+            //_ = GetCheckpoints();
+            _ = GetNormalizedModule();
+        }
+
+        private async Task GetNormalizedModule()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            string package = "903bee129a0790ed375b9266ccd02c81b6eb00e6bc0b353ef0fe69c68e365065";
+            string moduleName = "bonk";
+            RpcResult<SuiMoveNormalizedModule> rpcResult = await client.GetNormalizedMoveModule(package, moduleName);
+            Debug.Log($"MARCUS:::: {rpcResult.Result}");
         }
 
         private async Task GetCheckpoints()

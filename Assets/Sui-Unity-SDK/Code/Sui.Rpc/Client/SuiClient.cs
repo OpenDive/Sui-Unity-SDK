@@ -89,5 +89,11 @@ namespace Sui.Rpc
         {
             return await SendRpcRequestAsync<string>("sui_getLatestCheckpointSequenceNumber");
         }
+
+        public async Task<RpcResult<SuiMoveNormalizedModule>> GetNormalizedMoveModule(string package, string moduleName)
+        {
+            return await SendRpcRequestAsync<SuiMoveNormalizedModule>("sui_getNormalizedMoveModule",
+                ArgumentBuilder.BuildArguments(package, moduleName));
+        }
     }
 }
