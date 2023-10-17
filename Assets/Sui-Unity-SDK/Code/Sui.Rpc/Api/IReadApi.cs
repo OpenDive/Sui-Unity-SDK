@@ -89,5 +89,15 @@ namespace Sui.Rpc.Api
         /// <param name="id">Checkpoint identifier, can use either checkpoint digest, or checkpoint sequence number as input.</param>
         /// <returns></returns>
         Task<RpcResult<Checkpoint>> GetCheckpoint(string id);
+
+        /// <summary>
+        /// Return paginated list of checkpoints
+        /// https://docs.sui.io/sui-jsonrpc#sui_getCheckpoints
+        /// </summary>
+        /// <param name="cursor">An optional paging cursor. If provided, the query will start from the next item after the specified cursor. Default to start from the first item if not specified.</param>
+        /// <param name="limit">Maximum item returned per page, default to [QUERY_MAX_RESULT_LIMIT_CHECKPOINTS] if not specified.</param>
+        /// <param name="descendingOrder">query result ordering, default to false (ascending order), oldest record first.</param>
+        /// <returns></returns>
+        Task<RpcResult<Checkpoints>> GetCheckpoints(string cursor, int limit, bool descendingOrder);
     }
 }

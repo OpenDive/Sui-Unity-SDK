@@ -54,4 +54,17 @@ namespace Sui.Rpc.Models
         [JsonProperty("epochCommitments")]
         public ISerializable EpochCommitments { get; set; }
     }
+
+    [JsonObject]
+    public class Checkpoints
+    {
+        [JsonProperty("data")]
+        public Checkpoint[] Data { get; set; }
+
+        [JsonProperty("nextCursor")]
+        public string NextCursor { get; set; }
+
+        [JsonProperty("hasNextPage")]
+        public bool HasNextPage { get; set; }
+    }
 }

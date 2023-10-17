@@ -78,5 +78,11 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<Checkpoint>("sui_getCheckpoint",
                 ArgumentBuilder.BuildArguments(id));
         }
+
+        public async Task<RpcResult<Checkpoints>> GetCheckpoints(string cursor, int limit, bool descendingOrder)
+        {
+            return await SendRpcRequestAsync<Checkpoints>("sui_getCheckpoints",
+                ArgumentBuilder.BuildArguments(cursor, limit, descendingOrder));
+        }
     }
 }
