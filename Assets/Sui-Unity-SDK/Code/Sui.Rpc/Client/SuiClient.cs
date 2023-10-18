@@ -1,12 +1,15 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using OpenDive.BCS;
+using Sui.Accounts;
 using Sui.Rpc.Api;
 using Sui.Rpc.Models;
+using UnityEngine;
 
 namespace Sui.Rpc
 {
-    public class SuiClient : IReadApi
+    public class SuiClient : IReadApi, ICoinQueryApi
     {
         private UnityRpcClient _rpcClient;
         public SuiClient(UnityRpcClient rpcClient)
@@ -67,5 +70,22 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<IEnumerable<SuiObjectResponse>>("sui_multiGetObjects",
                 ArgumentBuilder.BuildArguments(objectIds, options));
         }
+
+        public async Task<RpcResult<Balance>> GetBalanceAsync(AccountAddress owner, SuiStructTag coinType = null)
+        {
+            Debug.Log("METHOD: " + Methods.suix_getBalance.ToString());
+            return await SendRpcRequestAsync<Balance>("suix_getBalance",
+                ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString()));
+        }
+
+        //public async Task<RpcResult<Balance>> GetBalanceAsync(AccountAddress owner, SuiStructTag coinType = null)
+        //{
+        //    // TODO: Handle when SuiStructTag is null and hence we can't do ToString
+        //    Debug.Log("METHOD: " + Methods.suix_getBalance.ToString());
+        //    //return await SendRpcRequestAsync<Balance>(Methods.suix_getBalance.ToString(),
+
+        //    return await SendRpcRequestAsync<Balance>("suix_getBalance",
+        //        ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString()));
+        //}
     }
 }
