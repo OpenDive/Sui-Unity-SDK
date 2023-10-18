@@ -115,5 +115,13 @@ namespace Sui.Rpc.Api
         /// <param name="moduleName"></param>
         /// <returns></returns>
         Task<RpcResult<SuiMoveNormalizedModule>> GetNormalizedMoveModule(string package, string moduleName);
+
+        /// <summary>
+        /// Return transaction events.
+        /// https://docs.sui.io/sui-jsonrpc#sui_getEvents
+        /// </summary>
+        /// <param name="transactionDigest">The event query criteria.</param>
+        /// <returns></returns>
+        Task<RpcResult<Models.Event[]>> GetEvents(string transactionDigest);
     }
 }

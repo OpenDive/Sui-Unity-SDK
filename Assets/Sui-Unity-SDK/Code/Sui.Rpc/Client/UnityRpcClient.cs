@@ -122,13 +122,13 @@ namespace Sui.Rpc
             {
                 result.RawRpcResponse = downloadHandler.text;
                 Debug.Log($"Result: {result.RawRpcResponse}");
-                var res = JsonConvert.DeserializeObject<T>(
-                    downloadHandler.text, converter
+                var res = JsonConvert.DeserializeObject<RpcValidResponse<T>>(
+                    result.RawRpcResponse, converter
                 );
 
-                if (res != null)
+                if (res.Result != null)
                 {
-                    result.Result = res;
+                    result.Result = res.Result;
                     result.IsSuccess = true;
                 }
                 else
@@ -147,11 +147,43 @@ namespace Sui.Rpc
                     }
                 }
             }
-            catch (JsonException e)
+            catch
             {
-                Debug.LogError($"HandleResult Caught exception: {e.Message}");
-                result.IsSuccess = false;
-                result.ErrorMessage = "Unable to parse json.";
+                try
+                {
+                    result.RawRpcResponse = downloadHandler.text;
+                    Debug.Log($"Result: {result.RawRpcResponse}");
+                    var res = JsonConvert.DeserializeObject<T>(
+                        result.RawRpcResponse, converter
+                    );
+
+                    if (res != null)
+                    {
+                        result.Result = res;
+                        result.IsSuccess = true;
+                    }
+                    else
+                    {
+                        var errorRes = JsonConvert.DeserializeObject<RpcErrorResponse>(
+                            result.RawRpcResponse
+                        );
+
+                        if (errorRes != null)
+                        {
+                            result.ErrorMessage = errorRes.Error.Message;
+                        }
+                        else
+                        {
+                            result.ErrorMessage = "Something wrong happened.";
+                        }
+                    }
+                }
+                catch (JsonException e)
+                {
+                    Debug.LogError($"HandleResult Caught exception: {e.Message}");
+                    result.IsSuccess = false;
+                    result.ErrorMessage = "Unable to parse json.";
+                }
             }
 
             return result;

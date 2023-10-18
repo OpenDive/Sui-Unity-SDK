@@ -26,7 +26,7 @@ namespace Sui.Rpc.Models
         [JsonProperty("networkTotalTransactions")]
         public BigInteger NetworkTotalTransactions { get; set; }
 
-        [JsonProperty("previousDigest", Required = Required.AllowNull)]
+        [JsonProperty("previousDigest", Required = Required.Default)]
         public string PreviousDigest { get; set; }
 
         [JsonProperty("sequenceNumber")]

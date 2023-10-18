@@ -102,5 +102,11 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<SuiMoveNormalizedModule>("sui_getNormalizedMoveModule",
                 ArgumentBuilder.BuildArguments(package, moduleName), new NormalizedMoveModuleConverter());
         }
+
+        public async Task<RpcResult<Models.Event[]>> GetEvents(string transactionDigest)
+        {
+            return await SendRpcRequestAsync<Models.Event[]>("sui_getEvents",
+                ArgumentBuilder.BuildArguments(transactionDigest));
+        }
     }
 }

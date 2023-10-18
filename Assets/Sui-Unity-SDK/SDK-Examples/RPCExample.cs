@@ -20,7 +20,20 @@ namespace Sui.Rpc
             //_ = GetChainId();
             //_ = GetCheckpoint();
             //_ = GetCheckpoints();
-            _ = GetNormalizedModule();
+            //_ = GetNormalizedModule();
+            _ = GetEvents();
+        }
+
+        private async Task GetEvents()
+        {
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            string transactionDigest = "32vzvgcc49wJiRxmf9RkLNq4Cu21NYUeKfBq3v4oLyZT";
+            RpcResult<Models.Event[]> rpcResult = await client.GetEvents(transactionDigest);
+            string json = JsonConvert.SerializeObject(rpcResult.Result, Formatting.Indented);
+            Debug.Log($"MARCUS:::: {json}");
         }
 
         private async Task GetNormalizedModule()
@@ -53,7 +66,8 @@ namespace Sui.Rpc
 
             SuiClient client = new SuiClient(rpcClient);
             RpcResult<Checkpoint> rpcResult = await client.GetCheckpoint("26178");
-            Debug.Log($"MARCUS:::: {rpcResult.Result}");
+            string json = JsonConvert.SerializeObject(rpcResult.Result, Formatting.Indented);
+            Debug.Log($"MARCUS:::: {json}");
         }
 
         private async Task GetChainId()
