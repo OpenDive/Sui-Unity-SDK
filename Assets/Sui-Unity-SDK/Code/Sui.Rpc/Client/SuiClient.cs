@@ -96,14 +96,12 @@ namespace Sui.Rpc
             );
         }
 
-        //public async Task<RpcResult<Balance>> GetBalanceAsync(AccountAddress owner, SuiStructTag coinType = null)
-        //{
-        //    // TODO: Handle when SuiStructTag is null and hence we can't do ToString
-        //    Debug.Log("METHOD: " + Methods.suix_getBalance.ToString());
-        //    //return await SendRpcRequestAsync<Balance>(Methods.suix_getBalance.ToString(),
-
-        //    return await SendRpcRequestAsync<Balance>("suix_getBalance",
-        //        ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString()));
-        //}
+        public async Task<RpcResult<TotalSupply>> GetTotalSupply(SuiStructTag coinType)
+        {
+            return await SendRpcRequestAsync<TotalSupply>(
+                Methods.suix_getTotalSupply.ToString(),
+                ArgumentBuilder.BuildArguments(coinType.ToString())
+            );
+        }
     }
 }

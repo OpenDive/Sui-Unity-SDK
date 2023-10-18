@@ -26,6 +26,13 @@ namespace Sui.Rpc.Api
         /// </summary>
         /// <param name="coin_type"></param>
         /// <returns></returns>
-        Task<RpcResult<CoinMetadata>> GetCoinMetadata(SuiStructTag coin_type);
+        Task<RpcResult<CoinMetadata>> GetCoinMetadata(SuiStructTag coinType);
+
+        /// <summary>
+        /// https://docs.sui.io/sui-jsonrpc#suix_getTotalSupply
+        /// </summary>
+        /// <param name="coin_type"></param>
+        /// <returns></returns>
+        Task<RpcResult<TotalSupply>> GetTotalSupply(SuiStructTag coinType);
     }
 }

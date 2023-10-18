@@ -22,8 +22,9 @@ namespace Sui.Rpc
             //_ = GetCoins();
             //_ = DryTransactionBlock();
             //_ = TestGetBalance();
-            _ = TestGetAllBalances();
+            //_ = TestGetAllBalances();
             //_ = TestGetCoinMetadata();
+            _ = TestGetTotalSupply();
         }
 
         private async Task TestClientTask()
@@ -180,6 +181,27 @@ namespace Sui.Rpc
             Debug.Log("IRVIN:::: " + coinMetadata);
             Debug.Log("IRVIN:::: " + coinMetadata.Id.ToHex());
             Debug.Log("IRVIN:::: " + coinMetadata.Description);
+            Debug.Log("IRVIN:::: END REQUESET");
+        }
+
+        private async Task TestGetTotalSupply()
+        {
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            Debug.Log("IRVIN:::: START REQUEST");
+            // TODO: Discuss and identify a Coin we can test this on. Currently using Sui returns 0.
+            SuiStructTag structTag = SuiStructTag.FromStr("0x2::sui::SUI");
+            //SuiStructTag structTag = SuiStructTag.FromStr("0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::usdc::USDC");
+            Debug.Log("IRVIN:::: ~~~~~" + structTag.ToString());
+
+            RpcResult<TotalSupply> rpcResult = await client.GetTotalSupply(
+                structTag
+            );
+
+            TotalSupply totalSupply = rpcResult.Result;
+            Debug.Log("IRVIN:::: " + totalSupply.Value);
             Debug.Log("IRVIN:::: END REQUESET");
         }
 
