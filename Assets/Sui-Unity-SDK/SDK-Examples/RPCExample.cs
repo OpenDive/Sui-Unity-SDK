@@ -153,6 +153,7 @@ namespace Sui.Rpc
 
             CoinMetadata coinMetadata = rpcResult.Result;
             Debug.Log("IRVIN:::: " + coinMetadata);
+            Debug.Log("IRVIN:::: " + coinMetadata.Id.ToHex());
             Debug.Log("IRVIN:::: " + coinMetadata.Description);
             Debug.Log("IRVIN:::: END REQUESET");
         }
