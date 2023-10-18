@@ -129,8 +129,9 @@ namespace Sui.Rpc
                 address,
                 structTag
             );
-
-            //Debug.Log("IRVIN:::: " + rpcResult.Result);
+            Balance balance = rpcResult.Result;
+            Debug.Log("IRVIN:::: " + balance);
+            Debug.Log("IRVIN:::: " + balance.cointType.ToString());
             Debug.Log("IRVIN:::: END REQUESET");
         }
 
