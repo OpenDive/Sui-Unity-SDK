@@ -1163,7 +1163,8 @@ namespace OpenDive.BCS
         {
             string value = string.Format(
                 "{0}::{1}::{2}",
-                this.address.ToString(),
+                //this.address.ToString(), // TODO: Look into this. RPC takes Hex version, but Sui follows base58
+                this.address.ToHex(),
                 this.module.ToString(),
                 this.name.ToString()
             );
@@ -1192,8 +1193,11 @@ namespace OpenDive.BCS
                 else
                     name += letter;
             }
-
+            Debug.Log("NAME: " + name);
             string[] split = name.Split("::");
+            Debug.Log("addr: " + split[0]);
+            Debug.Log("module: " + split[1]);
+            Debug.Log("name: " + split[2]);
             return new SuiStructTag(
                 AccountAddress.FromHex(split[0]),
                 split[1],
