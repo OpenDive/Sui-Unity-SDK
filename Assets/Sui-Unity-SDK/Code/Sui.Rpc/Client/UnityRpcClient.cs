@@ -54,6 +54,7 @@ namespace Sui.Rpc
 
                     RpcResult<T> result = HandleResult<T>(request.downloadHandler);
                     result.RawRpcRequest = requestJson;
+                    Debug.Log("AFTER HANDLE RESULT");
                     return result;
                 }
             }
@@ -82,14 +83,16 @@ namespace Sui.Rpc
                 var res = JsonConvert.DeserializeObject<RpcValidResponse<T>>(
                     result.RawRpcResponse
                 );
-
+                Debug.Log($"~~~Result: {result.RawRpcResponse}");
                 if (res.Result != null)
                 {
+                    Debug.Log("RESULT is NOT NULL");
                     result.Result = res.Result;
                     result.IsSuccess = true;
                 }
                 else
                 {
+                    Debug.Log("RESULT is NULL");
                     var errorRes = JsonConvert.DeserializeObject<RpcErrorResponse>(
                         result.RawRpcResponse
                     );

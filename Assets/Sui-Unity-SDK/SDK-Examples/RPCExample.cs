@@ -22,7 +22,8 @@ namespace Sui.Rpc
             //_ = GetCoins();
             //_ = DryTransactionBlock();
             //_ = TestGetBalance();
-            _ = TestGetCoinMetadata();
+            _ = TestGetAllBalances();
+            //_ = TestGetCoinMetadata();
         }
 
         private async Task TestClientTask()
@@ -133,6 +134,30 @@ namespace Sui.Rpc
             Balance balance = rpcResult.Result;
             Debug.Log("IRVIN:::: " + balance);
             Debug.Log("IRVIN:::: " + balance.cointType.ToString());
+            Debug.Log("IRVIN:::: END REQUESET");
+        }
+
+        private async Task TestGetAllBalances()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            Debug.Log("IRVIN:::: START REQUEST");
+            //Debug.Log("METHOD: " + Methods.suix_getBalance.ToString());
+            AccountAddress address = AccountAddress.FromHex("0x4ebe7aef1474166caa8ce2dd5bd77d72469780c91b18eb424d6211510bc2ca98");
+            //AccountAddress address = AccountAddress.FromHex("0xa2da382c0a40261c675cc73c20f3d94e2ee7d8ebcf21e9dab5012600d745cb0f");
+            Debug.Log("IRVIN:::: " + address.ToHex());
+            RpcResult<IEnumerable<Balance>> rpcResult = await client.GetAllBalancesAsync(
+                address
+            );
+            Debug.Log("IRVIN:::: ~~~");
+            List<Balance> balances = (List<Balance>)rpcResult.Result;
+            foreach (Balance balance in balances)
+            {
+                Debug.Log("IRVIN ====:::: " + balance.cointType);
+            }
+            
             Debug.Log("IRVIN:::: END REQUESET");
         }
 

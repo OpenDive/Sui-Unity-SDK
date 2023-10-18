@@ -80,6 +80,14 @@ namespace Sui.Rpc
                 ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString()));
         }
 
+        public async Task<RpcResult<IEnumerable<Balance>>> GetAllBalancesAsync(AccountAddress owner)
+        {
+            return await SendRpcRequestAsync<IEnumerable<Balance>>(
+                Methods.suix_getAllBalances.ToString(),
+                ArgumentBuilder.BuildArguments(owner.ToHex())
+            );
+        }
+
         public async Task<RpcResult<CoinMetadata>> GetCoinMetadata(SuiStructTag coinType)
         {
             return await SendRpcRequestAsync<CoinMetadata>(
