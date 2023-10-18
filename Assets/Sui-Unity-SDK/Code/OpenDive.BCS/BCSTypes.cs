@@ -1196,10 +1196,11 @@ namespace OpenDive.BCS
             Debug.Log("NAME: " + name);
             string[] split = name.Split("::");
             Debug.Log("addr: " + split[0]);
+            AccountAddress address = AccountAddress.FromHex(split[0]);
             Debug.Log("module: " + split[1]);
             Debug.Log("name: " + split[2]);
             return new SuiStructTag(
-                AccountAddress.FromHex(split[0]),
+                address,
                 split[1],
                 split[2],
                 new ISerializableTag[] { }

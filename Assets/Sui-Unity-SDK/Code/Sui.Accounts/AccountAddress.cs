@@ -7,6 +7,7 @@ using Sui.Utilities;
 using static Sui.Cryptography.SignatureUtils;
 using Newtonsoft.Json;
 using Sui.Rpc.Models;
+using UnityEngine;
 
 namespace Sui.Accounts
 {
@@ -24,6 +25,8 @@ namespace Sui.Accounts
     [JsonConverter(typeof(SuiAddressJsonConverter))]
     public class AccountAddress : ISerializableTag
     {
+        public static readonly int OldLength = 20;
+
         /// <summary>
         /// Length of a Sui account address.
         /// </summary>
@@ -98,9 +101,12 @@ namespace Sui.Accounts
         /// <param name="address"></param>
         public AccountAddress(byte[] suiAddress)
         {
-            if (suiAddress.Length != Length)
+            Debug.Log("IRVIN::: bytes length: " + suiAddress.Length);
+            if (suiAddress.Length != OldLength && suiAddress.Length != Length)
                 throw new ArgumentException("Invalid address length. It must be " + Length + " bytes");
+            Debug.Log("IRVIN::: bytes assigning ...");
             AddressBytes = suiAddress;
+            Debug.Log("IRVIN::: bytes assigning ...");
         }
 
         /// <summary>
@@ -134,9 +140,12 @@ namespace Sui.Accounts
 
             string addr = suiAddress;
 
-            if (suiAddress[0..2].Equals("0x")) { addr = suiAddress[2..]; }
+            if (suiAddress[0..2].Equals("0x")) {
+                addr = suiAddress[2..];
+            }
 
-            if (addr.Length < AccountAddress.Length * 2)
+            // TODO: Document that Sui changed their address length from 20 to 32, hence some old addresses are shorter
+            if (addr.Length < AccountAddress.OldLength * 2)
             {
                 string pad = new string('0', AccountAddress.Length * 2 - addr.Length);
                 addr = pad + addr;
@@ -164,7 +173,8 @@ namespace Sui.Accounts
         {
             string addressHex = BitConverter.ToString(AddressBytes); // Turn into hexadecimal string
             addressHex = addressHex.Replace("-", "").ToLowerInvariant(); // Remove '-' characters from hex string hash
-            addressHex = "0x" + addressHex.Substring(0, 64);
+            //addressHex = "0x" + addressHex.Substring(0, 64); // TODO: Address this
+            addressHex = "0x" + addressHex.Substring(0, AddressBytes.Length * 2); // It is assumed that at this stage the bytes are valid, so it's either 20 or 32 bytes
             return addressHex;
         }
 
