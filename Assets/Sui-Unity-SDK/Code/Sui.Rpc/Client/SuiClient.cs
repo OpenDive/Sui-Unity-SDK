@@ -6,6 +6,8 @@ using Sui.Accounts;
 using Sui.Rpc.Api;
 using Sui.Rpc.Models;
 using UnityEngine;
+using static PlasticGui.WorkspaceWindow.Items.ExpandedTreeNode;
+using static UnityEngine.UI.GridLayoutGroup;
 
 namespace Sui.Rpc
 {
@@ -74,8 +76,16 @@ namespace Sui.Rpc
         public async Task<RpcResult<Balance>> GetBalanceAsync(AccountAddress owner, SuiStructTag coinType = null)
         {
             Debug.Log("METHOD: " + Methods.suix_getBalance.ToString());
-            return await SendRpcRequestAsync<Balance>("suix_getBalance",
+            return await SendRpcRequestAsync<Balance>(Methods.suix_getBalance.ToString(),
                 ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString()));
+        }
+
+        public async Task<RpcResult<CoinMetadata>> GetCoinMetadata(SuiStructTag coinType)
+        {
+            return await SendRpcRequestAsync<CoinMetadata>(
+                Methods.suix_getCoinMetadata.ToString(),
+                ArgumentBuilder.BuildArguments(coinType.ToString())
+            );
         }
 
         //public async Task<RpcResult<Balance>> GetBalanceAsync(AccountAddress owner, SuiStructTag coinType = null)

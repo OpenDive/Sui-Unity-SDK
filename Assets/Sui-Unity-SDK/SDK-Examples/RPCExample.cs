@@ -21,7 +21,8 @@ namespace Sui.Rpc
             //_ = GetReferenceGasPrice();
             //_ = GetCoins();
             //_ = DryTransactionBlock();
-            _ = TestGetBalance();
+            //_ = TestGetBalance();
+            _ = TestGetCoinMetadata();
         }
 
         private async Task TestClientTask()
@@ -132,6 +133,27 @@ namespace Sui.Rpc
             Balance balance = rpcResult.Result;
             Debug.Log("IRVIN:::: " + balance);
             Debug.Log("IRVIN:::: " + balance.cointType.ToString());
+            Debug.Log("IRVIN:::: END REQUESET");
+        }
+
+        private async Task TestGetCoinMetadata()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            Debug.Log("IRVIN:::: START REQUEST");
+            //SuiStructTag structTag = SuiStructTag.FromStr("0x168da5bf1f48dafc111b0a488fa454aca95e0b5e::usdc::USDC");
+            SuiStructTag structTag = SuiStructTag.FromStr("0x2::sui::SUI");
+            Debug.Log("IRVIN:::: ~~~~~" + structTag.ToString());
+
+            RpcResult<CoinMetadata> rpcResult = await client.GetCoinMetadata(
+                structTag
+            );
+
+            CoinMetadata coinMetadata = rpcResult.Result;
+            Debug.Log("IRVIN:::: " + coinMetadata);
+            Debug.Log("IRVIN:::: " + coinMetadata.Description);
             Debug.Log("IRVIN:::: END REQUESET");
         }
 
