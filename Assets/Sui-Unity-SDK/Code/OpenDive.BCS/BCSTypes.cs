@@ -82,7 +82,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class TagSequence : ISerializable
     {
-        ISerializableTag[] serializableTags;
+        public ISerializableTag[] serializableTags;
 
         public TagSequence(ISerializableTag[] serializableTags)
         {
@@ -158,7 +158,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class Sequence : ISerializable
     {
-        ISerializable[] values;
+        public ISerializable[] values;
 
         public int Length
         {
@@ -248,7 +248,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class BytesSequence : ISerializable
     {
-        byte[][] values;
+        public byte[][] values;
 
         public BytesSequence(byte[][] values)
         {
@@ -456,7 +456,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class Bytes : ISerializable
     {
-        byte[] values;
+        public byte[] values;
 
         public Bytes(byte[] values)
         {
@@ -508,7 +508,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class Bool : ISerializableTag
     {
-        bool value;
+        public bool value;
 
         public Bool(bool value)
         {
@@ -565,7 +565,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class U8 : ISerializableTag
     {
-        byte value;
+        public byte value;
 
         public U8(byte value)
         {
@@ -735,7 +735,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class U64 : ISerializableTag
     {
-        ulong value;
+        public ulong value;
 
         public U64(ulong value)
         {
@@ -793,7 +793,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class U128 : ISerializableTag
     {
-        BigInteger value;
+        public BigInteger value;
 
         public U128(BigInteger value)
         {
@@ -851,7 +851,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class U256 : ISerializableTag
     {
-        BigInteger value;
+        public BigInteger value;
 
         public U256(BigInteger value)
         {
@@ -909,10 +909,10 @@ namespace OpenDive.BCS
     /// </summary>
     public class StructTag : ISerializableTag
     {
-        AccountAddress address;
-        string module;
-        string name;
-        ISerializableTag[] typeArgs;
+        public AccountAddress address;
+        public string module;
+        public string name;
+        public ISerializableTag[] typeArgs;
 
         public StructTag(AccountAddress address, string module, string name, ISerializableTag[] typeArgs)
         {

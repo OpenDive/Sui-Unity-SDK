@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System.Numerics;
 using OpenDive.BCS;
 using Sui.Accounts;
+using System;
 
 namespace Sui.Rpc.Models
 {
@@ -10,7 +11,7 @@ namespace Sui.Rpc.Models
     public class SuiMoveNormalizedModule
 	{
         [JsonProperty("address")]
-        public AccountAddress Address { get; set; }
+        public string Address { get; set; }
 
         [JsonProperty("name")]
         public string Name { get; set; }
@@ -68,6 +69,18 @@ namespace Sui.Rpc.Models
     [JsonObject]
     public class SuiMoveNormalizedField
     {
+        public SuiMoveNormalizedField(string name, ISuiMoveNormalizedType type)
+        {
+            this.Name = name;
+            this.Type = type;
+        }
+
+        public SuiMoveNormalizedField()
+        {
+            this.Name = null;
+            this.Type = null;
+        }
+
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -79,6 +92,68 @@ namespace Sui.Rpc.Models
         // - Vector: SuiMoveNormalizedType
         // - SuiMoveNormalizedStructType
         [JsonProperty("type")]
-        public ISerializable Type { get; set; }
+        public ISuiMoveNormalizedType Type { get; set; }
+    }
+
+    public interface ISuiMoveNormalizedType { }
+
+    public class SuiMoveNormalizedTypeString: ISuiMoveNormalizedType
+    {
+        public string Value { get; set; }
+
+        public SuiMoveNormalizedTypeString(string Value)
+        {
+            this.Value = Value;
+        }
+    }
+
+    public class SuiMoveNormalziedTypeParameterType : ISuiMoveNormalizedType
+    {
+        public U16 TypeParameter { get; set; }
+
+        public SuiMoveNormalziedTypeParameterType(U16 TypeParameter)
+        {
+            this.TypeParameter = TypeParameter;
+        }
+    }
+
+    public class SuiMoveNormalziedTypeStruct: ISuiMoveNormalizedType
+    {
+        public StructTag Struct { get; set; }
+
+        public SuiMoveNormalziedTypeStruct(StructTag Struct)
+        {
+            this.Struct = Struct;
+        }
+    }
+
+    public class SuiMoveNormalizedTypeVector: ISuiMoveNormalizedType
+    {
+        public ISuiMoveNormalizedType Vector { get; set; }
+
+        public SuiMoveNormalizedTypeVector(ISuiMoveNormalizedType Vector)
+        {
+            this.Vector = Vector;
+        }
+    }
+
+    public class SuiMoveNormalizedTypeReference : ISuiMoveNormalizedType
+    {
+        public ISuiMoveNormalizedType Reference { get; set; }
+
+        public SuiMoveNormalizedTypeReference(ISuiMoveNormalizedType Reference)
+        {
+            this.Reference = Reference;
+        }
+    }
+
+    public class SuiMoveNormalizedTypeMutableReference: ISuiMoveNormalizedType
+    {
+        public ISuiMoveNormalizedType MutableReference { get; set; }
+
+        public SuiMoveNormalizedTypeMutableReference(ISuiMoveNormalizedType MutableReference)
+        {
+            this.MutableReference = MutableReference;
+        }
     }
 }

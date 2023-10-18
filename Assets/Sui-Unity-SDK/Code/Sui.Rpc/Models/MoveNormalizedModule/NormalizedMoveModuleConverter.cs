@@ -1,13 +1,137 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
-using System.Numerics;
 using OpenDive.BCS;
 using System;
 using Newtonsoft.Json.Linq;
 using Sui.Accounts;
+using UnityEditor;
+using UnityEngine;
+using UnityEditor.Build.Player;
 
 namespace Sui.Rpc.Models
 {
+    public class NormalizedTypeConverter : JsonConverter
+    {
+        public static string NormalizeSuiAddress(string address)
+        {
+            // If the address starts with "0x", remove it
+            if (address.StartsWith("0x"))
+            {
+                address = address.Substring(2);
+            }
+
+            // Ensure the address is not longer than the desired length
+            if (address.Length > 64)
+            {
+                throw new ArgumentException("The address is longer than expected.");
+            }
+
+            // Pad the address with zeros to reach 64 characters
+            string paddedAddress = address.PadLeft(64, '0');
+
+            // Return the normalized address with "0x" prefix
+            return "0x" + paddedAddress;
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(ISuiMoveNormalizedType);
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType != JsonToken.StartObject)
+            {
+                JObject typeObj = JObject.Load(reader);
+                ISuiMoveNormalizedType normalziedType;
+
+                // NOTE: This only iterates once because there's only one object. For example,
+                // below there's only one "Struct" object hence the property is only "Struct"
+                // "type":{
+                //    "Struct":{
+                //      "address":"0x2",
+                //      "module":"object",
+                //      "name":"UID",
+                //      "typeArguments":[
+                //      ]
+                //    }
+                // }
+                foreach (JProperty typeObjectProp in typeObj.Properties())
+                {
+                    string objType = typeObjectProp.Name;
+                    switch (objType)
+                    {
+                        // SuiMoveNormalizedTypeParameterType
+                        case "TypeParameter":
+                            JObject typeParameterTypeObj = (JObject)typeObj[objType];
+                            U16 typeParameter = new U16((uint)typeParameterTypeObj["TypeParameter"]);
+                            normalziedType = new SuiMoveNormalziedTypeParameterType(typeParameter);
+                            break;
+                        // SuiMoveNormalizedReferenceType
+                        case "Reference":
+                            JObject referenceTypeObj = (JObject)typeObj[objType];
+                            var referenceTypeConverter = new NormalizedTypeConverter();
+                            ISuiMoveNormalizedType reference = referenceTypeConverter.ReadJson(
+                                referenceTypeObj.CreateReader(),
+                                typeof(ISuiMoveNormalizedType),
+                                null,
+                                serializer
+                            ) as ISuiMoveNormalizedType;
+                            normalziedType = new SuiMoveNormalizedTypeReference(reference);
+                            break;
+                        // SuiMoveNormalizedMutableReferenceType
+                        case "MutableReference":
+                            JObject mutableReferenceTypeObj = (JObject)typeObj[objType];
+                            var mutableReferenceTypeConverter = new NormalizedTypeConverter();
+                            ISuiMoveNormalizedType mutableReference = mutableReferenceTypeConverter.ReadJson(
+                                mutableReferenceTypeObj.CreateReader(),
+                                typeof(ISuiMoveNormalizedType),
+                                null,
+                                serializer
+                            ) as ISuiMoveNormalizedType;
+                            normalziedType = new SuiMoveNormalizedTypeReference(mutableReference);
+                            break;
+                        // SuiMoveNormalizedVectorType
+                        case "Vector":
+                            JObject vectorTypeObj = (JObject)typeObj[objType];
+                            var vectorTypeConverter = new NormalizedTypeConverter();
+                            ISuiMoveNormalizedType vector = vectorTypeConverter.ReadJson(
+                                vectorTypeObj.CreateReader(),
+                                typeof(ISuiMoveNormalizedType),
+                                null,
+                                serializer
+                            ) as ISuiMoveNormalizedType;
+                            normalziedType = new SuiMoveNormalizedTypeReference(vector);
+                            break;
+                        // SuiMoveNormalizedStructType
+                        case "Struct":
+                            JObject structTypeObj = (JObject)typeObj[objType];
+                            AccountAddress address = AccountAddress.FromHex(NormalizeSuiAddress((string)structTypeObj["address"]));
+                            string module = (string)structTypeObj["module"];
+                            string name = (string)structTypeObj["name"];
+                            StructTag structTag = new StructTag(address, module, name, Array.Empty<ISerializableTag>()); // TODO: Marcus: Implement Type Arguemtns parameter
+                            normalziedType = new SuiMoveNormalziedTypeStruct(structTag);
+                            break;
+                        // String
+                        default:
+                            throw new NotImplementedException();
+                    }
+
+                    if (normalziedType != null)
+                    {
+                        return normalziedType;
+                    }
+                }
+            }
+            throw new NotImplementedException();
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class NormalizedMoveModuleConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)
@@ -20,82 +144,74 @@ namespace Sui.Rpc.Models
             if(reader.TokenType == JsonToken.StartObject)
             {
                 JObject item = JObject.Load(reader);
-
+                item = (JObject)item["result"];
+                Debug.Log(item.ToString());
                 SuiMoveNormalizedModule moveModule = new SuiMoveNormalizedModule();
                 Dictionary<string, SuiMoveNormalizedStruct> Structs = new Dictionary<string, SuiMoveNormalizedStruct>();
 
                 if (item["fileFormatVersion"] != null) moveModule.FileFormatVersion = (int)item["fileFormatVersion"];
-                if (item["address"] != null) moveModule.Address = AccountAddress.FromHex((string)item["address"]);
+                if (item["address"] != null) moveModule.Address = (string)item["address"];
                 if (item["name"] != null) moveModule.Name = (string)item["name"];
-                // TODO: Check if this works. We might need to additional logic to convert array to list of Objects
-                Friends[] Friends = JsonConvert.DeserializeObject<Friends[]>((string)item["friends"]);
-                moveModule.Friends = Friends;
+                List<Friends> Friends = new List<Friends>();
 
-                //JArray structArr = (JArray)item["structs"];
-                //foreach(JObject structObj in structArr)
-                //{
+                if (item["friends"] != null)
+                {
+                    foreach (JProperty friend in item["friends"])
+                        Friends.Add(JsonConvert.DeserializeObject<Friends>((string)friend));
+                }
 
-                //}
+                moveModule.Friends = Friends.ToArray();
 
                 JObject structs = (JObject)item["structs"];
-                //List<JProperty> props = (List<JProperty>)strutcs.Properties();
                 foreach (JProperty property in structs.Properties())
                 {
-                    //Console.WriteLine(property.Name + " - " + property.Value);
                     JObject structObj = (JObject)structs[property.Name];
                     SuiMoveNormalizedStruct normalizedStruct = new SuiMoveNormalizedStruct();
-                    SuiMoveAbilitySet abilitySet = JsonConvert.DeserializeObject<SuiMoveAbilitySet> ((string)structObj["abilities"]);
-                    // TODO: Revisit typeParams and use corresponding implementation
-                    SuiMoveStructTypeParameter typeParams = JsonConvert.DeserializeObject<SuiMoveStructTypeParameter>((string)structObj["typeParameters"]);
+                    SuiMoveAbilitySet abilitySet = JsonConvert.DeserializeObject<SuiMoveAbilitySet> (structObj["abilities"].ToString());
+                    List<SuiMoveStructTypeParameter> typeParams = new List<SuiMoveStructTypeParameter>();
 
+                    if (structObj["TypeParameters"] != null)
+                    {
+                        foreach (JProperty type in structObj["TypeParameters"])
+                            typeParams.Add(JsonConvert.DeserializeObject<SuiMoveStructTypeParameter>((string)type));
+                    }
                     JArray fields = (JArray)structObj["fields"];
                     List<SuiMoveNormalizedField> normalizedFields = new List<SuiMoveNormalizedField>();
-
                     foreach (JObject field in fields)
                     {
                         SuiMoveNormalizedField normalizedField = new SuiMoveNormalizedField();
                         normalizedField.Name = (string)field["name"];
 
-                        // TODO: Add logic to check type and create corresponding object
-                        JObject typeObj = (JObject)field["type"];
-
-                        // NOTE: This only iterates once because there's only one object. For example,
-                        // below there's only one "Struct" object hence the property is only "Struct"
-                        // "type":{
-                        //    "Struct":{
-                        //      "address":"0x2",
-                        //      "module":"object",
-                        //      "name":"UID",
-                        //      "typeArguments":[
-                        //      ]
-                        //    }
-                        // }
-                        foreach (JProperty typeObjectProp in typeObj.Properties())
+                        // TODO: Marcus: Move this into the NormalizeType Converter, this object shouldn't have to know how to decode NormalizedTypeStrings itself.
+                        try
                         {
-                            string objType = typeObjectProp.Name;
-                            switch (objType)
-                            {
-                                case "Struct":
-                                    //StructTag structTag = JsonConvert.DeserializeObject<StructTag>((string)typeObj[objType]);
-                                    JObject structTypeObj = (JObject)typeObj[objType];
-                                    AccountAddress address = AccountAddress.FromHex((string)structTypeObj["address"]);
-                                    string module = (string)structTypeObj["module"];
-                                    string name = (string)structTypeObj["name"];
-                                    ISerializableTag[] typeArgs = new ISerializableTag[0]; // TODO: Implement this
-                                    StructTag structTag = new StructTag(address, module, name, typeArgs);
+                            JObject typeObj = (JObject)field["type"];
 
-                                    normalizedField.Type = structTag;
-                                    break;
-                                case "lorem":
-                                    break;
-                                default:
-                                    break;
-                            }
-                                
+                            NormalizedTypeConverter typeConverter = new NormalizedTypeConverter();
+                            normalizedField.Type = typeConverter.ReadJson(
+                                typeObj.CreateReader(),
+                                typeof(ISuiMoveNormalizedType),
+                                null,
+                                serializer
+                            ) as ISuiMoveNormalizedType;
 
+                            normalizedFields.Add(normalizedField);
+                        }
+                        catch
+                        {
+                            string type = (string)field["type"];
+                            normalizedField.Type = new SuiMoveNormalizedTypeString(type);
+                            normalizedFields.Add(normalizedField);
                         }
                     }
+                    normalizedStruct.Abilities = abilitySet;
+                    normalizedStruct.TypeParameters = typeParams.ToArray();
+                    normalizedStruct.Fields = normalizedFields.ToArray();
+                    Structs[property.Name] = normalizedStruct;
                 }
+
+                moveModule.Structs = Structs;
+                return moveModule;
             }
             throw new NotImplementedException();
         }

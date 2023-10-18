@@ -32,7 +32,8 @@ namespace Sui.Rpc
             string package = "903bee129a0790ed375b9266ccd02c81b6eb00e6bc0b353ef0fe69c68e365065";
             string moduleName = "bonk";
             RpcResult<SuiMoveNormalizedModule> rpcResult = await client.GetNormalizedMoveModule(package, moduleName);
-            Debug.Log($"MARCUS:::: {rpcResult.Result}");
+            string json = JsonConvert.SerializeObject(rpcResult.Result, Formatting.Indented);
+            Debug.Log($"MARCUS:::: {json}");
         }
 
         private async Task GetCheckpoints()

@@ -2,7 +2,9 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using Sui.Rpc.Api;
+using Newtonsoft.Json;
 using Sui.Rpc.Models;
+using NBitcoin.RPC;
 
 namespace Sui.Rpc
 {
@@ -20,9 +22,14 @@ namespace Sui.Rpc
             return await _rpcClient.SendAsync<T>(request);
         }
 
+        public async Task<RpcResult<T>> SendRpcRequestAsync<T>(string method, IEnumerable<object> @params, JsonConverter converter)
+        {
+            RpcRequest request = new RpcRequest(method, @params);
+            return await _rpcClient.HandleAsync<T>(request, converter);
+        }
+
         private async Task<RpcResult<T>> SendRpcRequestAsync<T>(string method, IEnumerable<object> @params)
         {
-            //var request = BuildRequest<T>(method, @params);
             RpcRequest request = new RpcRequest(method, @params);
             return await _rpcClient.SendAsync<T>(request);
         }
@@ -93,7 +100,7 @@ namespace Sui.Rpc
         public async Task<RpcResult<SuiMoveNormalizedModule>> GetNormalizedMoveModule(string package, string moduleName)
         {
             return await SendRpcRequestAsync<SuiMoveNormalizedModule>("sui_getNormalizedMoveModule",
-                ArgumentBuilder.BuildArguments(package, moduleName));
+                ArgumentBuilder.BuildArguments(package, moduleName), new NormalizedMoveModuleConverter());
         }
     }
 }
