@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using OpenDive.BCS;
+using Sui.Accounts;
+using Sui.Rpc.Api;
 using Sui.Rpc.Models;
 using UnityEngine;
 
@@ -10,13 +13,15 @@ namespace Sui.Rpc
 {
     public class RPCExample : MonoBehaviour
     {
+
         // Start is called before the first frame update
         void Start()
         {
             //_ = GetProtocolConfig();
             //_ = GetReferenceGasPrice();
             //_ = GetCoins();
-            _ = DryTransactionBlock();
+            //_ = DryTransactionBlock();
+            _ = TestGetBalance();
         }
 
         private async Task TestClientTask()
@@ -105,6 +110,28 @@ namespace Sui.Rpc
             Debug.Log("IRVIN:::: " + result.ObjectChanges[0].Digest);
             string json = JsonConvert.SerializeObject(result);
             Debug.Log("GET TransactionBlockResponse :::: " + json);
+        }
+
+        private async Task TestGetBalance()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            Debug.Log("IRVIN:::: START REQUEST" );
+            //Debug.Log("METHOD: " + Methods.suix_getBalance.ToString());
+            AccountAddress address = AccountAddress.FromHex("0x4ebe7aef1474166caa8ce2dd5bd77d72469780c91b18eb424d6211510bc2ca98");
+            Debug.Log("IRVIN:::: " + address.ToHex());
+            SuiStructTag structTag = SuiStructTag.FromStr("0x2::sui::SUI");
+            Debug.Log("IRVIN:::: " + structTag.ToString());
+
+            RpcResult<Balance> rpcResult = await client.GetBalanceAsync(
+                address,
+                structTag
+            );
+
+            //Debug.Log("IRVIN:::: " + rpcResult.Result);
+            Debug.Log("IRVIN:::: END REQUESET");
         }
 
         // Update is called once per frame
