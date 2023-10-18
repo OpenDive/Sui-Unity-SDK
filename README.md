@@ -51,3 +51,4 @@ It has the following properties
 
 It has the following functions:
 - To hex, which returns the address as a hex string
+

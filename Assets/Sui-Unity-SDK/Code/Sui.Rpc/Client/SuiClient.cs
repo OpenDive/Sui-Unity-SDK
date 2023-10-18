@@ -1,14 +1,17 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using OpenDive.BCS;
+using Sui.Accounts;
 using Sui.Rpc.Api;
-using Newtonsoft.Json;
 using Sui.Rpc.Models;
-using NBitcoin.RPC;
+using UnityEngine;
+using static PlasticGui.WorkspaceWindow.Items.ExpandedTreeNode;
+using static UnityEngine.UI.GridLayoutGroup;
 
 namespace Sui.Rpc
 {
-    public class SuiClient : IReadApi
+    public class SuiClient : IReadApi, ICoinQueryApi
     {
         private UnityRpcClient _rpcClient;
         public SuiClient(UnityRpcClient rpcClient)
@@ -22,14 +25,9 @@ namespace Sui.Rpc
             return await _rpcClient.SendAsync<T>(request);
         }
 
-        public async Task<RpcResult<T>> SendRpcRequestAsync<T>(string method, IEnumerable<object> @params, JsonConverter converter)
-        {
-            RpcRequest request = new RpcRequest(method, @params);
-            return await _rpcClient.HandleAsync<T>(request, converter);
-        }
-
         private async Task<RpcResult<T>> SendRpcRequestAsync<T>(string method, IEnumerable<object> @params)
         {
+            //var request = BuildRequest<T>(method, @params);
             RpcRequest request = new RpcRequest(method, @params);
             return await _rpcClient.SendAsync<T>(request);
         }
@@ -75,38 +73,29 @@ namespace Sui.Rpc
                 ArgumentBuilder.BuildArguments(objectIds, options));
         }
 
-        public async Task<RpcResult<string>> GetChainIdentifier()
+        public async Task<RpcResult<Balance>> GetBalanceAsync(AccountAddress owner, SuiStructTag coinType = null)
         {
-            return await SendRpcRequestAsync<string>("sui_getChainIdentifier");
+            Debug.Log("METHOD: " + Methods.suix_getBalance.ToString());
+            return await SendRpcRequestAsync<Balance>(Methods.suix_getBalance.ToString(),
+                ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString()));
         }
 
-        public async Task<RpcResult<Checkpoint>> GetCheckpoint(string id)
+        public async Task<RpcResult<CoinMetadata>> GetCoinMetadata(SuiStructTag coinType)
         {
-            return await SendRpcRequestAsync<Checkpoint>("sui_getCheckpoint",
-                ArgumentBuilder.BuildArguments(id));
+            return await SendRpcRequestAsync<CoinMetadata>(
+                Methods.suix_getCoinMetadata.ToString(),
+                ArgumentBuilder.BuildArguments(coinType.ToString())
+            );
         }
 
-        public async Task<RpcResult<Checkpoints>> GetCheckpoints(string cursor, int limit, bool descendingOrder)
-        {
-            return await SendRpcRequestAsync<Checkpoints>("sui_getCheckpoints",
-                ArgumentBuilder.BuildArguments(cursor, limit, descendingOrder));
-        }
+        //public async Task<RpcResult<Balance>> GetBalanceAsync(AccountAddress owner, SuiStructTag coinType = null)
+        //{
+        //    // TODO: Handle when SuiStructTag is null and hence we can't do ToString
+        //    Debug.Log("METHOD: " + Methods.suix_getBalance.ToString());
+        //    //return await SendRpcRequestAsync<Balance>(Methods.suix_getBalance.ToString(),
 
-        public async Task<RpcResult<string>> GetLatestCheckpointSequenceNumber()
-        {
-            return await SendRpcRequestAsync<string>("sui_getLatestCheckpointSequenceNumber");
-        }
-
-        public async Task<RpcResult<SuiMoveNormalizedModule>> GetNormalizedMoveModule(string package, string moduleName)
-        {
-            return await SendRpcRequestAsync<SuiMoveNormalizedModule>("sui_getNormalizedMoveModule",
-                ArgumentBuilder.BuildArguments(package, moduleName), new NormalizedMoveModuleConverter());
-        }
-
-        public async Task<RpcResult<Models.Event[]>> GetEvents(string transactionDigest)
-        {
-            return await SendRpcRequestAsync<Models.Event[]>("sui_getEvents",
-                ArgumentBuilder.BuildArguments(transactionDigest));
-        }
+        //    return await SendRpcRequestAsync<Balance>("suix_getBalance",
+        //        ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString()));
+        //}
     }
 }
