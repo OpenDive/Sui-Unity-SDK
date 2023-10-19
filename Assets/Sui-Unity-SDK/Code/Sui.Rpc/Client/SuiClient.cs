@@ -125,5 +125,13 @@ namespace Sui.Rpc
                 Methods.suix_getValidatorsApy.ToString()
             );
         }
+
+        public async Task<RpcResult<Stakes>> GetStakes(AccountAddress owner)
+        {
+            return await SendRpcRequestAsync<Stakes>(
+                Methods.suix_getStakes.ToString(),
+                ArgumentBuilder.BuildArguments(owner.ToHex())
+            );
+        }
     }
 }

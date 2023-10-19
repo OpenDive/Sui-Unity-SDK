@@ -27,7 +27,8 @@ namespace Sui.Rpc
             //_ = TestGetTotalSupply();
             //_ = TestGetCommitteeInfo();
             //_ = TestGetCommitteeInfoNoParams();
-            _ = TestGetValidatorsApy();
+            //_ = TestGetValidatorsApy();
+            _ = TestGetStakes();
         }
 
         private async Task TestClientTask()
@@ -258,6 +259,27 @@ namespace Sui.Rpc
             {
                 Debug.Log("IRVIN:::: " + validatorApy.Address.ToHex());
                 Debug.Log("IRVIN:::: " + validatorApy.Apy);
+            }
+            Debug.Log("IRVIN:::: END REQUESET");
+        }
+
+        private async Task TestGetStakes()
+        {
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            Debug.Log("IRVIN:::: START REQUEST");
+
+            AccountAddress owner = AccountAddress.FromHex("0x8a0907e2990baebbbb87c12821db4845b034e45f937167e68b4925ac3465335a");
+            RpcResult<Stakes> rpcResult = await client.GetStakes(owner);
+
+            Stakes stakes = rpcResult.Result;
+            Debug.Log("IRVIN:::: " + stakes.StakingPool);
+            foreach (Stakes.Stake stake in stakes.StakeList)
+            {
+                Debug.Log("IRVIN:::: " + stake.StakedSuiId.ToHex());
+                Debug.Log("IRVIN:::: " + stake.status);
             }
             Debug.Log("IRVIN:::: END REQUESET");
         }

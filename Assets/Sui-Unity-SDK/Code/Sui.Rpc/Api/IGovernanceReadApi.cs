@@ -21,5 +21,12 @@ namespace Sui.Rpc.Api
         /// </summary>
         /// <returns></returns>
         public Task<RpcResult<ValidatorsApy>> GetValidatorsApy();
+
+        /// <summary>
+        /// Return all [DelegatedStake].
+        /// https://docs.sui.io/sui-jsonrpc#suix_getStakes
+        /// </summary>
+        /// <returns></returns>
+        public Task<RpcResult<Stakes>> GetStakes(AccountAddress owner);
     }
 }
