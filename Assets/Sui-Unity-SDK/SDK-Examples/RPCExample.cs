@@ -29,7 +29,8 @@ namespace Sui.Rpc
             //_ = TestGetCommitteeInfo();
             //_ = TestGetCommitteeInfoNoParams();
             //_ = TestGetValidatorsApy();
-            _ = TestGetStakes();
+            //_ = TestGetStakes();
+            _ = TestGetStakesById();
         }
 
         private async Task TestClientTask()
@@ -278,6 +279,38 @@ namespace Sui.Rpc
             List<Stakes> stakes = (List<Stakes>)rpcResult.Result;
             Debug.Log("IRVIN:::: " + stakes.Count);
             foreach(Stakes stakePool in stakes)
+            {
+                Debug.Log("IRVIN:::: VALIDATOR: " + stakePool.ValidatorAddress.ToHex());
+                foreach (Stakes.Stake stake in stakePool.StakeList)
+                {
+                    Debug.Log("IRVIN:::: StakedSuiId: " + stake.StakedSuiId.ToHex());
+                    Debug.Log("IRVIN:::: " + stake.status);
+                }
+                Debug.Log("IRVIN:::: END REQUESET");
+            }
+        }
+
+        private async Task TestGetStakesById()
+        {
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            Debug.Log("IRVIN:::: START REQUEST");
+
+            AccountAddress owner = AccountAddress.FromHex("0x8a0907e2990baebbbb87c12821db4845b034e45f937167e68b4925ac3465335a");
+
+            List<AccountAddress> stakedSuiId = new List<AccountAddress>() {
+                AccountAddress.FromHex("0x752b18cfa44304b9bbb110ba95211556f79c62bc2916c23eeb7aea959f5b3463"),
+                AccountAddress.FromHex("0x8ecaf4b95b3c82c712d3ddb22e7da88d2286c4653f3753a86b6f7a216a3ca518"),
+                AccountAddress.FromHex("0xe0e042d1aacba8abf6f32be86c555a08eae5ba2b7972c912f7451104391e8c57")
+            };
+
+            RpcResult<IEnumerable<Stakes>> rpcResult = await client.GetStakesByIds(stakedSuiId);
+
+            List<Stakes> stakes = (List<Stakes>)rpcResult.Result;
+            Debug.Log("IRVIN:::: " + stakes.Count);
+            foreach (Stakes stakePool in stakes)
             {
                 Debug.Log("IRVIN:::: VALIDATOR: " + stakePool.ValidatorAddress.ToHex());
                 foreach (Stakes.Stake stake in stakePool.StakeList)

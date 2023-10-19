@@ -28,5 +28,12 @@ namespace Sui.Rpc.Api
         /// </summary>
         /// <returns></returns>
         public Task<RpcResult<IEnumerable<Stakes>>> GetStakes(AccountAddress owner);
+
+        /// <summary>
+        /// Return one or more [DelegatedStake]. If a Stake was withdrawn its status will be Unstaked.
+        /// https://docs.sui.io/sui-jsonrpc#suix_getStakesByIds
+        /// </summary>
+        /// <returns></returns>
+        public Task<RpcResult<IEnumerable<Stakes>>> GetStakesByIds(List<AccountAddress> stakedSuiId);
     }
 }

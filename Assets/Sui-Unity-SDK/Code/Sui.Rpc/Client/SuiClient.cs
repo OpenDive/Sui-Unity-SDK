@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using OpenDive.BCS;
@@ -132,6 +133,16 @@ namespace Sui.Rpc
                 Methods.suix_getStakes.ToString(),
                 ArgumentBuilder.BuildArguments(owner.ToHex())
             );
+        }
+
+        public async Task<RpcResult<IEnumerable<Stakes>>> GetStakesByIds(List<AccountAddress> stakedSuiId)
+        {
+            return await SendRpcRequestAsync<IEnumerable<Stakes>>(
+                Methods.suix_getStakes.ToString(),
+                ArgumentBuilder.BuildArguments(stakedSuiId.Select(x => x.ToHex()).ToArray())
+            );
+
+            throw new System.NotImplementedException();
         }
     }
 }
