@@ -11,7 +11,7 @@ using static UnityEngine.UI.GridLayoutGroup;
 
 namespace Sui.Rpc
 {
-    public class SuiClient : IReadApi, ICoinQueryApi
+    public class SuiClient : IReadApi, ICoinQueryApi, IGovernanceReadApi
     {
         private UnityRpcClient _rpcClient;
         public SuiClient(UnityRpcClient rpcClient)
@@ -101,6 +101,21 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<TotalSupply>(
                 Methods.suix_getTotalSupply.ToString(),
                 ArgumentBuilder.BuildArguments(coinType.ToString())
+            );
+        }
+
+        public async Task<RpcResult<CommitteeInfo>> GetCommitteeInfo(BigInteger epoch)
+        {
+            return await SendRpcRequestAsync<CommitteeInfo>(
+                Methods.suix_getCommitteeInfo.ToString(),
+                ArgumentBuilder.BuildArguments(epoch.ToString())
+            );
+        }
+
+        public async Task<RpcResult<CommitteeInfo>> GetCommitteeInfo()
+        {
+            return await SendRpcRequestAsync<CommitteeInfo>(
+                Methods.suix_getCommitteeInfo.ToString()
             );
         }
     }

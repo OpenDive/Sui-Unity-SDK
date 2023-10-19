@@ -24,7 +24,9 @@ namespace Sui.Rpc
             //_ = TestGetBalance();
             //_ = TestGetAllBalances();
             //_ = TestGetCoinMetadata();
-            _ = TestGetTotalSupply();
+            //_ = TestGetTotalSupply();
+            //_ = TestGetCommitteeInfo();
+            _ = TestGetCommitteeInfoNoParams();
         }
 
         private async Task TestClientTask()
@@ -202,6 +204,40 @@ namespace Sui.Rpc
 
             TotalSupply totalSupply = rpcResult.Result;
             Debug.Log("IRVIN:::: " + totalSupply.Value);
+            Debug.Log("IRVIN:::: END REQUESET");
+        }
+
+        private async Task TestGetCommitteeInfo()
+        {
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            Debug.Log("IRVIN:::: START REQUEST");
+
+            RpcResult<CommitteeInfo> rpcResult = await client.GetCommitteeInfo(
+                1000000000
+            );
+
+            CommitteeInfo committeeInfo = rpcResult.Result;
+            Debug.Log("IRVIN:::: " + committeeInfo.Epoch);
+            Debug.Log("IRVIN:::: " + committeeInfo.Validators[0].AuthorityName);
+            Debug.Log("IRVIN:::: END REQUESET");
+        }
+
+        private async Task TestGetCommitteeInfoNoParams()
+        {
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            Debug.Log("IRVIN:::: START REQUEST");
+
+            RpcResult<CommitteeInfo> rpcResult = await client.GetCommitteeInfo();
+
+            CommitteeInfo committeeInfo = rpcResult.Result;
+            Debug.Log("IRVIN:::: " + committeeInfo.Epoch);
+            Debug.Log("IRVIN:::: " + committeeInfo.Validators[0].AuthorityName);
             Debug.Log("IRVIN:::: END REQUESET");
         }
 
