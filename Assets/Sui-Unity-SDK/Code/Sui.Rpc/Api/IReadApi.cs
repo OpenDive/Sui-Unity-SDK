@@ -123,5 +123,13 @@ namespace Sui.Rpc.Api
         /// <param name="transactionDigest">The event query criteria.</param>
         /// <returns></returns>
         Task<RpcResult<Models.Event[]>> GetEvents(string transactionDigest);
+
+        /// <summary>
+        /// Return structured representations of all modules in the given package
+        /// https://docs.sui.io/sui-jsonrpc#sui_getNormalizedMoveModulesByPackage
+        /// </summary>
+        /// <param name="package"></param>
+        /// <returns></returns>
+        Task<RpcResult<Dictionary<string, SuiMoveNormalizedModule>>> GetNormalizedMoveModulesByPackage(string package);
     }
 }

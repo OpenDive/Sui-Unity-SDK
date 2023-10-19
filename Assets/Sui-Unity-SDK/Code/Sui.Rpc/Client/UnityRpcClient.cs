@@ -146,6 +146,8 @@ namespace Sui.Rpc
                         result.ErrorMessage = "Something wrong happened.";
                     }
                 }
+
+                return result;
             }
             catch
             {
@@ -177,6 +179,10 @@ namespace Sui.Rpc
                             result.ErrorMessage = "Something wrong happened.";
                         }
                     }
+
+                    Debug.Log($"MARCUS::: {result.Result}");
+
+                    return result;
                 }
                 catch (JsonException e)
                 {
@@ -186,7 +192,7 @@ namespace Sui.Rpc
                 }
             }
 
-            return result;
+            throw new NotImplementedException();
         }
     }
 }

@@ -119,9 +119,9 @@ namespace Sui.Rpc.Models
 
     public class SuiMoveNormalziedTypeStruct: ISuiMoveNormalizedType
     {
-        public StructTag Struct { get; set; }
+        public SuiStructTag Struct { get; set; }
 
-        public SuiMoveNormalziedTypeStruct(StructTag Struct)
+        public SuiMoveNormalziedTypeStruct(SuiStructTag Struct)
         {
             this.Struct = Struct;
         }

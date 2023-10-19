@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using OpenDive.BCS;
-using Sui.Accounts;
-using Sui.Rpc.Api;
 using Sui.Rpc.Models;
 using UnityEngine;
 
@@ -13,7 +10,6 @@ namespace Sui.Rpc
 {
     public class RPCExample : MonoBehaviour
     {
-
         // Start is called before the first frame update
         void Start()
         {
@@ -21,8 +17,78 @@ namespace Sui.Rpc
             //_ = GetReferenceGasPrice();
             //_ = GetCoins();
             //_ = DryTransactionBlock();
-            //_ = TestGetBalance();
-            _ = TestGetCoinMetadata();
+            //_ = GetChainId();
+            //_ = GetCheckpoint();
+            //_ = GetCheckpoints();
+            _ = GetNormalizedModule();
+            //_ = GetEvents();
+            //_ = GetNormalizedMoveModulesByPackage();
+        }
+
+        private async Task GetNormalizedMoveModulesByPackage()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            string package = "903bee129a0790ed375b9266ccd02c81b6eb00e6bc0b353ef0fe69c68e365065";
+            RpcResult<Dictionary<string, SuiMoveNormalizedModule>> rpcResult = await client.GetNormalizedMoveModulesByPackage(package);
+            Debug.Log($"MARCUS:::: {rpcResult.Result}");
+        }
+
+        private async Task GetEvents()
+        {
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            string transactionDigest = "32vzvgcc49wJiRxmf9RkLNq4Cu21NYUeKfBq3v4oLyZT";
+            RpcResult<Models.Event[]> rpcResult = await client.GetEvents(transactionDigest);
+            string json = JsonConvert.SerializeObject(rpcResult.Result, Formatting.Indented);
+            Debug.Log($"MARCUS:::: {json}");
+        }
+
+        private async Task GetNormalizedModule()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            string package = "903bee129a0790ed375b9266ccd02c81b6eb00e6bc0b353ef0fe69c68e365065";
+            string moduleName = "bonk";
+            RpcResult<SuiMoveNormalizedModule> rpcResult = await client.GetNormalizedMoveModule(package, moduleName);
+            Debug.Log($"MARCUS:::: {rpcResult.Result.Address}");
+        }
+
+        private async Task GetCheckpoints()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            RpcResult<Checkpoints> rpcResult = await client.GetCheckpoints("26178", 4, false);
+            Debug.Log($"MARCUS:::: {rpcResult.Result}");
+        }
+
+        private async Task GetCheckpoint()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            RpcResult<Checkpoint> rpcResult = await client.GetCheckpoint("26178");
+            string json = JsonConvert.SerializeObject(rpcResult.Result, Formatting.Indented);
+            Debug.Log($"MARCUS:::: {json}");
+        }
+
+        private async Task GetChainId()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            RpcResult<string> rpcResult = await client.GetChainIdentifier();
+            Debug.Log($"MARCUS:::: {rpcResult.Result}");
         }
 
         private async Task TestClientTask()
@@ -111,50 +177,6 @@ namespace Sui.Rpc
             Debug.Log("IRVIN:::: " + result.ObjectChanges[0].Digest);
             string json = JsonConvert.SerializeObject(result);
             Debug.Log("GET TransactionBlockResponse :::: " + json);
-        }
-
-        private async Task TestGetBalance()
-        {
-            string rpcUri = Constants.DevnetConnection.FULL_NODE;
-            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
-
-            SuiClient client = new SuiClient(rpcClient);
-            Debug.Log("IRVIN:::: START REQUEST" );
-            //Debug.Log("METHOD: " + Methods.suix_getBalance.ToString());
-            AccountAddress address = AccountAddress.FromHex("0x4ebe7aef1474166caa8ce2dd5bd77d72469780c91b18eb424d6211510bc2ca98");
-            Debug.Log("IRVIN:::: " + address.ToHex());
-            SuiStructTag structTag = SuiStructTag.FromStr("0x2::sui::SUI");
-            Debug.Log("IRVIN:::: " + structTag.ToString());
-
-            RpcResult<Balance> rpcResult = await client.GetBalanceAsync(
-                address,
-                structTag
-            );
-            Balance balance = rpcResult.Result;
-            Debug.Log("IRVIN:::: " + balance);
-            Debug.Log("IRVIN:::: " + balance.cointType.ToString());
-            Debug.Log("IRVIN:::: END REQUESET");
-        }
-
-        private async Task TestGetCoinMetadata()
-        {
-            string rpcUri = Constants.DevnetConnection.FULL_NODE;
-            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
-
-            SuiClient client = new SuiClient(rpcClient);
-            Debug.Log("IRVIN:::: START REQUEST");
-            //SuiStructTag structTag = SuiStructTag.FromStr("0x168da5bf1f48dafc111b0a488fa454aca95e0b5e::usdc::USDC");
-            SuiStructTag structTag = SuiStructTag.FromStr("0x2::sui::SUI");
-            Debug.Log("IRVIN:::: ~~~~~" + structTag.ToString());
-
-            RpcResult<CoinMetadata> rpcResult = await client.GetCoinMetadata(
-                structTag
-            );
-
-            CoinMetadata coinMetadata = rpcResult.Result;
-            Debug.Log("IRVIN:::: " + coinMetadata);
-            Debug.Log("IRVIN:::: " + coinMetadata.Description);
-            Debug.Log("IRVIN:::: END REQUESET");
         }
 
         // Update is called once per frame
