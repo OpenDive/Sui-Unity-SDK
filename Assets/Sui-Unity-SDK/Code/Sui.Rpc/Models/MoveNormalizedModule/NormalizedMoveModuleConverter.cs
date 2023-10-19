@@ -15,9 +15,9 @@ namespace Sui.Rpc.Models
     {
         public override bool CanConvert(Type objectType)
         {
-            Debug.Log(objectType);
-            //return objectType == typeof(SuiMoveNormalizedModule);
-            return true;
+            //Debug.Log(objectType);
+            return objectType == typeof(Dictionary<string, SuiMoveNormalizedModule>);
+            //return true;  // TODO: Get proper type for 
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
@@ -40,16 +40,17 @@ namespace Sui.Rpc.Models
                     Debug.Log($"MARCUS::::::: {dictionaryObject[moduleName]}");
                     NormalizedMoveModuleConverter converter = new NormalizedMoveModuleConverter();
                     JsonReader newReader = dictionaryObject[moduleName].CreateReader();
-
-                    dictionary[moduleName] = (converter.ReadJson(
+                    object result = converter.ReadJson(
                         newReader,
                         typeof(SuiMoveNormalizedModule),
                         null,
                         serializer
-                    )) as SuiMoveNormalizedModule;
+                    );
+                    Debug.Log($"MARCUS:::: RESULT - {result.ToString()}");
+                    dictionary[moduleName] = (Models.SuiMoveNormalizedModule)result;
                 }
 
-                return dictionaryObject;
+                return dictionary;
             }
 
             throw new NotImplementedException();
@@ -222,27 +223,38 @@ namespace Sui.Rpc.Models
             JObject structs = (JObject)item["structs"];
             foreach (JProperty property in structs.Properties())
             {
+                Debug.Log("MARCUS:::::: D");
                 JObject structObj = (JObject)structs[property.Name];
+                Debug.Log("MARCUS:::::: E");
                 SuiMoveNormalizedStruct normalizedStruct = new SuiMoveNormalizedStruct();
+                Debug.Log("MARCUS:::::: F");
                 SuiMoveAbilitySet abilitySet = JsonConvert.DeserializeObject<SuiMoveAbilitySet>(structObj["abilities"].ToString());
+                Debug.Log("MARCUS:::::: G");
                 List<SuiMoveStructTypeParameter> typeParams = new List<SuiMoveStructTypeParameter>();
+                Debug.Log("MARCUS:::::: H");
 
                 if (structObj["TypeParameters"] != null)
                 {
                     foreach (JProperty type in structObj["TypeParameters"])
                         typeParams.Add(JsonConvert.DeserializeObject<SuiMoveStructTypeParameter>((string)type));
                 }
+                Debug.Log("MARCUS:::::: I");
                 JArray fields = (JArray)structObj["fields"];
+                Debug.Log("MARCUS:::::: J");
                 List<SuiMoveNormalizedField> normalizedFields = new List<SuiMoveNormalizedField>();
+                Debug.Log("MARCUS:::::: K");
                 foreach (JObject field in fields)
                 {
+                    Debug.Log("MARCUS:::::: C");
                     SuiMoveNormalizedField normalizedField = new SuiMoveNormalizedField();
-                    normalizedField.Name = (string)field["name"];
 
                     // TODO: Marcus: Move this into the NormalizeType Converter, this object shouldn't have to know how to decode NormalizedTypeStrings itself.
                     try
                     {
+                        normalizedField.Name = (string)field["name"];
                         JObject typeObj = (JObject)field["type"];
+
+                        Debug.Log($"0_MARCUS::::: {(string)field["name"]}");
 
                         NormalizedTypeConverter typeConverter = new NormalizedTypeConverter();
                         normalizedField.Type = typeConverter.ReadJson(
@@ -250,7 +262,7 @@ namespace Sui.Rpc.Models
                             typeof(ISuiMoveNormalizedType),
                             null,
                             serializer
-                        ) as ISuiMoveNormalizedType;  // Marcus: Error: SendAsync Caught exception: Specified cast is not valid.
+                        ) as ISuiMoveNormalizedType;
 
                         Debug.Log($"_MARCUS::::: {normalizedField.Type}");
 
@@ -258,17 +270,23 @@ namespace Sui.Rpc.Models
                     }
                     catch
                     {
+                        Debug.Log($"1_MARCUS::::: {field}");
                         string type = (string)field["type"];
                         normalizedField.Type = new SuiMoveNormalizedTypeString(type);
                         normalizedFields.Add(normalizedField);
                     }
                 }
+                Debug.Log("MARCUS:::::: L");
                 normalizedStruct.Abilities = abilitySet;
+                Debug.Log("MARCUS:::::: M");
                 normalizedStruct.TypeParameters = typeParams.ToArray();
+                Debug.Log("MARCUS:::::: N");
                 normalizedStruct.Fields = normalizedFields.ToArray();
+                Debug.Log("MARCUS:::::: O");
                 Structs[property.Name] = normalizedStruct;
+                Debug.Log("MARCUS:::::: P");
             }
-
+            Debug.Log("MARCUS:::::: Q");
             moveModule.Structs = Structs;
             return moveModule;
         }

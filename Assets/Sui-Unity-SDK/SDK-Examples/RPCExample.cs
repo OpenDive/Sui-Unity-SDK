@@ -20,9 +20,9 @@ namespace Sui.Rpc
             //_ = GetChainId();
             //_ = GetCheckpoint();
             //_ = GetCheckpoints();
-            _ = GetNormalizedModule();
+            //_ = GetNormalizedModule();
             //_ = GetEvents();
-            //_ = GetNormalizedMoveModulesByPackage();
+            _ = GetNormalizedMoveModulesByPackage();
         }
 
         private async Task GetNormalizedMoveModulesByPackage()
@@ -34,6 +34,12 @@ namespace Sui.Rpc
             string package = "903bee129a0790ed375b9266ccd02c81b6eb00e6bc0b353ef0fe69c68e365065";
             RpcResult<Dictionary<string, SuiMoveNormalizedModule>> rpcResult = await client.GetNormalizedMoveModulesByPackage(package);
             Debug.Log($"MARCUS:::: {rpcResult.Result}");
+
+            foreach (KeyValuePair<string, SuiMoveNormalizedModule> result in rpcResult.Result)
+            {
+                Debug.Log($"MARCUS:::: KEY - {result.Key}");
+                Debug.Log($"MARCUS:::: VALUE'S ADDRESS - {result.Value.Address}");
+            }
         }
 
         private async Task GetEvents()
