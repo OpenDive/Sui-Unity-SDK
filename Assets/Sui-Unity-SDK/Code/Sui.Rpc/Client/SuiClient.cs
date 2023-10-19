@@ -118,5 +118,12 @@ namespace Sui.Rpc
                 Methods.suix_getCommitteeInfo.ToString()
             );
         }
+
+        public async Task<RpcResult<ValidatorsApy>> GetValidatorsApy()
+        {
+            return await SendRpcRequestAsync<ValidatorsApy>(
+                Methods.suix_getValidatorsApy.ToString()
+            );
+        }
     }
 }

@@ -5,6 +5,7 @@ using System.Numerics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sui.Accounts;
+using static Sui.Rpc.Models.ValidatorsApy;
 
 namespace Sui.Rpc.Models
 {
@@ -52,6 +53,8 @@ namespace Sui.Rpc.Models
         {
             public override bool CanConvert(Type objectType)
             {
+                //return (objectType == typeof(ValidatorApy));
+                // TODO: Implement
                 throw new NotImplementedException();
             }
 

@@ -26,7 +26,8 @@ namespace Sui.Rpc
             //_ = TestGetCoinMetadata();
             //_ = TestGetTotalSupply();
             //_ = TestGetCommitteeInfo();
-            _ = TestGetCommitteeInfoNoParams();
+            //_ = TestGetCommitteeInfoNoParams();
+            _ = TestGetValidatorsApy();
         }
 
         private async Task TestClientTask()
@@ -238,6 +239,26 @@ namespace Sui.Rpc
             CommitteeInfo committeeInfo = rpcResult.Result;
             Debug.Log("IRVIN:::: " + committeeInfo.Epoch);
             Debug.Log("IRVIN:::: " + committeeInfo.Validators[0].AuthorityName);
+            Debug.Log("IRVIN:::: END REQUESET");
+        }
+
+        private async Task TestGetValidatorsApy()
+        {
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            Debug.Log("IRVIN:::: START REQUEST");
+
+            RpcResult<ValidatorsApy> rpcResult = await client.GetValidatorsApy();
+
+            ValidatorsApy validatorsApy = rpcResult.Result;
+            Debug.Log("IRVIN:::: " + validatorsApy.Epoch);
+            foreach(ValidatorsApy.ValidatorApy validatorApy in validatorsApy.Apys)
+            {
+                Debug.Log("IRVIN:::: " + validatorApy.Address.ToHex());
+                Debug.Log("IRVIN:::: " + validatorApy.Apy);
+            }
             Debug.Log("IRVIN:::: END REQUESET");
         }
 

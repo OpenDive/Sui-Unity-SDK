@@ -15,5 +15,11 @@ namespace Sui.Rpc.Api
         /// <returns></returns>
         public Task<RpcResult<CommitteeInfo>> GetCommitteeInfo(BigInteger epoch);
         public Task<RpcResult<CommitteeInfo>> GetCommitteeInfo();
+
+        /// <summary>
+        /// https://docs.sui.io/sui-jsonrpc#suix_getValidatorsApy
+        /// </summary>
+        /// <returns></returns>
+        public Task<RpcResult<ValidatorsApy>> GetValidatorsApy();
     }
 }
