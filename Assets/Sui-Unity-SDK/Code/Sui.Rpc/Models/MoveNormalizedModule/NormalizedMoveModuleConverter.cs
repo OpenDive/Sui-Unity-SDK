@@ -15,9 +15,7 @@ namespace Sui.Rpc.Models
     {
         public override bool CanConvert(Type objectType)
         {
-            //Debug.Log(objectType);
             return objectType == typeof(Dictionary<string, SuiMoveNormalizedModule>);
-            //return true;  // TODO: Get proper type for 
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)

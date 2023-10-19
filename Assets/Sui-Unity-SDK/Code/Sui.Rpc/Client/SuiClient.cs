@@ -114,5 +114,11 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<Dictionary<string, SuiMoveNormalizedModule>>("sui_getNormalizedMoveModulesByPackage",
                 ArgumentBuilder.BuildArguments(package), new NormalizedModulesByPackageConverter());
         }
+
+        public async Task<RpcResult<MoveFunctionArgTypes>> GetMoveFunctionArgTypes(string package, string module, string function)
+        {
+            return await SendRpcRequestAsync<MoveFunctionArgTypes>("sui_getMoveFunctionArgTypes",
+                ArgumentBuilder.BuildArguments(package, module, function), new MoveFunctionArgTypesConverter());
+        }
     }
 }

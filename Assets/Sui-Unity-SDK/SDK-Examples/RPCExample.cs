@@ -22,7 +22,26 @@ namespace Sui.Rpc
             //_ = GetCheckpoints();
             //_ = GetNormalizedModule();
             //_ = GetEvents();
-            _ = GetNormalizedMoveModulesByPackage();
+            //_ = GetNormalizedMoveModulesByPackage();
+            _ = GetMoveFunctionArgTypes();
+        }
+
+        private async Task GetMoveFunctionArgTypes()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            string package = "0xe2c9fdc9d962093a8f7bddc876eb30e9da7fb2124e90dc8534e1252253edceeb";
+            string module = "nft_example";
+            string function = "mint_to_sender";
+
+            RpcResult<MoveFunctionArgTypes> rpcResult = await client.GetMoveFunctionArgTypes(package, module, function);
+
+            foreach (MoveFunctionArgType arg in rpcResult.Result.ArgTypes)
+            {
+                Debug.Log($"MARCUS:::: {arg}");
+            }
         }
 
         private async Task GetNormalizedMoveModulesByPackage()

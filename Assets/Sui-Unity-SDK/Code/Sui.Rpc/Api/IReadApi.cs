@@ -131,5 +131,15 @@ namespace Sui.Rpc.Api
         /// <param name="package"></param>
         /// <returns></returns>
         Task<RpcResult<Dictionary<string, SuiMoveNormalizedModule>>> GetNormalizedMoveModulesByPackage(string package);
+
+        /// <summary>
+        /// Return the argument types of a Move function, based on normalized Type.
+        /// https://docs.sui.io/sui-jsonrpc#sui_getMoveFunctionArgTypes
+        /// </summary>
+        /// <param name="package"></param>
+        /// <param name="module"></param>
+        /// <param name="function"></param>
+        /// <returns></returns>
+        Task<RpcResult<MoveFunctionArgTypes>> GetMoveFunctionArgTypes(string package, string module, string function);
     }
 }
