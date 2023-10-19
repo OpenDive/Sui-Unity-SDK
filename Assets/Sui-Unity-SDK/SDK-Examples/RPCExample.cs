@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -272,16 +273,20 @@ namespace Sui.Rpc
             Debug.Log("IRVIN:::: START REQUEST");
 
             AccountAddress owner = AccountAddress.FromHex("0x8a0907e2990baebbbb87c12821db4845b034e45f937167e68b4925ac3465335a");
-            RpcResult<Stakes> rpcResult = await client.GetStakes(owner);
+            RpcResult<IEnumerable<Stakes>> rpcResult = await client.GetStakes(owner);
 
-            Stakes stakes = rpcResult.Result;
-            Debug.Log("IRVIN:::: " + stakes.StakingPool);
-            foreach (Stakes.Stake stake in stakes.StakeList)
+            List<Stakes> stakes = (List<Stakes>)rpcResult.Result;
+            Debug.Log("IRVIN:::: " + stakes.Count);
+            foreach(Stakes stakePool in stakes)
             {
-                Debug.Log("IRVIN:::: " + stake.StakedSuiId.ToHex());
-                Debug.Log("IRVIN:::: " + stake.status);
+                Debug.Log("IRVIN:::: VALIDATOR: " + stakePool.ValidatorAddress.ToHex());
+                foreach (Stakes.Stake stake in stakePool.StakeList)
+                {
+                    Debug.Log("IRVIN:::: StakedSuiId: " + stake.StakedSuiId.ToHex());
+                    Debug.Log("IRVIN:::: " + stake.status);
+                }
+                Debug.Log("IRVIN:::: END REQUESET");
             }
-            Debug.Log("IRVIN:::: END REQUESET");
         }
 
         // Update is called once per frame

@@ -126,9 +126,9 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<Stakes>> GetStakes(AccountAddress owner)
+        public async Task<RpcResult<IEnumerable<Stakes>>> GetStakes(AccountAddress owner)
         {
-            return await SendRpcRequestAsync<Stakes>(
+            return await SendRpcRequestAsync<IEnumerable<Stakes>>(
                 Methods.suix_getStakes.ToString(),
                 ArgumentBuilder.BuildArguments(owner.ToHex())
             );

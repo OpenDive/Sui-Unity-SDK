@@ -27,6 +27,6 @@ namespace Sui.Rpc.Api
         /// https://docs.sui.io/sui-jsonrpc#suix_getStakes
         /// </summary>
         /// <returns></returns>
-        public Task<RpcResult<Stakes>> GetStakes(AccountAddress owner);
+        public Task<RpcResult<IEnumerable<Stakes>>> GetStakes(AccountAddress owner);
     }
 }
