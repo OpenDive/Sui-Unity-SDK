@@ -186,6 +186,70 @@ namespace Sui.Rpc.Models
         }
     }
 
+    public class MoveStructConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(SuiMoveNormalizedStruct);
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            JObject structObj = JObject.Load(reader);
+
+            if (reader.TokenType == JsonToken.StartObject)
+                structObj = (JObject)structObj["result"];
+
+            SuiMoveNormalizedStruct normalizedStruct = new SuiMoveNormalizedStruct();
+            SuiMoveAbilitySet abilitySet = JsonConvert.DeserializeObject<SuiMoveAbilitySet>(structObj["abilities"].ToString());
+            List<SuiMoveStructTypeParameter> typeParams = new List<SuiMoveStructTypeParameter>();
+
+            if (structObj["TypeParameters"] != null)
+            {
+                foreach (JProperty type in structObj["TypeParameters"])
+                    typeParams.Add(JsonConvert.DeserializeObject<SuiMoveStructTypeParameter>((string)type));
+            }
+            JArray fields = (JArray)structObj["fields"];
+            List<SuiMoveNormalizedField> normalizedFields = new List<SuiMoveNormalizedField>();
+            foreach (JObject field in fields)
+            {
+                SuiMoveNormalizedField normalizedField = new SuiMoveNormalizedField();
+
+                // TODO: Marcus: Move this into the NormalizeType Converter, this object shouldn't have to know how to decode NormalizedTypeStrings itself.
+                try
+                {
+                    normalizedField.Name = (string)field["name"];
+                    JObject typeObj = (JObject)field["type"];
+
+                    NormalizedTypeConverter typeConverter = new NormalizedTypeConverter();
+                    normalizedField.Type = typeConverter.ReadJson(
+                        typeObj.CreateReader(),
+                        typeof(ISuiMoveNormalizedType),
+                        null,
+                        serializer
+                    ) as ISuiMoveNormalizedType;
+
+                    normalizedFields.Add(normalizedField);
+                }
+                catch
+                {
+                    string type = (string)field["type"];
+                    normalizedField.Type = new SuiMoveNormalizedTypeString(type);
+                    normalizedFields.Add(normalizedField);
+                }
+            }
+            normalizedStruct.Abilities = abilitySet;
+            normalizedStruct.TypeParameters = typeParams.ToArray();
+            normalizedStruct.Fields = normalizedFields.ToArray();
+            return normalizedStruct;
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class NormalizedMoveModuleConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)
@@ -221,70 +285,18 @@ namespace Sui.Rpc.Models
             JObject structs = (JObject)item["structs"];
             foreach (JProperty property in structs.Properties())
             {
-                Debug.Log("MARCUS:::::: D");
                 JObject structObj = (JObject)structs[property.Name];
-                Debug.Log("MARCUS:::::: E");
-                SuiMoveNormalizedStruct normalizedStruct = new SuiMoveNormalizedStruct();
-                Debug.Log("MARCUS:::::: F");
-                SuiMoveAbilitySet abilitySet = JsonConvert.DeserializeObject<SuiMoveAbilitySet>(structObj["abilities"].ToString());
-                Debug.Log("MARCUS:::::: G");
-                List<SuiMoveStructTypeParameter> typeParams = new List<SuiMoveStructTypeParameter>();
-                Debug.Log("MARCUS:::::: H");
+                MoveStructConverter converter = new MoveStructConverter();
 
-                if (structObj["TypeParameters"] != null)
-                {
-                    foreach (JProperty type in structObj["TypeParameters"])
-                        typeParams.Add(JsonConvert.DeserializeObject<SuiMoveStructTypeParameter>((string)type));
-                }
-                Debug.Log("MARCUS:::::: I");
-                JArray fields = (JArray)structObj["fields"];
-                Debug.Log("MARCUS:::::: J");
-                List<SuiMoveNormalizedField> normalizedFields = new List<SuiMoveNormalizedField>();
-                Debug.Log("MARCUS:::::: K");
-                foreach (JObject field in fields)
-                {
-                    Debug.Log("MARCUS:::::: C");
-                    SuiMoveNormalizedField normalizedField = new SuiMoveNormalizedField();
+                SuiMoveNormalizedStruct normalizedStruct = converter.ReadJson(
+                    structObj.CreateReader(),
+                    typeof(SuiMoveNormalizedStruct),
+                    null,
+                    serializer
+                ) as SuiMoveNormalizedStruct;
 
-                    // TODO: Marcus: Move this into the NormalizeType Converter, this object shouldn't have to know how to decode NormalizedTypeStrings itself.
-                    try
-                    {
-                        normalizedField.Name = (string)field["name"];
-                        JObject typeObj = (JObject)field["type"];
-
-                        Debug.Log($"0_MARCUS::::: {(string)field["name"]}");
-
-                        NormalizedTypeConverter typeConverter = new NormalizedTypeConverter();
-                        normalizedField.Type = typeConverter.ReadJson(
-                            typeObj.CreateReader(),
-                            typeof(ISuiMoveNormalizedType),
-                            null,
-                            serializer
-                        ) as ISuiMoveNormalizedType;
-
-                        Debug.Log($"_MARCUS::::: {normalizedField.Type}");
-
-                        normalizedFields.Add(normalizedField);
-                    }
-                    catch
-                    {
-                        Debug.Log($"1_MARCUS::::: {field}");
-                        string type = (string)field["type"];
-                        normalizedField.Type = new SuiMoveNormalizedTypeString(type);
-                        normalizedFields.Add(normalizedField);
-                    }
-                }
-                Debug.Log("MARCUS:::::: L");
-                normalizedStruct.Abilities = abilitySet;
-                Debug.Log("MARCUS:::::: M");
-                normalizedStruct.TypeParameters = typeParams.ToArray();
-                Debug.Log("MARCUS:::::: N");
-                normalizedStruct.Fields = normalizedFields.ToArray();
-                Debug.Log("MARCUS:::::: O");
                 Structs[property.Name] = normalizedStruct;
-                Debug.Log("MARCUS:::::: P");
             }
-            Debug.Log("MARCUS:::::: Q");
             moveModule.Structs = Structs;
             return moveModule;
         }

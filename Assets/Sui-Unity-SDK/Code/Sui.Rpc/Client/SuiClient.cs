@@ -120,5 +120,11 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<MoveFunctionArgTypes>("sui_getMoveFunctionArgTypes",
                 ArgumentBuilder.BuildArguments(package, module, function), new MoveFunctionArgTypesConverter());
         }
+
+        public async Task<RpcResult<SuiMoveNormalizedStruct>> GetNormalizedMoveStruct(string package, string moduleName, string structName)
+        {
+            return await SendRpcRequestAsync<SuiMoveNormalizedStruct>("sui_getNormalizedMoveStruct",
+                ArgumentBuilder.BuildArguments(package, moduleName, structName), new MoveStructConverter());
+        }
     }
 }

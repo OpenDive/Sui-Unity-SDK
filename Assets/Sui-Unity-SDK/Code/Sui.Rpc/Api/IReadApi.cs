@@ -141,5 +141,15 @@ namespace Sui.Rpc.Api
         /// <param name="function"></param>
         /// <returns></returns>
         Task<RpcResult<MoveFunctionArgTypes>> GetMoveFunctionArgTypes(string package, string module, string function);
+
+        /// <summary>
+        /// Return a structured representation of Move struct
+        /// https://docs.sui.io/sui-jsonrpc#sui_getNormalizedMoveStruct
+        /// </summary>
+        /// <param name="package"></param>
+        /// <param name="moduleName"></param>
+        /// <param name="structName"></param>
+        /// <returns></returns>
+        Task<RpcResult<SuiMoveNormalizedStruct>> GetNormalizedMoveStruct(string package, string moduleName, string structName);
     }
 }
