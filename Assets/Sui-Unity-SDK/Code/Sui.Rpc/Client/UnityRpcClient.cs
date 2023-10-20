@@ -33,6 +33,8 @@ namespace Sui.Rpc
                 rpcRequest, new Newtonsoft.Json.Converters.StringEnumConverter()
             );
 
+            Debug.Log("QUERY: \n" + requestJson);
+
             try
             {
                 byte[] requestBytes = Encoding.UTF8.GetBytes(requestJson);

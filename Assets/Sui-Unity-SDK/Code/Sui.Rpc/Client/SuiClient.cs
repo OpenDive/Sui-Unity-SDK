@@ -138,11 +138,16 @@ namespace Sui.Rpc
         public async Task<RpcResult<IEnumerable<Stakes>>> GetStakesByIds(List<AccountAddress> stakedSuiId)
         {
             return await SendRpcRequestAsync<IEnumerable<Stakes>>(
-                Methods.suix_getStakes.ToString(),
-                ArgumentBuilder.BuildArguments(stakedSuiId.Select(x => x.ToHex()).ToArray())
+                Methods.suix_getStakesByIds.ToString(),
+                ArgumentBuilder.BuildTypeArguments(stakedSuiId.Select(x => x.ToHex()).ToArray())
             );
+        }
 
-            throw new System.NotImplementedException();
+        public async Task<RpcResult<SuiSystemSummary>> GetLatestSuiSystemState()
+        {
+            return await SendRpcRequestAsync<SuiSystemSummary>(
+                Methods.suix_getLatestSuiSystemState.ToString()
+            );
         }
     }
 }

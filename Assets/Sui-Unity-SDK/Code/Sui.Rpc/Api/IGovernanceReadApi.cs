@@ -35,5 +35,12 @@ namespace Sui.Rpc.Api
         /// </summary>
         /// <returns></returns>
         public Task<RpcResult<IEnumerable<Stakes>>> GetStakesByIds(List<AccountAddress> stakedSuiId);
+
+        /// <summary>
+        /// Return the latest SUI system state object on-chain.
+        /// https://docs.sui.io/sui-jsonrpc#suix_getLatestSuiSystemState
+        /// </summary>
+        /// <returns></returns>
+        public Task<RpcResult<SuiSystemSummary>> GetLatestSuiSystemState();
     }
 }

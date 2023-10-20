@@ -30,7 +30,8 @@ namespace Sui.Rpc
             //_ = TestGetCommitteeInfoNoParams();
             //_ = TestGetValidatorsApy();
             //_ = TestGetStakes();
-            _ = TestGetStakesById();
+            //_ = TestGetStakesById();
+            _ = TestGetSuiSystemState();
         }
 
         private async Task TestClientTask()
@@ -320,6 +321,20 @@ namespace Sui.Rpc
                 }
                 Debug.Log("IRVIN:::: END REQUESET");
             }
+        }
+
+        private async Task TestGetSuiSystemState()
+        {
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            Debug.Log("IRVIN:::: START REQUEST");
+
+            RpcResult<SuiSystemSummary> rpcResult = await client.GetLatestSuiSystemState();
+
+            SuiSystemSummary systemSummary = (SuiSystemSummary)rpcResult.Result;
+            Debug.Log("IRVIN:::: " + systemSummary.Epoch);
         }
 
         // Update is called once per frame
