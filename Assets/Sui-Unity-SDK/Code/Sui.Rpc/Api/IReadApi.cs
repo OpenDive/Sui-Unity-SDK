@@ -151,5 +151,13 @@ namespace Sui.Rpc.Api
         /// <param name="structName"></param>
         /// <returns></returns>
         Task<RpcResult<SuiMoveNormalizedStruct>> GetNormalizedMoveStruct(string package, string moduleName, string structName);
+
+        /// <summary>
+        /// Gets loaded child objects associated with the transaction the request provides.
+        /// https://docs.sui.io/sui-jsonrpc#sui_getLoadedChildObjects
+        /// </summary>
+        /// <param name="digest"></param>
+        /// <returns></returns>
+        Task<RpcResult<ChildObjects>> GetLoadedChildObjects(string digest);
     }
 }

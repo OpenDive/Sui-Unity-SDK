@@ -203,5 +203,13 @@ namespace Sui.Rpc
                 ArgumentBuilder.BuildArguments(coinType.ToString())
             );
         }
+
+        public async Task<RpcResult<ChildObjects>> GetLoadedChildObjects(string digest)
+        {
+            return await SendRpcRequestAsync<ChildObjects>(
+                Methods.sui_getLoadedChildObjects.ToString(),
+                ArgumentBuilder.BuildTypeArguments(digest)
+            );
+        }
     }
 }
