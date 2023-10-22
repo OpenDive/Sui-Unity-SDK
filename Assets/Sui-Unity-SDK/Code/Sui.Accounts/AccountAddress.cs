@@ -8,6 +8,7 @@ using static Sui.Cryptography.SignatureUtils;
 using Newtonsoft.Json;
 using Sui.Rpc.Models;
 using UnityEngine;
+using System.Text;
 
 namespace Sui.Accounts
 {
@@ -162,6 +163,18 @@ namespace Sui.Accounts
         public static AccountAddress FromBase64(string suiAddress)
         {
             byte[] suiAddressBytes = Convert.FromBase64String(suiAddress);
+            return new AccountAddress(suiAddressBytes);
+        }
+
+        public static AccountAddress FromBase58(string suiAddress)
+        {
+            byte[] bytes = Encoding.ASCII.GetBytes(suiAddress);
+            Base58Encoder base58Encoder = new Base58Encoder();
+            if (Base58Encoder.IsValidEncoding(suiAddress))
+                throw new ArgumentException("Not a valid Base58 string - " + suiAddress);
+
+            Debug.Log(suiAddress);
+            byte[] suiAddressBytes = base58Encoder.DecodeData(suiAddress);
             return new AccountAddress(suiAddressBytes);
         }
 

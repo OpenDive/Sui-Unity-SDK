@@ -1,6 +1,7 @@
 
 using System.Numerics;
 using Newtonsoft.Json;
+using Sui.Accounts;
 
 namespace Sui.Rpc.Models
 {
@@ -25,8 +26,9 @@ namespace Sui.Rpc.Models
     [JsonObject]
     public class CoinMetadata
     {
-        [JsonProperty("id")]
-        public IdObj Id;
+        [JsonProperty("id"), JsonConverter(typeof(SuiAddressJsonConverter))]
+        //public IdObj Id;
+        public AccountAddress Id;
 
         [JsonProperty("decimals")]
         public BigInteger Decimals;

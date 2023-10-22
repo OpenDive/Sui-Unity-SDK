@@ -1,4 +1,5 @@
 using System;
+using System.Data.SqlTypes;
 using Chaos.NaCl;
 using Org.BouncyCastle.Crypto.Digests;
 using Sui.Accounts;
@@ -10,30 +11,33 @@ namespace Sui.Cryptography
     public abstract class PublicKeyBase
     {
         /// <summary>
-        /// Signature scheme for the public key
+        /// Signature scheme for the public key.
         /// </summary>
         public abstract SignatureScheme SignatureScheme { get; }
 
         /// <summary>
-        /// The lenght of the public key
+        /// The lenght of the public key.
         /// </summary>
         public abstract int KeyLength { get; }
 
         /// <summary>
-        /// Public key represented as a byte array
+        /// Public key represented as a byte array.
         /// </summary>
         private byte[] _keyBytes;
 
         /// <summary>
-        /// Public key represented as a hex string
+        /// Public key represented as a hex string.
         /// </summary>
         private string _keyHex;
 
         /// <summary>
-        /// Public key represented as a base64 string
+        /// Public key represented as a base64 string.
         /// </summary>
         private string _keyBase64;
 
+        /// <summary>
+        /// Public key represented as a hex string.
+        /// </summary>
         public string KeyHex
         {
             get
@@ -60,6 +64,9 @@ namespace Sui.Cryptography
             set => _keyHex = value;
         }
 
+        /// <summary>
+        /// Public key represented as a base64 string.
+        /// </summary>
         public string KeyBase64
         {
             get
@@ -82,6 +89,9 @@ namespace Sui.Cryptography
             set => _keyBase64 = value;
         }
 
+        /// <summary>
+        /// Public key represented as a byte array.
+        /// </summary>
         public byte[] KeyBytes
         {
             get
@@ -164,13 +174,56 @@ namespace Sui.Cryptography
         /// <summary>
         /// Return the Sui representation of the public key encoded in
         /// base-64. A Sui public key is formed by the concatenation
-        /// of the scheme flag with the raw bytes of the public key
+        /// of the scheme flag with the raw bytes of the public key.
         /// </summary>
         /// <returns></returns>
         public string ToSuiPublicKey()
         {
             byte[] bytes = ToSuiBytes();
             return CryptoBytes.ToBase64String(bytes);
+        }
+
+        /// <summary>
+        /// Creates a PublicKey object from a base-64
+        /// string representation of a Sui-formatted public key.
+        /// A Sui public key is formed by the concatenation
+        /// of the scheme flag with the raw bytes of the public key.
+        /// </summary>
+        /// <param name="suiPubKey"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public static PublicKeyBase FromSuiPublicKey(string suiPublicKey)
+        {
+            byte[] suiPubKeybytes = CryptoBytes.FromBase64String(suiPublicKey);
+            byte flag = suiPubKeybytes[0];
+            SignatureScheme signatureScheme = SignatureFlagToScheme.GetScheme(flag);
+
+            int len = suiPubKeybytes.Length - 1;
+            byte[] pubKeyBytes = new byte[len];
+
+            switch (signatureScheme)
+            {
+                case SignatureScheme.ED25519:
+                    Array.Copy(suiPubKeybytes, 1, pubKeyBytes, 0, len);
+                    return new Ed25519.PublicKey(pubKeyBytes); 
+                case SignatureScheme.Secp256k1:
+                    //Array.Copy(suiPubKeybytes, 1, pubKeyBytes, 0, len);
+                    //return new Sui.Cryptography.Secp256k1.PublicKey(pubKeyBytes);
+                    break;
+                case SignatureScheme.Secp256r1:
+                    //Array.Copy(suiPubKeybytes, 1, pubKeyBytes, 0, len);
+                    //return new Sui.Cryptography.Secp256r1.PublicKey(pubKeyBytes);
+                    break;
+                case SignatureScheme.MultiSig:
+                    throw new NotSupportedException("Multisign public key not supported.");
+                case SignatureScheme.Zk:
+                    throw new NotSupportedException("Zk public key not supported.");
+                default:
+                    Array.Copy(suiPubKeybytes, 1, pubKeyBytes, 0, len);
+                    return new Ed25519.PublicKey(pubKeyBytes);
+            }
+
+            throw new NotImplementedException();
         }
 
         /// <summary>

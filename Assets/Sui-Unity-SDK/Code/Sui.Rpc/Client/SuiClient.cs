@@ -1,14 +1,18 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using OpenDive.BCS;
+using Sui.Accounts;
 using Sui.Rpc.Api;
-using Newtonsoft.Json;
 using Sui.Rpc.Models;
-using NBitcoin.RPC;
+using UnityEngine;
+using static PlasticGui.WorkspaceWindow.Items.ExpandedTreeNode;
+using static UnityEngine.UI.GridLayoutGroup;
 
 namespace Sui.Rpc
 {
-    public class SuiClient : IReadApi
+    public class SuiClient : IReadApi, ICoinQueryApi, IGovernanceReadApi
     {
         private UnityRpcClient _rpcClient;
         public SuiClient(UnityRpcClient rpcClient)
@@ -22,14 +26,9 @@ namespace Sui.Rpc
             return await _rpcClient.SendAsync<T>(request);
         }
 
-        public async Task<RpcResult<T>> SendRpcRequestAsync<T>(string method, IEnumerable<object> @params, JsonConverter converter)
-        {
-            RpcRequest request = new RpcRequest(method, @params);
-            return await _rpcClient.HandleAsync<T>(request, converter);
-        }
-
         private async Task<RpcResult<T>> SendRpcRequestAsync<T>(string method, IEnumerable<object> @params)
         {
+            //var request = BuildRequest<T>(method, @params);
             RpcRequest request = new RpcRequest(method, @params);
             return await _rpcClient.SendAsync<T>(request);
         }
@@ -75,56 +74,80 @@ namespace Sui.Rpc
                 ArgumentBuilder.BuildArguments(objectIds, options));
         }
 
-        public async Task<RpcResult<string>> GetChainIdentifier()
+        public async Task<RpcResult<Balance>> GetBalanceAsync(AccountAddress owner, SuiStructTag coinType = null)
         {
-            return await SendRpcRequestAsync<string>("sui_getChainIdentifier");
+            Debug.Log("METHOD: " + Methods.suix_getBalance.ToString());
+            return await SendRpcRequestAsync<Balance>(Methods.suix_getBalance.ToString(),
+                ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString()));
         }
 
-        public async Task<RpcResult<Checkpoint>> GetCheckpoint(string id)
+        public async Task<RpcResult<IEnumerable<Balance>>> GetAllBalancesAsync(AccountAddress owner)
         {
-            return await SendRpcRequestAsync<Checkpoint>("sui_getCheckpoint",
-                ArgumentBuilder.BuildArguments(id));
+            return await SendRpcRequestAsync<IEnumerable<Balance>>(
+                Methods.suix_getAllBalances.ToString(),
+                ArgumentBuilder.BuildArguments(owner.ToHex())
+            );
         }
 
-        public async Task<RpcResult<Checkpoints>> GetCheckpoints(string cursor, int limit, bool descendingOrder)
+        public async Task<RpcResult<CoinMetadata>> GetCoinMetadata(SuiStructTag coinType)
         {
-            return await SendRpcRequestAsync<Checkpoints>("sui_getCheckpoints",
-                ArgumentBuilder.BuildArguments(cursor, limit, descendingOrder));
+            return await SendRpcRequestAsync<CoinMetadata>(
+                Methods.suix_getCoinMetadata.ToString(),
+                ArgumentBuilder.BuildArguments(coinType.ToString())
+            );
         }
 
-        public async Task<RpcResult<string>> GetLatestCheckpointSequenceNumber()
+        public async Task<RpcResult<TotalSupply>> GetTotalSupply(SuiStructTag coinType)
         {
-            return await SendRpcRequestAsync<string>("sui_getLatestCheckpointSequenceNumber");
+            return await SendRpcRequestAsync<TotalSupply>(
+                Methods.suix_getTotalSupply.ToString(),
+                ArgumentBuilder.BuildArguments(coinType.ToString())
+            );
         }
 
-        public async Task<RpcResult<SuiMoveNormalizedModule>> GetNormalizedMoveModule(string package, string moduleName)
+        public async Task<RpcResult<CommitteeInfo>> GetCommitteeInfo(BigInteger epoch)
         {
-            return await SendRpcRequestAsync<SuiMoveNormalizedModule>("sui_getNormalizedMoveModule",
-                ArgumentBuilder.BuildArguments(package, moduleName), new NormalizedMoveModuleConverter());
+            return await SendRpcRequestAsync<CommitteeInfo>(
+                Methods.suix_getCommitteeInfo.ToString(),
+                ArgumentBuilder.BuildArguments(epoch.ToString())
+            );
         }
 
-        public async Task<RpcResult<Models.Event[]>> GetEvents(string transactionDigest)
+        public async Task<RpcResult<CommitteeInfo>> GetCommitteeInfo()
         {
-            return await SendRpcRequestAsync<Models.Event[]>("sui_getEvents",
-                ArgumentBuilder.BuildArguments(transactionDigest));
+            return await SendRpcRequestAsync<CommitteeInfo>(
+                Methods.suix_getCommitteeInfo.ToString()
+            );
         }
 
-        public async Task<RpcResult<Dictionary<string, SuiMoveNormalizedModule>>> GetNormalizedMoveModulesByPackage(string package)
+        public async Task<RpcResult<ValidatorsApy>> GetValidatorsApy()
         {
-            return await SendRpcRequestAsync<Dictionary<string, SuiMoveNormalizedModule>>("sui_getNormalizedMoveModulesByPackage",
-                ArgumentBuilder.BuildArguments(package), new NormalizedModulesByPackageConverter());
+            return await SendRpcRequestAsync<ValidatorsApy>(
+                Methods.suix_getValidatorsApy.ToString()
+            );
         }
 
-        public async Task<RpcResult<MoveFunctionArgTypes>> GetMoveFunctionArgTypes(string package, string module, string function)
+        public async Task<RpcResult<IEnumerable<Stakes>>> GetStakes(AccountAddress owner)
         {
-            return await SendRpcRequestAsync<MoveFunctionArgTypes>("sui_getMoveFunctionArgTypes",
-                ArgumentBuilder.BuildArguments(package, module, function), new MoveFunctionArgTypesConverter());
+            return await SendRpcRequestAsync<IEnumerable<Stakes>>(
+                Methods.suix_getStakes.ToString(),
+                ArgumentBuilder.BuildArguments(owner.ToHex())
+            );
         }
 
-        public async Task<RpcResult<SuiMoveNormalizedStruct>> GetNormalizedMoveStruct(string package, string moduleName, string structName)
+        public async Task<RpcResult<IEnumerable<Stakes>>> GetStakesByIds(List<AccountAddress> stakedSuiId)
         {
-            return await SendRpcRequestAsync<SuiMoveNormalizedStruct>("sui_getNormalizedMoveStruct",
-                ArgumentBuilder.BuildArguments(package, moduleName, structName), new MoveStructConverter());
+            return await SendRpcRequestAsync<IEnumerable<Stakes>>(
+                Methods.suix_getStakesByIds.ToString(),
+                ArgumentBuilder.BuildTypeArguments(stakedSuiId.Select(x => x.ToHex()).ToArray())
+            );
+        }
+
+        public async Task<RpcResult<SuiSystemSummary>> GetLatestSuiSystemState()
+        {
+            return await SendRpcRequestAsync<SuiSystemSummary>(
+                Methods.suix_getLatestSuiSystemState.ToString()
+            );
         }
     }
 }
