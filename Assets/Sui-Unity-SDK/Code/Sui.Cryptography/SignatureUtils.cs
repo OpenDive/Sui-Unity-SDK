@@ -116,6 +116,38 @@ namespace Sui.Cryptography
             return _signatureSchemeToFlag[signatureScheme];
         }
 
+        ///// <summary>
+        ///// Returns the corresponding signature scheme from a flag byte.
+        ///// </summary>
+        ///// <param name="flag">Byte that specifies the signature scheme.</param>
+        ///// <returns>SignatureScheme enum.</returns>
+        //public static SignatureScheme GetSignatureScheme(byte flag)
+        //{
+        //    SignatureScheme signatureScheme;
+        //    switch (flag)
+        //    {
+        //        case 0x00:
+        //            signatureScheme = SignatureScheme.ED25519;
+        //            break;
+        //        case 0x01:
+        //            signatureScheme = SignatureScheme.Secp256k1;
+        //            break;
+        //        case 0x02:
+        //            signatureScheme = SignatureScheme.Secp256r1;
+        //            break;
+        //        case 0x03:
+        //            signatureScheme = SignatureScheme.MultiSig;
+        //            break;
+        //        case 0x05:
+        //            signatureScheme = SignatureScheme.Zk;
+        //            break;
+        //        default:
+        //            signatureScheme = SignatureScheme.ED25519;
+        //            break;
+        //    }
+        //    return signatureScheme;
+        //}
+
     }
 
     /// <summary>
