@@ -1,14 +1,12 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
+using System.Linq;
 using System.Threading.Tasks;
-using OpenDive.BCS;
-using Sui.Accounts;
 using Sui.Rpc.Api;
+using Newtonsoft.Json;
 using Sui.Rpc.Models;
-using UnityEngine;
-using static PlasticGui.WorkspaceWindow.Items.ExpandedTreeNode;
-using static UnityEngine.UI.GridLayoutGroup;
+using Sui.Accounts;
+using OpenDive.BCS;
 
 namespace Sui.Rpc
 {
@@ -26,9 +24,14 @@ namespace Sui.Rpc
             return await _rpcClient.SendAsync<T>(request);
         }
 
+        public async Task<RpcResult<T>> SendRpcRequestAsync<T>(string method, IEnumerable<object> @params, JsonConverter converter)
+        {
+            RpcRequest request = new RpcRequest(method, @params);
+            return await _rpcClient.HandleAsync<T>(request, converter);
+        }
+
         private async Task<RpcResult<T>> SendRpcRequestAsync<T>(string method, IEnumerable<object> @params)
         {
-            //var request = BuildRequest<T>(method, @params);
             RpcRequest request = new RpcRequest(method, @params);
             return await _rpcClient.SendAsync<T>(request);
         }
@@ -69,16 +72,13 @@ namespace Sui.Rpc
 
         public async Task<RpcResult<IEnumerable<SuiObjectResponse>>> GetObjectsAsync(IEnumerable<string> objectIds, ObjectDataOptions options)
         {
-            //throw new System.NotImplementedException();
             return await SendRpcRequestAsync<IEnumerable<SuiObjectResponse>>("sui_multiGetObjects",
                 ArgumentBuilder.BuildArguments(objectIds, options));
         }
 
-        public async Task<RpcResult<Balance>> GetBalanceAsync(AccountAddress owner, SuiStructTag coinType = null)
+        public async Task<RpcResult<string>> GetChainIdentifier()
         {
-            Debug.Log("METHOD: " + Methods.suix_getBalance.ToString());
-            return await SendRpcRequestAsync<Balance>(Methods.suix_getBalance.ToString(),
-                ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString()));
+            return await SendRpcRequestAsync<string>("sui_getChainIdentifier");
         }
 
         public async Task<RpcResult<IEnumerable<Balance>>> GetAllBalancesAsync(AccountAddress owner)
@@ -89,12 +89,52 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<CoinMetadata>> GetCoinMetadata(SuiStructTag coinType)
+        //public async Task<RpcResult<CoinMetadata>> GetCoinMetadata(SuiStructTag coinType)  // TODO: Reimplement this
+        public async Task<RpcResult<Checkpoint>> GetCheckpoint(string id)
         {
-            return await SendRpcRequestAsync<CoinMetadata>(
-                Methods.suix_getCoinMetadata.ToString(),
-                ArgumentBuilder.BuildArguments(coinType.ToString())
-            );
+            return await SendRpcRequestAsync<Checkpoint>("sui_getCheckpoint",
+                ArgumentBuilder.BuildArguments(id));
+        }
+
+        public async Task<RpcResult<Checkpoints>> GetCheckpoints(string cursor, int limit, bool descendingOrder)
+        {
+            return await SendRpcRequestAsync<Checkpoints>("sui_getCheckpoints",
+                ArgumentBuilder.BuildArguments(cursor, limit, descendingOrder));
+        }
+
+        public async Task<RpcResult<string>> GetLatestCheckpointSequenceNumber()
+        {
+            return await SendRpcRequestAsync<string>("sui_getLatestCheckpointSequenceNumber");
+        }
+
+        public async Task<RpcResult<SuiMoveNormalizedModule>> GetNormalizedMoveModule(string package, string moduleName)
+        {
+            return await SendRpcRequestAsync<SuiMoveNormalizedModule>("sui_getNormalizedMoveModule",
+                ArgumentBuilder.BuildArguments(package, moduleName), new NormalizedMoveModuleConverter());
+        }
+
+        public async Task<RpcResult<Models.Event[]>> GetEvents(string transactionDigest)
+        {
+            return await SendRpcRequestAsync<Models.Event[]>("sui_getEvents",
+                ArgumentBuilder.BuildArguments(transactionDigest));
+        }
+
+        public async Task<RpcResult<Dictionary<string, SuiMoveNormalizedModule>>> GetNormalizedMoveModulesByPackage(string package)
+        {
+            return await SendRpcRequestAsync<Dictionary<string, SuiMoveNormalizedModule>>("sui_getNormalizedMoveModulesByPackage",
+                ArgumentBuilder.BuildArguments(package), new NormalizedModulesByPackageConverter());
+        }
+
+        public async Task<RpcResult<MoveFunctionArgTypes>> GetMoveFunctionArgTypes(string package, string module, string function)
+        {
+            return await SendRpcRequestAsync<MoveFunctionArgTypes>("sui_getMoveFunctionArgTypes",
+                ArgumentBuilder.BuildArguments(package, module, function), new MoveFunctionArgTypesConverter());
+        }
+
+        public async Task<RpcResult<SuiMoveNormalizedStruct>> GetNormalizedMoveStruct(string package, string moduleName, string structName)
+        {
+            return await SendRpcRequestAsync<SuiMoveNormalizedStruct>("sui_getNormalizedMoveStruct",
+                ArgumentBuilder.BuildArguments(package, moduleName, structName), new MoveStructConverter());
         }
 
         public async Task<RpcResult<TotalSupply>> GetTotalSupply(SuiStructTag coinType)
@@ -147,6 +187,20 @@ namespace Sui.Rpc
         {
             return await SendRpcRequestAsync<SuiSystemSummary>(
                 Methods.suix_getLatestSuiSystemState.ToString()
+            );
+        }
+
+        public async Task<RpcResult<Balance>> GetBalanceAsync(AccountAddress owner, SuiStructTag coinType = null)
+        {
+            return await SendRpcRequestAsync<Balance>(Methods.suix_getBalance.ToString(),
+                ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString()));
+        }
+
+        public async Task<RpcResult<CoinMetadata>> GetCoinMetadata(SuiStructTag coinType)
+        {
+            return await SendRpcRequestAsync<CoinMetadata>(
+                Methods.suix_getCoinMetadata.ToString(),
+                ArgumentBuilder.BuildArguments(coinType.ToString())
             );
         }
     }
