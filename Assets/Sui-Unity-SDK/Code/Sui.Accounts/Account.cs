@@ -47,29 +47,24 @@ namespace Sui.Accounts
         {
             SignatureScheme = signatureScheme;
 
-            if(signatureScheme == SignatureScheme.ED25519)
+            switch (signatureScheme)
             {
-
-            }
-            else if (signatureScheme == SignatureScheme.Secp256k1)
-            {
-
-            }
-            else if (signatureScheme == SignatureScheme.Secp256r1)
-            {
-
-            }
-            else if(signatureScheme == SignatureScheme.MultiSig)
-            {
-
-            }
-            else if(signatureScheme == SignatureScheme.Zk)
-            {
-
-            }
-            else
-            {
-
+                case SignatureScheme.ED25519:
+                    PrivateKey = new Cryptography.Ed25519.PrivateKey(privateKey);
+                    PublicKey = PrivateKey.PublicKey();
+                    break;
+                case SignatureScheme.Secp256k1:
+                    throw new NotImplementedException();
+                    //break;
+                case SignatureScheme.Secp256r1:
+                    throw new NotImplementedException();
+                    //break;
+                case SignatureScheme.MultiSig:
+                    throw new NotImplementedException();
+                    //break;
+                case SignatureScheme.Zk:
+                    throw new NotImplementedException();
+                    //break;
             }
         }
 
@@ -81,54 +76,60 @@ namespace Sui.Accounts
         {
             SignatureScheme = signatureScheme;
 
-            if (signatureScheme == SignatureScheme.ED25519)
+            switch (signatureScheme)
             {
-                PrivateKey = Cryptography.Ed25519.PrivateKey.Random();
-                PublicKey = PrivateKey.PublicKey();
-
-            }
-            else if (signatureScheme == SignatureScheme.Secp256k1)
-            {
-                throw new NotImplementedException();
-            }
-            else if (signatureScheme == SignatureScheme.Secp256r1)
-            {
-                throw new NotImplementedException();
-            }
-            else if (signatureScheme == SignatureScheme.MultiSig)
-            {
-                throw new NotImplementedException();
-            }
-            else if (signatureScheme == SignatureScheme.Zk)
-            {
-                throw new NotImplementedException();
-            }
-            else
-            {
-                throw new NotImplementedException();
+                case SignatureScheme.ED25519:
+                    PrivateKey = Cryptography.Ed25519.PrivateKey.Random();
+                    PublicKey = PrivateKey.PublicKey();
+                    break;
+                case SignatureScheme.Secp256k1:
+                    throw new NotImplementedException();
+                    //break;
+                case SignatureScheme.Secp256r1:
+                    throw new NotImplementedException();
+                    //break;
+                case SignatureScheme.MultiSig:
+                    throw new NotImplementedException();
+                    //break;
+                case SignatureScheme.Zk:
+                    throw new NotImplementedException();
+                    //break;
             }
         }
 
-
+        /// <summary>
+        /// Generate an Account of given signature scheme
+        /// </summary>
+        /// <param name="signatureScheme"></param>
+        /// <returns></returns>
         public static Account Generate(SignatureScheme signatureScheme = SignatureScheme.ED25519)
         {
             return new Account(signatureScheme);
         }
 
+        /// <summary>
+        /// Verifies a given signature.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="signature"></param>
+        /// <returns></returns>
         public bool Verify(byte[] message, SignatureBase signature)
         {
             return PublicKey.Verify(message, signature);
         }
 
-        public SignatureBase Sign(byte[] message)
-        {
-            return PrivateKey.Sign(message);
-        }
+        /// <summary>
+        /// Signs a message with the account's private key.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        public SignatureBase Sign(byte[] message) => PrivateKey.Sign(message);
 
-        public AccountAddress SuiAddress()
-        {
-            return PublicKey.ToSuiAddress();
-        }
+        /// <summary>
+        /// Derives a Sui address from the account's public key.
+        /// </summary>
+        /// <returns></returns>
+        public AccountAddress SuiAddress() => PublicKey.ToSuiAddress();
 
         /// <summary>
         /// Sign messages with a specific intent. By combining
