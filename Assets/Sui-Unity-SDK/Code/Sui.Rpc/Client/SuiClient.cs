@@ -235,5 +235,13 @@ namespace Sui.Rpc
                 ArgumentBuilder.BuildArguments(parentObjectId, cursor, limit)
             );
         }
+
+        public async Task<RpcResult<PastObject>> TryGetPastObject(AccountAddress objectId, ObjectDataOptions options, string version = null)
+        {
+            return await SendRpcRequestAsync<PastObject>(
+                Methods.sui_tryGetPastObject.ToString(),
+                ArgumentBuilder.BuildArguments(objectId.ToHex(), version, options)
+            );
+        }
     }
 }
