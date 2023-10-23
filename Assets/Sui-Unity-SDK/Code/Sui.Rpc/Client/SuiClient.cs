@@ -211,5 +211,13 @@ namespace Sui.Rpc
                 ArgumentBuilder.BuildTypeArguments(digest)
             );
         }
+
+        public async Task<RpcResult<DevInspectResponse>> DevInspectTransactionBlock(AccountAddress senderAddress, string txBytes, string gasPrice, string epoch = null)
+        {
+            return await SendRpcRequestAsync<DevInspectResponse>(
+                Methods.sui_devInspectTransactionBlock.ToString(),
+                ArgumentBuilder.BuildArguments(senderAddress.ToHex(), txBytes, gasPrice, epoch)
+            );
+        }
     }
 }

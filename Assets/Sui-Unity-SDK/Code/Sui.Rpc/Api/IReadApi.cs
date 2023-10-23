@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using Sui.Accounts;
 using Sui.Rpc.Models;
 using UnityEngine;
 
@@ -159,5 +160,17 @@ namespace Sui.Rpc.Api
         /// <param name="digest"></param>
         /// <returns></returns>
         Task<RpcResult<ChildObjects>> GetLoadedChildObjects(string digest);
+
+        /// <summary>
+        /// Runs the transaction in dev-inspect mode. Which allows for nearly any transaction (or Move call) with any arguments. Detailed results are provided,
+        /// including both the transaction effects and any return values.
+        /// https://docs.sui.io/sui-jsonrpc#sui_devInspectTransactionBlock
+        /// </summary>
+        /// <param name="senderAddress"></param>
+        /// <param name="txBytes">BCS encoded TransactionKind(as opposed to TransactionData, which include gasBudget and gasPrice)</param>
+        /// <param name="gasPrice">Gas is not charged, but gas usage is still calculated. Default to use reference gas price</param>
+        /// <param name="epoch">The epoch to perform the call. Will be set from the system state object if not provided</param>
+        /// <returns></returns>
+        Task<RpcResult<DevInspectResponse>> DevInspectTransactionBlock(AccountAddress senderAddress, string txBytes, string gasPrice, string epoch);
     }
 }
