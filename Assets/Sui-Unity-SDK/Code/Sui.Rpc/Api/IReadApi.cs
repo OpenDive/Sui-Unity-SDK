@@ -172,5 +172,14 @@ namespace Sui.Rpc.Api
         /// <param name="epoch">The epoch to perform the call. Will be set from the system state object if not provided</param>
         /// <returns></returns>
         Task<RpcResult<DevInspectResponse>> DevInspectTransactionBlock(AccountAddress senderAddress, string txBytes, string gasPrice, string epoch);
+
+        /// <summary>
+        /// Return the dynamic field object information for a specified object
+        /// https://docs.sui.io/sui-jsonrpc#suix_getDynamicFieldObject
+        /// </summary>
+        /// <param name="parentObjectId">The ID of the queried parent object</param>
+        /// <param name="name">The Name of the dynamic field</param>
+        /// <returns></returns>
+        Task<RpcResult<ObjectData>> GetDynamicFieldObject(string parentObjectId, string name);
     }
 }

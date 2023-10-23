@@ -219,5 +219,13 @@ namespace Sui.Rpc
                 ArgumentBuilder.BuildArguments(senderAddress.ToHex(), txBytes, gasPrice, epoch)
             );
         }
+
+        public async Task<RpcResult<ObjectData>> GetDynamicFieldObject(string parentObjectId, string name)
+        {
+            return await SendRpcRequestAsync<ObjectData>(
+                Methods.suix_getDynamicFieldObject.ToString(),
+                ArgumentBuilder.BuildArguments(parentObjectId, name)
+            );
+        }
     }
 }
