@@ -201,5 +201,14 @@ namespace Sui.Rpc.Api
         /// <param name="version">options for specifying the content to be returned</param>
         /// <returns></returns>
         Task<RpcResult<PastObject>> TryGetPastObject(AccountAddress objectId, ObjectDataOptions options, string version);
+
+        /// <summary>
+        /// Note there is no software-level guarantee/SLA that objects with past versions can be retrieved by this API, even if the object and version exists/existed. The result may vary across nodes depending on their pruning policies. Return the object information for a specified version
+        /// https://docs.sui.io/sui-jsonrpc#sui_tryMultiGetPastObjects
+        /// </summary>
+        /// <param name="pastObjects">a vector of object and versions to be queried</param>
+        /// <param name="options">options for specifying the content to be returned</param>
+        /// <returns></returns>
+        Task<RpcResult<PastObject[]>> TryMultiGetPastObjects(PastObjectRequest pastObjects, ObjectDataOptions options);
     }
 }

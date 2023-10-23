@@ -63,4 +63,14 @@ namespace Sui.Rpc.Models
         [JsonProperty("fields")]
         public JObject Fields { get; set; }
     }
+
+    [JsonObject]
+    public class PastObjectRequest
+    {
+        [JsonProperty("objectId")]
+        public string ObjectID { get; set; }
+
+        [JsonProperty("version")]
+        public string Version { get; set; }
+    }
 }

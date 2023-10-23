@@ -243,5 +243,13 @@ namespace Sui.Rpc
                 ArgumentBuilder.BuildArguments(objectId.ToHex(), version, options)
             );
         }
+
+        public async Task<RpcResult<PastObject[]>> TryMultiGetPastObjects(PastObjectRequest pastObjects, ObjectDataOptions options)
+        {
+            return await SendRpcRequestAsync<PastObject[]>(
+                Methods.sui_tryMultiGetPastObjects.ToString(),
+                ArgumentBuilder.BuildArguments(pastObjects, options)
+            );
+        }
     }
 }
