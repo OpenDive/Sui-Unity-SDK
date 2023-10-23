@@ -227,5 +227,13 @@ namespace Sui.Rpc
                 ArgumentBuilder.BuildArguments(parentObjectId, name)
             );
         }
+
+        public async Task<RpcResult<DynamicFieldPage>> GetDynamicFields(string parentObjectId, int limit, string cursor = null)
+        {
+            return await SendRpcRequestAsync<DynamicFieldPage>(
+                Methods.suix_getDynamicFields.ToString(),
+                ArgumentBuilder.BuildArguments(parentObjectId, cursor, limit)
+            );
+        }
     }
 }

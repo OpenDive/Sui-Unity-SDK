@@ -181,5 +181,15 @@ namespace Sui.Rpc.Api
         /// <param name="name">The Name of the dynamic field</param>
         /// <returns></returns>
         Task<RpcResult<ObjectData>> GetDynamicFieldObject(string parentObjectId, string name);
+
+        /// <summary>
+        /// Return the list of dynamic field objects owned by an object.
+        /// https://docs.sui.io/sui-jsonrpc#suix_getDynamicFields
+        /// </summary>
+        /// <param name="parentObjectId">The ID of the parent object</param>
+        /// <param name="cursor">An optional paging cursor. If provided, the query will start from the next item after the specified cursor. Default to start from the first item if not specified.</param>
+        /// <param name="limit">Maximum item returned per page, default to [QUERY_MAX_RESULT_LIMIT] if not specified.</param>
+        /// <returns></returns>
+        Task<RpcResult<DynamicFieldPage>> GetDynamicFields(string parentObjectId, int limit, string cursor);
     }
 }
