@@ -91,7 +91,7 @@ namespace Sui.Rpc
             AccountAddress owner, SuiStructTag coinType = null)
         {
             return await SendRpcRequestAsync<Balance>(
-                ethods.suix_getBalance.ToString(),
+                Methods.suix_getBalance.ToString(),
                 ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString()));
         }
 
