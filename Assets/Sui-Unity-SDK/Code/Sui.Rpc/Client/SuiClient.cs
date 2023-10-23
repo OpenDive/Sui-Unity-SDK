@@ -12,7 +12,7 @@ using static UnityEngine.UI.GridLayoutGroup;
 
 namespace Sui.Rpc
 {
-    public class SuiClient : IReadApi, ICoinQueryApi, IGovernanceReadApi
+    public class SuiClient : IReadApi, ICoinQueryApi, IGovernanceReadApi, IExtendedApi
     {
         private UnityRpcClient _rpcClient;
         public SuiClient(UnityRpcClient rpcClient)
@@ -147,6 +147,14 @@ namespace Sui.Rpc
         {
             return await SendRpcRequestAsync<SuiSystemSummary>(
                 Methods.suix_getLatestSuiSystemState.ToString()
+            );
+        }
+
+        public async Task<RpcResult<AccountAddress>> ResolveNameServiceAddress(string name)
+        {
+            return await SendRpcRequestAsync<AccountAddress>(
+                Methods.suix_resolveNameServiceAddress.ToString(),
+                ArgumentBuilder.BuildArguments(name)
             );
         }
     }
