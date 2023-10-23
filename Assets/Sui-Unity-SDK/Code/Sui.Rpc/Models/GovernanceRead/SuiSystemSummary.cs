@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Sui.Accounts;
 using Sui.Cryptography.Ed25519;
 
@@ -59,7 +60,7 @@ namespace Sui.Rpc.Models
         /// <summary>
         /// ID of the object that maps from a staking pool ID to the inactive validator that has that pool as its staking pool.
         /// </summary>
-        [JsonProperty("inactivePoolsId"), JsonConverter(typeof(AccountAddress))]
+        [JsonProperty("inactivePoolsId"), JsonConverter(typeof(AccountAddressConverter))]
         public AccountAddress InactivePoolsId;
 
         /// <summary>
@@ -415,7 +416,31 @@ namespace Sui.Rpc.Models
 
             public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             {
-                throw new NotImplementedException();
+
+                Dictionary<AccountAddress, List<AccountAddress>> validatorReportRecords
+                    = new Dictionary<AccountAddress, List<AccountAddress>>();
+
+                JToken token = JToken.Load(reader);
+                JArray validatorReportRecordsArr = token as JArray;
+
+                foreach (JArray item in validatorReportRecordsArr)
+                {
+                    AccountAddress address = AccountAddress.FromHex((string)item[0]);
+
+                    List<AccountAddress> reportingToList = new List<AccountAddress>();
+                    JArray reportingToArr = (JArray)item[1];
+
+                    foreach (JToken reportingAddress in reportingToArr)
+                    {
+                        AccountAddress reportingToAddress
+                            = AccountAddress.FromHex((string)reportingAddress);
+                        reportingToList.Add(reportingToAddress);
+                    }
+
+                    validatorReportRecords.Add(address, reportingToList);
+                }
+
+                return validatorReportRecords;
             }
 
             public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
