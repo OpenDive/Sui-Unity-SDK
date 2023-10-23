@@ -17,7 +17,8 @@
         "NBitcoin.dll",
         "Chaos.NaCl.dll",
         "BouncyCastle.Crypto.dll",
-        "Microsoft.Extensions.Logging.Abstractions.dll"
+        "Microsoft.Extensions.Logging.Abstractions.dll",
+        "Newtonsoft.Json.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [
