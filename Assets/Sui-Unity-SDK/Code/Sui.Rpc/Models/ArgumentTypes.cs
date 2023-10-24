@@ -12,7 +12,7 @@ namespace Sui.Rpc.Models
 		Object, Pure
 	}
 
-    [JsonObject]
+    [JsonObject, JsonConverter(typeof(MoveFunctionArgTypesConverter))]
     public class MoveFunctionArgTypes
     {
         public MoveFunctionArgType[] ArgTypes;
