@@ -567,8 +567,9 @@ namespace Sui.Transactions
 
             foreach(ITransaction transaction in transactions)
             {
+                #region Process MoveCall Transaction
                 // Special case move call:
-                if(transaction.Kind == Kind.MoveCall)
+                if (transaction.Kind == Kind.MoveCall)
                 {
                     // Determine if any of the arguments require encoding.
                     // - If they don't, then this is good to go.
@@ -598,11 +599,29 @@ namespace Sui.Transactions
                         moveModulesToResolve.Add(moveTx);
                     continue;
                 }
+                #endregion
+                else if(transaction.Kind == Kind.TransferObjects)
+                {
+                    TransferObjects transferObjectsTx = (TransferObjects)transaction;
+                    ITransactionArgument[] arguments = transferObjectsTx.Objects;
 
+                    foreach(ITransactionArgument argument in arguments)
+                    {
+                        bool isNotInput = (argument.Kind != Types.Arguments.Kind.Input);
+                        if (isNotInput) continue;
+
+                        TransactionBlockInput txbInput = (TransactionBlockInput)argument;
+                        EncodeInput(txbInput.Index);
+                    }
+                }
+                else if(transaction.Kind == Kind.SplitCoins)
+                {
+                    SplitCoins splitCoinsTx = (SplitCoins)transaction;
+                }
                 // TODO: IRVIN, continue implementation
             }
 
-            if(moveModulesToResolve.Count > 0)
+            if (moveModulesToResolve.Count > 0)
             {
                 foreach(MoveCall moveCall in moveModulesToResolve)
                 {
