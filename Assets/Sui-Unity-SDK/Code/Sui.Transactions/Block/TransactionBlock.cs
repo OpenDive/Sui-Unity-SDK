@@ -35,6 +35,11 @@ namespace Sui.Transactions
         public List<ITransaction> Transactions { get; set; }
 
         /// <summary>
+        /// A list of object that we need to resolve by first querying the RPC API.
+        /// </summary>
+        private List<ObjectToResolve> objectsToResolve = new List<ObjectToResolve>();
+
+        /// <summary>
         /// Creates a TransactionBlock object from an existing TransactionBlock.
         /// </summary>
         /// <param name="transactionBlock"></param>
@@ -558,12 +563,13 @@ namespace Sui.Transactions
             ITransaction[] transactions = this.BlockDataBuilder.Transactions;
 
             List<MoveCall> moveModulesToResolve = new List<MoveCall>();
-            List<ObjectToResolve> objectsToResolve = new List<ObjectToResolve>();
+            //List<ObjectToResolve> objectsToResolve = new List<ObjectToResolve>();
 
             foreach(ITransaction transaction in transactions)
             {
+                #region Process MoveCall Transaction
                 // Special case move call:
-                if(transaction.Kind == Kind.MoveCall)
+                if (transaction.Kind == Kind.MoveCall)
                 {
                     // Determine if any of the arguments require encoding.
                     // - If they don't, then this is good to go.
@@ -593,11 +599,29 @@ namespace Sui.Transactions
                         moveModulesToResolve.Add(moveTx);
                     continue;
                 }
+                #endregion
+                else if(transaction.Kind == Kind.TransferObjects)
+                {
+                    TransferObjects transferObjectsTx = (TransferObjects)transaction;
+                    ITransactionArgument[] arguments = transferObjectsTx.Objects;
 
+                    foreach(ITransactionArgument argument in arguments)
+                    {
+                        bool isNotInput = (argument.Kind != Types.Arguments.Kind.Input);
+                        if (isNotInput) continue;
+
+                        TransactionBlockInput txbInput = (TransactionBlockInput)argument;
+                        EncodeInput(txbInput.Index);
+                    }
+                }
+                else if(transaction.Kind == Kind.SplitCoins)
+                {
+                    SplitCoins splitCoinsTx = (SplitCoins)transaction;
+                }
                 // TODO: IRVIN, continue implementation
             }
 
-            if(moveModulesToResolve.Count > 0)
+            if (moveModulesToResolve.Count > 0)
             {
                 foreach(MoveCall moveCall in moveModulesToResolve)
                 {
@@ -646,6 +670,37 @@ namespace Sui.Transactions
                         ////input.Value = new Bytes(ser.GetBytes());
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Encodes a `TransactionBlockInput` input.
+        /// Meaning that if the `value` inside the `TransactionBlockInput`
+        /// is simply an objectID (`AccountAddress`) then we need to resolve it.
+        /// Otherwise, if it's a "pure", then we create a `TransactionBlockInput`
+        /// with a "pure" value.
+        /// </summary>
+        /// <param name="index"></param>
+        private void EncodeInput(int index)
+        {
+            TransactionBlockInput input = BlockDataBuilder.Inputs[index];
+
+            Type type = input.Value.GetType();
+
+            // If the value of the `TransactionBlockInput` input is already a `BuilderCallArg`
+            if (type == typeof(ICallArg)) return;
+
+            if(type == typeof(AccountAddress))
+            {
+                // TODO: Figure out porting logic from TypeScript where they pass `input` by reference
+                // <code> input.value = Inputs.Pure(input.value, wellKnownEncoding.type); </code>
+            } else if(type == typeof(Bytes))// else if (wellKnownEncoding.kind === 'pure') 
+            {
+                //input.Value = input.Value.Serialize
+            }
+            else
+            {
+
             }
         }
 
