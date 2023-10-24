@@ -24,13 +24,6 @@ namespace Sui.Rpc
             return await _rpcClient.SendAsync<T>(request);
         }
 
-        public async Task<RpcResult<T>> SendRpcRequestAsync<T>(
-            string method, IEnumerable<object> @params, JsonConverter converter)
-        {
-            RpcRequest request = new RpcRequest(method, @params);
-            return await _rpcClient.HandleAsync<T>(request, converter);
-        }
-
         private async Task<RpcResult<T>> SendRpcRequestAsync<T>(
             string method, IEnumerable<object> @params)
         {
@@ -162,14 +155,20 @@ namespace Sui.Rpc
 
         public async Task<RpcResult<Dictionary<string, SuiMoveNormalizedModule>>> GetNormalizedMoveModulesByPackage(string package)
         {
+            //return await SendRpcRequestAsync<Dictionary<string, SuiMoveNormalizedModule>>("sui_getNormalizedMoveModulesByPackage",
+            //    ArgumentBuilder.BuildArguments(package), new NormalizedModulesByPackageConverter());
+
             return await SendRpcRequestAsync<Dictionary<string, SuiMoveNormalizedModule>>("sui_getNormalizedMoveModulesByPackage",
-                ArgumentBuilder.BuildArguments(package), new NormalizedModulesByPackageConverter());
+                ArgumentBuilder.BuildArguments(package));
         }
 
         public async Task<RpcResult<MoveFunctionArgTypes>> GetMoveFunctionArgTypes(string package, string module, string function)
         {
+            //return await SendRpcRequestAsync<MoveFunctionArgTypes>("sui_getMoveFunctionArgTypes",
+            //    ArgumentBuilder.BuildArguments(package, module, function), new MoveFunctionArgTypesConverter());
+
             return await SendRpcRequestAsync<MoveFunctionArgTypes>("sui_getMoveFunctionArgTypes",
-                ArgumentBuilder.BuildArguments(package, module, function), new MoveFunctionArgTypesConverter());
+                            ArgumentBuilder.BuildArguments(package, module, function));
         }
 
         public async Task<RpcResult<SuiMoveNormalizedStruct>> GetNormalizedMoveStruct(string package, string moduleName, string structName)

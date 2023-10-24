@@ -74,50 +74,6 @@ namespace Sui.Rpc
             }
         }
 
-        public async Task<RpcResult<T>> HandleAsync<T>(RpcRequest rpcRequest, JsonConverter converter)
-        {
-            string requestJson = JsonConvert.SerializeObject(
-                rpcRequest, new Newtonsoft.Json.Converters.StringEnumConverter()
-            );
-
-            try
-            {
-                byte[] requestBytes = Encoding.UTF8.GetBytes(requestJson);
-
-                using (UnityWebRequest request = new UnityWebRequest(Endpoint, "POST"))
-                {
-                    request.uploadHandler = new UploadHandlerRaw(requestBytes);
-                    request.downloadHandler = new DownloadHandlerBuffer();
-                    request.SetRequestHeader("Content-Type", "application/json");
-
-                    request.SendWebRequest();
-
-                    while (!request.isDone)
-                    {
-                        await Task.Yield();
-                    }
-
-                    Debug.Log("REQUEST: DOWNLOADHANDLER ::: " + request.downloadHandler.ToString());
-
-                    RpcResult<T> result = HandleResult<T>(request.downloadHandler, converter);
-                    result.RawRpcRequest = requestJson;
-                    return result;
-                }
-            }
-            catch (Exception e)
-            {
-                var result = new RpcResult<T>
-                {
-                    ErrorMessage = e.Message,
-                    RawRpcRequest = requestJson
-                };
-                var errorMessage = $"SendAsync Caught exception: {e.Message}";
-                Debug.LogError(errorMessage);
-
-                return result;
-            }
-        }
-
         private RpcResult<T> HandleResult<T>(DownloadHandler downloadHandler)
         {
             var result = new RpcResult<T>();
