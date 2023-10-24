@@ -627,7 +627,7 @@ namespace Sui.Transactions
 
                             if(input.Value.GetType() != typeof(IObjectRef))
                             {
-                                //input.Value = 
+                                input.Value = new PureCallArg(input.Value); ;
                             }
                         }
                     }
