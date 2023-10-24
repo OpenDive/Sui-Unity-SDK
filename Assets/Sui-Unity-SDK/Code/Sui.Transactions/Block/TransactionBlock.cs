@@ -572,23 +572,25 @@ namespace Sui.Transactions
                     ITransactionArgument[] arguments = moveTx.Arguments;
 
                     bool needsResolution = arguments.Any(arg => {
-                        bool isInput = arg.Kind == Types.Arguments.Kind.Input;
+                        bool isInput = (arg.Kind == Types.Arguments.Kind.Input);
                         if(isInput)
                         {
                             TransactionBlockInput argInput = (TransactionBlockInput)arg;
                             int index = argInput.Index;
 
                             // Is it a PureCallArg or ObjectCallArg?
-                            bool isBuilderCallArg = inputs[index].Value.GetType() == typeof(ICallArg);
+                            // If the argument is a `TransactionBlockInput`
+                            // and the value of the input at `index` is NOT a BuilderArg (`ICallArg`)
+                            // then we need to resolve it.
+                            bool isBuilderCallArg = inputs[index].Value.GetType() != typeof(ICallArg);
                             return isBuilderCallArg;
                         }
                         return false;
                     });
 
+                    // If any of the arguments in the MoveCall need to be resolved
                     if(needsResolution)
-                    {
                         moveModulesToResolve.Add(moveTx);
-                    }
                     continue;
                 }
 
