@@ -32,6 +32,7 @@ namespace Sui.Rpc
             //_ = TestGetStakes();
             //_ = TestGetStakesById();
             //_ = TestGetSuiSystemState();
+            _ = TestResolveNameServiceAddress();
             _ = GetLoadedChildObjects();
         }
 
@@ -139,7 +140,7 @@ namespace Sui.Rpc
             Debug.Log($"MARCUS:::: {rpcResult.Result}");
         }
 
-            private async Task GetLoadedChildObjects()
+        private async Task GetLoadedChildObjects()
         {
             string rpcUri = Constants.DevnetConnection.FULL_NODE;
             UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
@@ -451,6 +452,20 @@ namespace Sui.Rpc
 
             SuiSystemSummary systemSummary = (SuiSystemSummary)rpcResult.Result;
             Debug.Log("IRVIN:::: " + systemSummary.Epoch);
+        }
+
+        private async Task TestResolveNameServiceAddress()
+        {
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            Debug.Log("IRVIN:::: START REQUEST");
+
+            RpcResult<AccountAddress> rpcResult = await client.ResolveNameServiceAddress("example.sui");
+
+            AccountAddress address = (AccountAddress)rpcResult.Result;
+            Debug.Log("IRVIN:::: " + address.ToHex());
         }
 
         // Update is called once per frame

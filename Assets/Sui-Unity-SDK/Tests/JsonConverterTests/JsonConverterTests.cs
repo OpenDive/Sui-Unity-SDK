@@ -1,10 +1,6 @@
 using NUnit.Framework;
-using System;
-using Sui.Utilities;
 using UnityEngine;
 using System.IO;
-using static UnityEngine.Networking.UnityWebRequest;
-using Sui.Rpc.Client;
 using Newtonsoft.Json;
 using Sui.Rpc.Models;
 using Sui.Accounts;
@@ -22,9 +18,8 @@ namespace Sui.Tests.JsonConverter
             StreamReader reader = new StreamReader(path);
             string rawRpcResponse = reader.ReadToEnd();
 
-            SuiSystemSummary systemSummary = JsonConvert.DeserializeObject<SuiSystemSummary>(
-                    rawRpcResponse
-            );
+            SuiSystemSummary systemSummary
+                = JsonConvert.DeserializeObject<SuiSystemSummary>(rawRpcResponse);
 
             Debug.Log(systemSummary.Epoch);
             Debug.Log(systemSummary.ValidatorReportRecords.Count);
