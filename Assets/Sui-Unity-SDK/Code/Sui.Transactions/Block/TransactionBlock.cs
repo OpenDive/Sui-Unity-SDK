@@ -133,18 +133,7 @@ namespace Sui.Transactions
             return this.BlockDataBuilder.Snapshot();
         }
 
-        /// <summary>
-        /// Add an object ref to the list of inputs in the programmable transaction block.
-        ///
-        /// <code>
-        ///     // In TypeScript SDK
-        ///     txb.object(object_id)
-        ///
-        ///     object(value: string | ObjectCallArg)
-        /// </code>
-        /// </summary>
-        /// <param name="objectRef"></param>
-        /// <returns></returns>
+
         //public TransactionBlockInput AddObjectInput(IObjectRef objectRef)
         //{
         //    Type objectType = objectRef.GetType();
@@ -189,6 +178,69 @@ namespace Sui.Transactions
         //    ObjectCallArg newObjCallArg = new ObjectCallArg(objectRef);
         //    return this.CreateAddInput(newObjCallArg);
         //}
+
+        /// <summary>
+        /// Utility function to create and add an object input to the TransactionBlock.
+        /// <code>
+        ///     // In TypeScript SDK
+        ///     txb.object(object_id)
+        ///
+        ///     object(value: string | ObjectCallArg)
+        /// </code>
+        /// </summary>
+        /// <param name="objectRef"></param>
+        /// <returns></returns>
+        public TransactionBlockInput AddObjectInput(string objectId)
+        {
+            AccountAddress address = AccountAddress.FromHex(objectId);
+            return AddObjectInput(address);
+        }
+
+        /// <summary>
+        /// Utility function that creates a `TransactionBlockInput` from a
+        /// given objectID address.
+        ///
+        /// <code>
+        ///     // In TypeScript SDK
+        ///     txb.object(object_id)
+        ///
+        ///     object(value: string | ObjectCallArg)
+        /// </code>
+        /// </summary>
+        /// <param name="objectRef"></param>
+        /// <returns></returns>
+        public TransactionBlockInput AddObjectInput(AccountAddress objectIdValue)
+        {
+            string newObjectId = objectIdValue.ToHex();
+
+            List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
+
+            // Search through the list of inputs in the transaction block
+            // for a block input that has the name id as a `newObjectId`
+            TransactionBlockInput inserted = inputs.Find((blockInput) =>
+            {
+                Type blockInputValueType = blockInput.Value.GetType();
+                if (blockInputValueType == typeof(ObjectCallArg))
+                {
+                    ObjectCallArg _objCallArg = (ObjectCallArg)blockInput.Value;
+                    IObjectRef _objectRef = _objCallArg.ObjectArg;
+
+                    return newObjectId == _objectRef.ObjectId;
+                }
+                return false;
+            });
+
+            // If it it's already in the list of inputs, then don't insert it
+            if (inserted != null)
+                return inserted;
+
+            // Otherwise,
+            // create ObjectCallArg which will add the appropriate byte when serializing
+            // then add it to the list of inputs
+            return this.CreateAddInput(objectIdValue);
+
+            throw new NotSupportedException();
+        }
 
         public TransactionBlockInput AddObjectInput(ObjectCallArg objectCallArg)
         {
@@ -241,6 +293,29 @@ namespace Sui.Transactions
             TransactionBlockInput input = new TransactionBlockInput(
                 index,
                 value
+            );
+            this.BlockDataBuilder.Inputs.Add(input);
+            return input;
+        }
+
+        /// <summary>
+        /// Utility function with method signature for
+        /// creating a `TransactionBlockInput` (input) with an objectID address.
+        /// We explicitly define this method signature for readability,
+        /// otherwise we can use a `TransactionBlockInput` method signature that
+        /// takes in an `ISerializable` object
+        /// NOTE: `AccountAddress` and `ICallArg` are both `ISerializable`.
+        /// NOTE: The input created will later need to be resolved to an actual object definition.
+        /// </summary>
+        /// <param name="value">An objectId</param>
+        /// <returns></returns>
+        private TransactionBlockInput CreateAddInput(AccountAddress objectIdValue)
+        {
+            // Get the index of of the legth of inputs, and use it as an index
+            int index = this.BlockDataBuilder.Inputs.Count;
+            TransactionBlockInput input = new TransactionBlockInput(
+                index,
+                objectIdValue
             );
             this.BlockDataBuilder.Inputs.Add(input);
             return input;
