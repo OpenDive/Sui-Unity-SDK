@@ -677,6 +677,9 @@ namespace Sui.Transactions
 
                         ISerializable inputValue = input.Value;
 
+                        //Type t = Type.GetType(param); // for reference
+                        //Convert.ChangeType(value1, intType); // for reference
+
                         //ICallArg inputValue = input.Value;
                         //// Check if param received from RPC is Pure serializable
                         //Serialization ser = new Serialization();
