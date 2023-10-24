@@ -37,14 +37,14 @@ namespace Sui.Transactions.Types
         /// <summary>
         /// Amount of coins to use to split into.
         /// </summary>
-        public ulong[] Amounts;
+        public ITransactionArgument[] Amounts;
 
         /// <summary>
         /// Create a SplitCoins transaction.
         /// </summary>
         /// <param name="coin"></param>
         /// <param name="amounts"></param>
-        public SplitCoins(GasCoin coin, ulong[] amounts)
+        public SplitCoins(GasCoin coin, ITransactionArgument[] amounts)
         {
             // Check that it's an actual in or U16, U32, U64 wrapped
             Coin = coin;
@@ -59,8 +59,7 @@ namespace Sui.Transactions.Types
         public void Serialize(Serialization serializer)
         {
             serializer.Serialize(Coin);
-            U64[] u64Amounts = Amounts.Select(coin => new U64(coin)).ToArray();
-            serializer.Serialize(u64Amounts);
+            serializer.Serialize(Amounts);
         }
 
         public static SplitCoins Deserialize(Deserialization deserializer)
