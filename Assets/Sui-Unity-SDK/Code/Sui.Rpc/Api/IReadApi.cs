@@ -210,5 +210,14 @@ namespace Sui.Rpc.Api
         /// <param name="options">options for specifying the content to be returned</param>
         /// <returns></returns>
         Task<RpcResult<PastObject[]>> TryMultiGetPastObjects(PastObjectRequest pastObjects, ObjectDataOptions options);
+
+        /// <summary>
+        /// Return the object data for a list of objects
+        /// https://docs.sui.io/sui-jsonrpc#sui_multiGetObjects
+        /// </summary>
+        /// <param name="objectIds">the IDs of the queried objects</param>
+        /// <param name="options">options for specifying the content to be returned</param>
+        /// <returns></returns>
+        Task<RpcResult<ObjectDataResponse[]>> MultiGetObjects(AccountAddress[] objectIds, ObjectDataOptions options);
     }
 }

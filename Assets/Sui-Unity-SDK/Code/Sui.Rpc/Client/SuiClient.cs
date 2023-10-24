@@ -317,5 +317,16 @@ namespace Sui.Rpc
                 ArgumentBuilder.BuildArguments(name)
             );
         }
+
+        public async Task<RpcResult<ObjectDataResponse[]>> MultiGetObjects(AccountAddress[] objectIds, ObjectDataOptions options)
+        {
+            return await SendRpcRequestAsync<ObjectDataResponse[]>(
+                Methods.sui_multiGetObjects.ToString(),
+                ArgumentBuilder.BuildArguments(
+                    objectIds.Select(x => x.ToHex()).ToArray(),
+                    options
+                )
+            );
+        }
     }
 }
