@@ -28,5 +28,11 @@ namespace Sui.Tests.JsonConverter
                 Debug.Log(address.ToHex());
             }
         }
+
+        [Test]
+        public void GetObjectConverter()
+        {
+
+        }
     }
 }
