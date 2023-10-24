@@ -37,7 +37,9 @@ namespace Sui.Rpc
             //_ = TestResolveNameServiceAddress();
             //_ = GetLoadedChildObjects();
             //_ = GetNormalizedModule();
-            _ = GetNormalizedMoveStruct();
+            //_ = GetNormalizedMoveStruct();
+            _ = GetNormalizedMoveModulesByPackage();
+            //_ = GetMoveFunctionArgTypes();
         }
 
         private async Task GetNormalizedMoveStruct()
@@ -62,7 +64,7 @@ namespace Sui.Rpc
 
         private async Task GetMoveFunctionArgTypes()
         {
-            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
             UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
 
             SuiClient client = new SuiClient(rpcClient);
@@ -80,7 +82,7 @@ namespace Sui.Rpc
 
         private async Task GetNormalizedMoveModulesByPackage()
         {
-            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
             UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
 
             SuiClient client = new SuiClient(rpcClient);
