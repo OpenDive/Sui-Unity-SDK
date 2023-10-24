@@ -617,6 +617,20 @@ namespace Sui.Transactions
                 else if(transaction.Kind == Kind.SplitCoins)
                 {
                     SplitCoins splitCoinsTx = (SplitCoins)transaction;
+                    ITransactionArgument[] amounts = splitCoinsTx.Amounts;
+                    foreach(ITransactionArgument amount in amounts)
+                    {
+                        if(amount.GetType() == typeof(TransactionBlockInput))
+                        {
+                            TransactionBlockInput amountInput = (TransactionBlockInput)amount;
+                            TransactionBlockInput input = inputs[amountInput.Index];
+
+                            if(input.Value.GetType() != typeof(IObjectRef))
+                            {
+                                //input.Value = 
+                            }
+                        }
+                    }
                 }
                 // TODO: IRVIN, continue implementation
             }
