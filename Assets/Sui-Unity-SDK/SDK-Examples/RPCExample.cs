@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,8 +33,9 @@ namespace Sui.Rpc
             //_ = TestGetStakes();
             //_ = TestGetStakesById();
             //_ = TestGetSuiSystemState();
-            _ = TestResolveNameServiceAddress();
-            _ = GetLoadedChildObjects();
+            //_ = TestResolveNameServiceAddress();
+            //_ = GetLoadedChildObjects();
+            _ = GetNormalizedModule();
         }
 
         private async Task GetNormalizedMoveStruct()
@@ -99,14 +101,24 @@ namespace Sui.Rpc
 
         private async Task GetNormalizedModule()
         {
-            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
             UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
 
             SuiClient client = new SuiClient(rpcClient);
-            string package = "903bee129a0790ed375b9266ccd02c81b6eb00e6bc0b353ef0fe69c68e365065";
-            string moduleName = "bonk";
+            string package = "ef9124bfbeefc494e74ef7d4f4394018b7a094ccccb9a149a67eb04d4f79c034";
+            string moduleName = "arcade_champion";
             RpcResult<SuiMoveNormalizedModule> rpcResult = await client.GetNormalizedMoveModule(package, moduleName);
-            Debug.Log($"MARCUS:::: {rpcResult.Result.Address}");
+            SuiMoveNormalizedModule normalizedModule = rpcResult.Result;
+            Debug.Log($"MARCUS:::: {normalizedModule.Address}");
+            foreach(string key in normalizedModule.Structs.Keys)
+            {
+                Debug.Log($"MARCUS Struct Keys :::: {key}");
+                Debug.Log($"MARCUS Struct Fields Length :::: {normalizedModule.Structs[key].Fields.Length}");
+                foreach(SuiMoveNormalizedField field in normalizedModule.Structs[key].Fields)
+                {
+                    Debug.Log($"MARCUS Struct Keys Field Name :::: {field.Name}  Type:::: {field.Type}");
+                }
+            }
         }
 
         private async Task GetCheckpoints()

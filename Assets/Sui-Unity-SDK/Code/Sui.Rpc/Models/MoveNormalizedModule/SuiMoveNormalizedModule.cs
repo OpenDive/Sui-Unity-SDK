@@ -7,7 +7,7 @@ using System;
 
 namespace Sui.Rpc.Models
 {
-    [JsonObject]
+    [JsonObject, JsonConverter(typeof(NormalizedMoveModuleConverter))]
     public class SuiMoveNormalizedModule
 	{
         [JsonProperty("address")]

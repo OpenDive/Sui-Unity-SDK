@@ -24,7 +24,8 @@ namespace Sui.Rpc
             return await _rpcClient.SendAsync<T>(request);
         }
 
-        public async Task<RpcResult<T>> SendRpcRequestAsync<T>(string method, IEnumerable<object> @params, JsonConverter converter)
+        public async Task<RpcResult<T>> SendRpcRequestAsync<T>(
+            string method, IEnumerable<object> @params, JsonConverter converter)
         {
             RpcRequest request = new RpcRequest(method, @params);
             return await _rpcClient.HandleAsync<T>(request, converter);
@@ -147,8 +148,10 @@ namespace Sui.Rpc
 
         public async Task<RpcResult<SuiMoveNormalizedModule>> GetNormalizedMoveModule(string package, string moduleName)
         {
+            //return await SendRpcRequestAsync<SuiMoveNormalizedModule>("sui_getNormalizedMoveModule",
+            //    ArgumentBuilder.BuildArguments(package, moduleName), new NormalizedMoveModuleConverter());
             return await SendRpcRequestAsync<SuiMoveNormalizedModule>("sui_getNormalizedMoveModule",
-                ArgumentBuilder.BuildArguments(package, moduleName), new NormalizedMoveModuleConverter());
+                ArgumentBuilder.BuildArguments(package, moduleName));
         }
 
         public async Task<RpcResult<Models.Event[]>> GetEvents(string transactionDigest)
