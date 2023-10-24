@@ -1,5 +1,6 @@
 using OpenDive.BCS;
 using Sui.Accounts;
+using Sui.Transactions.Types.Arguments;
 
 namespace Sui.Transactions.Types
 {
@@ -28,7 +29,7 @@ public class TransferObjects : ITransaction
         /// <summary>
         /// 
         /// </summary>
-        public ITransaction[] Objects { get; set; }
+        public ITransactionArgument[] Objects { get; set; }
 
         /// <summary>
         /// 
@@ -45,7 +46,7 @@ public class TransferObjects : ITransaction
         /// This will be what Sui refers to as "Pure". TODO: Check if we need to simply encode it as byte array.
         /// </param>
         //public TransferObjects(ITransaction[] objects, TransactionBlockInput address)
-        public TransferObjects(ITransaction[] objects, AccountAddress address)
+        public TransferObjects(ITransactionArgument[] objects, AccountAddress address)
         {
             Objects = objects;
             Address = address;
