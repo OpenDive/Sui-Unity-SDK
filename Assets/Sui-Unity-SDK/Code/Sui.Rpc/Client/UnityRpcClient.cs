@@ -47,14 +47,14 @@ namespace Sui.Rpc
 
                     request.SendWebRequest();
 
-                    while(!request.isDone)
+                    while (!request.isDone)
                     {
                         await Task.Yield();
                     }
 
                     Debug.Log("REQUEST: DOWNLOADHANDLER ::: " + request.downloadHandler.ToString());
 
-                    RpcResult<T> result = HandleResult<T>(request.downloadHandler);
+                    RpcResult<T> result = HandleResult<T>(request.downloadHandler, new Newtonsoft.Json.Converters.StringEnumConverter());
                     result.RawRpcRequest = requestJson;
                     Debug.Log("AFTER HANDLE RESULT");
                     return result;
@@ -74,8 +74,51 @@ namespace Sui.Rpc
             }
         }
 
+        public async Task<RpcResult<T>> HandleAsync<T>(RpcRequest rpcRequest, JsonConverter converter)
+        {
+            string requestJson = JsonConvert.SerializeObject(
+                rpcRequest, new Newtonsoft.Json.Converters.StringEnumConverter()
+            );
 
-        private RpcResult<T> HandleResult<T>(DownloadHandler downloadHandler)
+            try
+            {
+                byte[] requestBytes = Encoding.UTF8.GetBytes(requestJson);
+
+                using (UnityWebRequest request = new UnityWebRequest(Endpoint, "POST"))
+                {
+                    request.uploadHandler = new UploadHandlerRaw(requestBytes);
+                    request.downloadHandler = new DownloadHandlerBuffer();
+                    request.SetRequestHeader("Content-Type", "application/json");
+
+                    request.SendWebRequest();
+
+                    while (!request.isDone)
+                    {
+                        await Task.Yield();
+                    }
+
+                    Debug.Log("REQUEST: DOWNLOADHANDLER ::: " + request.downloadHandler.ToString());
+
+                    RpcResult<T> result = HandleResult<T>(request.downloadHandler, converter);
+                    result.RawRpcRequest = requestJson;
+                    return result;
+                }
+            }
+            catch (Exception e)
+            {
+                var result = new RpcResult<T>
+                {
+                    ErrorMessage = e.Message,
+                    RawRpcRequest = requestJson
+                };
+                var errorMessage = $"SendAsync Caught exception: {e.Message}";
+                Debug.LogError(errorMessage);
+
+                return result;
+            }
+        }
+
+        private RpcResult<T> HandleResult<T>(DownloadHandler downloadHandler, JsonConverter converter)
         {
             var result = new RpcResult<T>();
             try
@@ -83,7 +126,7 @@ namespace Sui.Rpc
                 result.RawRpcResponse = downloadHandler.text;
                 Debug.Log($"Result: {result.RawRpcResponse}");
                 var res = JsonConvert.DeserializeObject<RpcValidResponse<T>>(
-                    result.RawRpcResponse
+                    result.RawRpcResponse, converter
                 );
                 Debug.Log($"~~~Result: {result.RawRpcResponse}");
                 if (res.Result != null)
@@ -108,15 +151,53 @@ namespace Sui.Rpc
                         result.ErrorMessage = "Something wrong happened.";
                     }
                 }
+
+                return result;
             }
-            catch (JsonException e)
+            catch
             {
-                Debug.LogError($"HandleResult Caught exception: {e.Message}");
-                result.IsSuccess = false;
-                result.ErrorMessage = "Unable to parse json.";
+                try
+                {
+                    result.RawRpcResponse = downloadHandler.text;
+                    Debug.Log($"Result: {result.RawRpcResponse}");
+                    var res = JsonConvert.DeserializeObject<T>(
+                        result.RawRpcResponse, converter
+                    );
+
+                    if (res != null)
+                    {
+                        result.Result = res;
+                        result.IsSuccess = true;
+                    }
+                    else
+                    {
+                        var errorRes = JsonConvert.DeserializeObject<RpcErrorResponse>(
+                            result.RawRpcResponse
+                        );
+
+                        if (errorRes != null)
+                        {
+                            result.ErrorMessage = errorRes.Error.Message;
+                        }
+                        else
+                        {
+                            result.ErrorMessage = "Something wrong happened.";
+                        }
+                    }
+
+                    Debug.Log($"MARCUS::: {result.Result}");
+
+                    return result;
+                }
+                catch (JsonException e)
+                {
+                    Debug.LogError($"HandleResult Caught exception: {e.Message}");
+                    result.IsSuccess = false;
+                    result.ErrorMessage = "Unable to parse json.";
+                }
             }
 
-            return result;
+            throw new NotImplementedException();
         }
     }
 }

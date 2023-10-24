@@ -134,10 +134,13 @@ namespace Sui.Rpc.Models
     {
         [JsonProperty("effects")]
         public TransactionBlockEffects Effects { get; set; }
+
         [JsonProperty("events")]
         public List<SuiEvent> Events { get; set; }
+
         [JsonProperty("objectChanges")]
         public List<ObjectChange> ObjectChanges { get; set; }
+
         [JsonProperty("balanceChange")]
         public List<BalanceChange> BalanceChanges { get; set; }
 
@@ -155,5 +158,20 @@ namespace Sui.Rpc.Models
         // effects : {}
 
         // objectChanges: []
+    }
+
+    [JsonObject]
+    public class DevInspectResponse
+    {
+        [JsonProperty("effects")]
+        public TransactionBlockEffects Effects { get; set; }
+
+        [JsonProperty("events")]
+        public List<SuiEvent> Events { get; set; }
+
+        [JsonProperty("error", Required = Required.Default)]
+        public string Error { get; set; }
+
+        // TODO: Implement ExecutionResultType value
     }
 }

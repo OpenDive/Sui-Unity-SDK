@@ -33,6 +33,122 @@ namespace Sui.Rpc
             //_ = TestGetStakesById();
             //_ = TestGetSuiSystemState();
             _ = TestResolveNameServiceAddress();
+            _ = GetLoadedChildObjects();
+        }
+
+        private async Task GetNormalizedMoveStruct()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            string package = "0xe2c9fdc9d962093a8f7bddc876eb30e9da7fb2124e90dc8534e1252253edceeb";
+            string module = "nft_example";
+            string structure = "NFT";
+
+            RpcResult<SuiMoveNormalizedStruct> rpcResult = await client.GetNormalizedMoveStruct(package, module, structure);
+            Debug.Log($"MARCUS:::: {rpcResult.Result}");
+        }
+
+        private async Task GetMoveFunctionArgTypes()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            string package = "0xe2c9fdc9d962093a8f7bddc876eb30e9da7fb2124e90dc8534e1252253edceeb";
+            string module = "nft_example";
+            string function = "mint_to_sender";
+
+            RpcResult<MoveFunctionArgTypes> rpcResult = await client.GetMoveFunctionArgTypes(package, module, function);
+
+            foreach (MoveFunctionArgType arg in rpcResult.Result.ArgTypes)
+            {
+                Debug.Log($"MARCUS:::: {arg}");
+            }
+        }
+
+        private async Task GetNormalizedMoveModulesByPackage()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            string package = "903bee129a0790ed375b9266ccd02c81b6eb00e6bc0b353ef0fe69c68e365065";
+            RpcResult<Dictionary<string, SuiMoveNormalizedModule>> rpcResult = await client.GetNormalizedMoveModulesByPackage(package);
+            Debug.Log($"MARCUS:::: {rpcResult.Result}");
+
+            foreach (KeyValuePair<string, SuiMoveNormalizedModule> result in rpcResult.Result)
+            {
+                Debug.Log($"MARCUS:::: KEY - {result.Key}");
+                Debug.Log($"MARCUS:::: VALUE'S ADDRESS - {result.Value.Address}");
+            }
+        }
+
+        private async Task GetEvents()
+        {
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            string transactionDigest = "32vzvgcc49wJiRxmf9RkLNq4Cu21NYUeKfBq3v4oLyZT";
+            RpcResult<Models.Event[]> rpcResult = await client.GetEvents(transactionDigest);
+            string json = JsonConvert.SerializeObject(rpcResult.Result, Formatting.Indented);
+            Debug.Log($"MARCUS:::: {json}");
+        }
+
+        private async Task GetNormalizedModule()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            string package = "903bee129a0790ed375b9266ccd02c81b6eb00e6bc0b353ef0fe69c68e365065";
+            string moduleName = "bonk";
+            RpcResult<SuiMoveNormalizedModule> rpcResult = await client.GetNormalizedMoveModule(package, moduleName);
+            Debug.Log($"MARCUS:::: {rpcResult.Result.Address}");
+        }
+
+        private async Task GetCheckpoints()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            RpcResult<Checkpoints> rpcResult = await client.GetCheckpoints("26178", 4, false);
+            Debug.Log($"MARCUS:::: {rpcResult.Result}");
+        }
+
+        private async Task GetCheckpoint()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            RpcResult<Checkpoint> rpcResult = await client.GetCheckpoint("26178");
+            string json = JsonConvert.SerializeObject(rpcResult.Result, Formatting.Indented);
+            Debug.Log($"MARCUS:::: {json}");
+        }
+
+        private async Task GetChainId()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            RpcResult<string> rpcResult = await client.GetChainIdentifier();
+            Debug.Log($"MARCUS:::: {rpcResult.Result}");
+        }
+
+        private async Task GetLoadedChildObjects()
+        {
+            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
+
+            SuiClient client = new SuiClient(rpcClient);
+            string transactionDigest = "32vzvgcc49wJiRxmf9RkLNq4Cu21NYUeKfBq3v4oLyZT";
+            RpcResult<ChildObjects> rpcResult = await client.GetLoadedChildObjects(transactionDigest);
+            Debug.Log($"MARCUS:::: {rpcResult.Result}");
         }
 
         private async Task TestClientTask()
