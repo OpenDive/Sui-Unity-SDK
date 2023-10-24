@@ -3,7 +3,6 @@ using System.Numerics;
 using System.Linq;
 using System.Threading.Tasks;
 using Sui.Rpc.Api;
-using Newtonsoft.Json;
 using Sui.Rpc.Models;
 using Sui.Accounts;
 using OpenDive.BCS;
@@ -90,7 +89,9 @@ namespace Sui.Rpc
 
         public async Task<RpcResult<string>> GetChainIdentifier()
         {
-            return await SendRpcRequestAsync<string>("sui_getChainIdentifier");
+            return await SendRpcRequestAsync<string>(
+                Methods.sui_getChainIdentifier.ToString()
+            );
 
         }
 
@@ -99,7 +100,8 @@ namespace Sui.Rpc
         {
             return await SendRpcRequestAsync<Balance>(
                 Methods.suix_getBalance.ToString(),
-                ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString()));
+                ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString())
+            );
         }
 
         public async Task<RpcResult<IEnumerable<Balance>>> GetAllBalancesAsync(
@@ -123,34 +125,44 @@ namespace Sui.Rpc
         public async Task<RpcResult<Checkpoint>> GetCheckpoint(string id)
         {
             return await SendRpcRequestAsync<Checkpoint>(
-                "sui_getCheckpoint",
+                Methods.sui_getCheckpoint.ToString(),
                 ArgumentBuilder.BuildArguments(id)
             );
         }
 
-        public async Task<RpcResult<Checkpoints>> GetCheckpoints(string cursor, int limit, bool descendingOrder)
+        public async Task<RpcResult<Checkpoints>> GetCheckpoints(
+            string cursor, int limit, bool descendingOrder)
         {
-            return await SendRpcRequestAsync<Checkpoints>("sui_getCheckpoints",
-                ArgumentBuilder.BuildArguments(cursor, limit, descendingOrder));
+            return await SendRpcRequestAsync<Checkpoints>(
+                Methods.sui_getCheckpoints.ToString(),
+                ArgumentBuilder.BuildArguments(cursor, limit, descendingOrder)
+            );
         }
 
         public async Task<RpcResult<string>> GetLatestCheckpointSequenceNumber()
         {
-            return await SendRpcRequestAsync<string>("sui_getLatestCheckpointSequenceNumber");
+            return await SendRpcRequestAsync<string>(
+                Methods.sui_getLatestCheckpointSequenceNumber.ToString()
+            );
         }
 
-        public async Task<RpcResult<SuiMoveNormalizedModule>> GetNormalizedMoveModule(string package, string moduleName)
+        public async Task<RpcResult<SuiMoveNormalizedModule>> GetNormalizedMoveModule(
+            string package, string moduleName)
         {
             //return await SendRpcRequestAsync<SuiMoveNormalizedModule>("sui_getNormalizedMoveModule",
             //    ArgumentBuilder.BuildArguments(package, moduleName), new NormalizedMoveModuleConverter());
-            return await SendRpcRequestAsync<SuiMoveNormalizedModule>("sui_getNormalizedMoveModule",
-                ArgumentBuilder.BuildArguments(package, moduleName));
+            return await SendRpcRequestAsync<SuiMoveNormalizedModule>(
+                Methods.sui_getNormalizedMoveModule.ToString(),
+                ArgumentBuilder.BuildArguments(package, moduleName)
+            );
         }
 
         public async Task<RpcResult<Models.Event[]>> GetEvents(string transactionDigest)
         {
-            return await SendRpcRequestAsync<Models.Event[]>("sui_getEvents",
-                ArgumentBuilder.BuildArguments(transactionDigest));
+            return await SendRpcRequestAsync<Models.Event[]>(
+                Methods.sui_getEvents.ToString(),
+                ArgumentBuilder.BuildArguments(transactionDigest)
+            );
         }
 
         public async Task<RpcResult<Dictionary<string, SuiMoveNormalizedModule>>> GetNormalizedMoveModulesByPackage(string package)
@@ -158,8 +170,10 @@ namespace Sui.Rpc
             //return await SendRpcRequestAsync<Dictionary<string, SuiMoveNormalizedModule>>("sui_getNormalizedMoveModulesByPackage",
             //    ArgumentBuilder.BuildArguments(package), new NormalizedModulesByPackageConverter());
 
-            return await SendRpcRequestAsync<Dictionary<string, SuiMoveNormalizedModule>>("sui_getNormalizedMoveModulesByPackage",
-                ArgumentBuilder.BuildArguments(package));
+            return await SendRpcRequestAsync<Dictionary<string, SuiMoveNormalizedModule>>(
+                Methods.sui_getNormalizedMoveModulesByPackage.ToString(),
+                ArgumentBuilder.BuildArguments(package)
+            );
         }
 
         public async Task<RpcResult<MoveFunctionArgTypes>> GetMoveFunctionArgTypes(string package, string module, string function)
@@ -167,16 +181,20 @@ namespace Sui.Rpc
             //return await SendRpcRequestAsync<MoveFunctionArgTypes>("sui_getMoveFunctionArgTypes",
             //    ArgumentBuilder.BuildArguments(package, module, function), new MoveFunctionArgTypesConverter());
 
-            return await SendRpcRequestAsync<MoveFunctionArgTypes>("sui_getMoveFunctionArgTypes",
-                            ArgumentBuilder.BuildArguments(package, module, function));
+            return await SendRpcRequestAsync<MoveFunctionArgTypes>(
+                Methods.sui_getMoveFunctionArgTypes.ToString(),
+                ArgumentBuilder.BuildArguments(package, module, function)
+            );
         }
 
         public async Task<RpcResult<SuiMoveNormalizedStruct>> GetNormalizedMoveStruct(string package, string moduleName, string structName)
         {
             //return await SendRpcRequestAsync<SuiMoveNormalizedStruct>("sui_getNormalizedMoveStruct",
             //    ArgumentBuilder.BuildArguments(package, moduleName, structName), new MoveStructConverter());
-            return await SendRpcRequestAsync<SuiMoveNormalizedStruct>("sui_getNormalizedMoveStruct",
-                ArgumentBuilder.BuildArguments(package, moduleName, structName));
+            return await SendRpcRequestAsync<SuiMoveNormalizedStruct>(
+                Methods.sui_getNormalizedMoveStruct.ToString(),
+                ArgumentBuilder.BuildArguments(package, moduleName, structName)
+            );
         }
 
         public async Task<RpcResult<TotalSupply>> GetTotalSupply(
@@ -246,7 +264,8 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<DevInspectResponse>> DevInspectTransactionBlock(AccountAddress senderAddress, string txBytes, string gasPrice, string epoch = null)
+        public async Task<RpcResult<DevInspectResponse>> DevInspectTransactionBlock(
+            AccountAddress senderAddress, string txBytes, string gasPrice, string epoch = null)
         {
             return await SendRpcRequestAsync<DevInspectResponse>(
                 Methods.sui_devInspectTransactionBlock.ToString(),
@@ -254,7 +273,8 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<ObjectData>> GetDynamicFieldObject(string parentObjectId, string name)
+        public async Task<RpcResult<ObjectData>> GetDynamicFieldObject(
+            string parentObjectId, string name)
         {
             return await SendRpcRequestAsync<ObjectData>(
                 Methods.suix_getDynamicFieldObject.ToString(),
@@ -262,7 +282,8 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<DynamicFieldPage>> GetDynamicFields(string parentObjectId, int limit, string cursor = null)
+        public async Task<RpcResult<DynamicFieldPage>> GetDynamicFields(
+            string parentObjectId, int limit, string cursor = null)
         {
             return await SendRpcRequestAsync<DynamicFieldPage>(
                 Methods.suix_getDynamicFields.ToString(),
@@ -270,7 +291,8 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<PastObject>> TryGetPastObject(AccountAddress objectId, ObjectDataOptions options, string version = null)
+        public async Task<RpcResult<PastObject>> TryGetPastObject(
+            AccountAddress objectId, ObjectDataOptions options, string version = null)
         {
             return await SendRpcRequestAsync<PastObject>(
                 Methods.sui_tryGetPastObject.ToString(),
@@ -278,7 +300,8 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<PastObject[]>> TryMultiGetPastObjects(PastObjectRequest pastObjects, ObjectDataOptions options)
+        public async Task<RpcResult<PastObject[]>> TryMultiGetPastObjects(
+            PastObjectRequest pastObjects, ObjectDataOptions options)
         {
             return await SendRpcRequestAsync<PastObject[]>(
                 Methods.sui_tryMultiGetPastObjects.ToString(),
