@@ -463,7 +463,7 @@ namespace Sui.Transactions
         /// <param name="coin">GasCoin is a type of `TransactionArgument`.</param>
         /// <param name="amounts">A list of respective amounts for each coin we are splitting.</param>
         /// <returns>A list of `TransactionResult`s.</returns>
-        public List<TransactionResult> AddSplitCoinsTx(GasCoin coin, params ulong[] amounts)
+        public List<TransactionResult> AddSplitCoinsTx(GasCoin coin, params ITransactionArgument[] amounts)
         {
             SplitCoins splitCoinsTx = new SplitCoins(coin, amounts);
             return this.AddTx(splitCoinsTx);
