@@ -36,7 +36,7 @@ namespace Sui.Rpc.Models
         public string Name { get; set; }
     }
 
-    [JsonObject]
+    [JsonObject, JsonConverter(typeof(MoveStructConverter))]
     public class SuiMoveNormalizedStruct
     {
         [JsonProperty("abilities")]

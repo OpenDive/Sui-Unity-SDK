@@ -174,8 +174,10 @@ namespace Sui.Rpc
 
         public async Task<RpcResult<SuiMoveNormalizedStruct>> GetNormalizedMoveStruct(string package, string moduleName, string structName)
         {
+            //return await SendRpcRequestAsync<SuiMoveNormalizedStruct>("sui_getNormalizedMoveStruct",
+            //    ArgumentBuilder.BuildArguments(package, moduleName, structName), new MoveStructConverter());
             return await SendRpcRequestAsync<SuiMoveNormalizedStruct>("sui_getNormalizedMoveStruct",
-                ArgumentBuilder.BuildArguments(package, moduleName, structName), new MoveStructConverter());
+                ArgumentBuilder.BuildArguments(package, moduleName, structName));
         }
 
         public async Task<RpcResult<TotalSupply>> GetTotalSupply(

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using NBitcoin;
 using Newtonsoft.Json;
 using OpenDive.BCS;
 using Sui.Accounts;
@@ -35,21 +36,28 @@ namespace Sui.Rpc
             //_ = TestGetSuiSystemState();
             //_ = TestResolveNameServiceAddress();
             //_ = GetLoadedChildObjects();
-            _ = GetNormalizedModule();
+            //_ = GetNormalizedModule();
+            _ = GetNormalizedMoveStruct();
         }
 
         private async Task GetNormalizedMoveStruct()
         {
-            string rpcUri = Constants.DevnetConnection.FULL_NODE;
+            string rpcUri = Constants.MainnetConnection.FULL_NODE;
             UnityRpcClient rpcClient = new UnityRpcClient(rpcUri);
 
             SuiClient client = new SuiClient(rpcClient);
-            string package = "0xe2c9fdc9d962093a8f7bddc876eb30e9da7fb2124e90dc8534e1252253edceeb";
-            string module = "nft_example";
-            string structure = "NFT";
+            string package = "ef9124bfbeefc494e74ef7d4f4394018b7a094ccccb9a149a67eb04d4f79c034";
+            string moduleName = "arcade_champion";
+            string structure = "Hero";
 
-            RpcResult<SuiMoveNormalizedStruct> rpcResult = await client.GetNormalizedMoveStruct(package, module, structure);
-            Debug.Log($"MARCUS:::: {rpcResult.Result}");
+            RpcResult<SuiMoveNormalizedStruct> rpcResult = await client.GetNormalizedMoveStruct(package, moduleName, structure);
+            SuiMoveNormalizedStruct normalizedStruct = rpcResult.Result;
+            Debug.Log($"MARCUS:::: {normalizedStruct}");
+            foreach (SuiMoveNormalizedField field in normalizedStruct.Fields)
+            {
+                Debug.Log($"MARCUS Struct Keys Field Name :::: {field.Name}  Type:::: {field.Type}");
+            }
+
         }
 
         private async Task GetMoveFunctionArgTypes()
