@@ -34,7 +34,7 @@ public class TransferObjects : ITransaction
         /// <summary>
         /// 
         /// </summary>
-        public AccountAddress Address { get; set; }
+        public ITransactionArgument Address { get; set; }
 
         //public TransactionBlockInput Address { get; set; }
 
@@ -46,7 +46,7 @@ public class TransferObjects : ITransaction
         /// This will be what Sui refers to as "Pure". TODO: Check if we need to simply encode it as byte array.
         /// </param>
         //public TransferObjects(ITransaction[] objects, TransactionBlockInput address)
-        public TransferObjects(ITransactionArgument[] objects, AccountAddress address)
+        public TransferObjects(ITransactionArgument[] objects, ITransactionArgument address)
         {
             Objects = objects;
             Address = address;

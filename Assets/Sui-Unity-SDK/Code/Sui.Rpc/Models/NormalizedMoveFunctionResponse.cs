@@ -15,11 +15,11 @@ namespace Sui.Rpc.Models
         [JsonProperty("typeParameters")]
         public List<TypeParameter> TypeParameters { get; set; }
 
-        [JsonProperty("parameters")]
-        public List<string> Parameters { get; set; }
+        [JsonProperty("parameters"), JsonConverter(typeof(NormalizedTypeConverter))]
+        public List<ISuiMoveNormalizedType> Parameters { get; set; }
 
         [JsonProperty("return")]
-        public List<string> Return { get; set; }
+        public List<ISuiMoveNormalizedType> Return { get; set; }
     }
 
     [JsonObject]

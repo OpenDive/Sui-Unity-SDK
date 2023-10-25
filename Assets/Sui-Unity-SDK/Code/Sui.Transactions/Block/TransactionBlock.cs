@@ -565,6 +565,19 @@ namespace Sui.Transactions
             List<MoveCall> moveModulesToResolve = new List<MoveCall>();
             //List<ObjectToResolve> objectsToResolve = new List<ObjectToResolve>();
 
+            foreach (TransactionBlockInput input in inputs)
+            {
+                if (input.Value.GetType() == typeof(string))
+                {
+                    ObjectToResolve objectToResolve = new ObjectToResolve(
+                        ((BString)input.Value).ToString(),
+                        input,
+                        null
+                    );
+                    objectsToResolve.Add(objectToResolve);
+                }
+            }
+
             foreach(ITransaction transaction in transactions)
             {
                 #region Process MoveCall Transaction
@@ -603,15 +616,17 @@ namespace Sui.Transactions
                 else if(transaction.Kind == Kind.TransferObjects)
                 {
                     TransferObjects transferObjectsTx = (TransferObjects)transaction;
-                    ITransactionArgument[] arguments = transferObjectsTx.Objects;
+                    ITransactionArgument address = transferObjectsTx.Address;
 
-                    foreach(ITransactionArgument argument in arguments)
+                    if (address.GetType() == typeof(TransactionBlockInput))
                     {
-                        bool isNotInput = (argument.Kind != Types.Arguments.Kind.Input);
-                        if (isNotInput) continue;
+                        TransactionBlockInput addressInput = (TransactionBlockInput)address;
+                        TransactionBlockInput input = inputs[addressInput.Index];
 
-                        TransactionBlockInput txbInput = (TransactionBlockInput)argument;
-                        EncodeInput(txbInput.Index);
+                        if (input.Value.GetType() != typeof(IObjectRef))
+                        {
+                            this.BlockDataBuilder.Inputs[addressInput.Index].Value = new PureCallArg(input.Value); ;
+                        }
                     }
                 }
                 else if(transaction.Kind == Kind.SplitCoins)
@@ -627,7 +642,7 @@ namespace Sui.Transactions
 
                             if(input.Value.GetType() != typeof(IObjectRef))
                             {
-                                input.Value = new PureCallArg(input.Value); ;
+                                this.BlockDataBuilder.Inputs[amountInput.Index].Value = new PureCallArg(input.Value); ;
                             }
                         }
                     }
@@ -653,9 +668,10 @@ namespace Sui.Transactions
                     // the function does not need to pass it in as an argument.
 
                     bool hasTxContext = normalized.Parameters.Count > 0
-                        && IsTxContext(new SuiStructTag(normalized.Parameters.Last()));
+                        && normalized.Parameters.Last() as SuiMoveNormalizedTypeString != null
+                        && IsTxContext(new SuiStructTag(((SuiMoveNormalizedTypeString)normalized.Parameters.Last()).Value));
 
-                    List<string> moduleParams = (List<string>)(hasTxContext ? normalized.Parameters.Take(normalized.Parameters.Count - 1) : normalized.Parameters);
+                    List<ISuiMoveNormalizedType> moduleParams = (List<ISuiMoveNormalizedType>)(hasTxContext ? normalized.Parameters.Take(normalized.Parameters.Count - 1) : normalized.Parameters);
 
                     if(moduleParams.Count != moveCall.Arguments.Length)
                     {
@@ -664,7 +680,7 @@ namespace Sui.Transactions
 
                     for(int i = 0; i < moduleParams.Count; i++)
                     {
-                        string param = moduleParams[i];
+                        ISuiMoveNormalizedType param = moduleParams[i];
 
                         ITransactionArgument arg = moveCall.Arguments[i];
                         if(arg.Kind != Types.Arguments.Kind.Input) continue;
@@ -685,8 +701,44 @@ namespace Sui.Transactions
                         //Serialization ser = new Serialization();
                         //input.Value.Serialize(ser);
                         ////input.Value = new Bytes(ser.GetBytes());
+                        ///
+
+                        string serType = Serializer.GetPureNormalizedType(param, inputValue);
+
+                        if (serType != null)
+                        {
+                            this.BlockDataBuilder.Inputs[inputArg.Index].Value = new PureCallArg(inputValue);
+                            continue;
+                        }
+
+                        ISuiMoveNormalizedType structVal = Serializer.ExtractStructType(param);
+
+                        if (structVal != null || param as SuiMoveNormalziedTypeParameterType != null)
+                        {
+                            if (inputValue.GetType() != typeof(string))
+                                throw new Exception($"Expect the argument to be an object id string, got {inputValue}");
+
+                            SuiMoveNormalizedTypeString inputString = (SuiMoveNormalizedTypeString)inputValue;
+
+                            ObjectToResolve objectToResolve = new ObjectToResolve(
+                                inputString.Value,
+                                input,
+                                param
+                            );
+
+                            objectsToResolve.Add(objectToResolve);
+
+                            continue;
+                        }
+
+                        throw new Exception($"Unknown call arg type {param} for value {inputValue}");
                     }
                 }
+            }
+
+            if (objectsToResolve.Count != 0)
+            {
+
             }
         }
 
@@ -725,9 +777,9 @@ namespace Sui.Transactions
         {
             string id { get; set; }
             TransactionBlockInput input { get; set; }
-            ISerializable? normalizedType; // SuiNo SuiMoveNormalizedType
+            ISuiMoveNormalizedType normalizedType;
 
-            ObjectToResolve(string id, TransactionBlockInput input, ISerializable? normalizedType) 
+            public ObjectToResolve(string id, TransactionBlockInput input, ISuiMoveNormalizedType normalizedType) 
             {
                 this.id = id;
                 this.input = input;
