@@ -9,8 +9,11 @@ namespace Sui.Rpc.Models
     {
         public SuiOwnerType Type { get; } // TODO: Fix this perhaps we should return enum
 
-        [JsonProperty("AddressOwner")] // TODO: Ask Mysten Labs about type
+        [JsonProperty("AddressOwner", Required = Required.Default)] // TODO: Ask Mysten Labs about type
         public string Address { get; }
+
+        [JsonProperty("Shared", Required = Required.Default)]
+        public SharedOwner Shared { get; }
 
         public Owner(SuiOwnerType type)
         {
@@ -22,5 +25,12 @@ namespace Sui.Rpc.Models
             Type = type;
             Address = address;
         }
+    }
+
+    [JsonObject]
+    public class SharedOwner
+    {
+        [JsonProperty("initial_shared_version", Required = Required.Default)] // TODO: Ask Mysten Labs about type
+        public int? InitialSharedVersion { get; }
     }
 }

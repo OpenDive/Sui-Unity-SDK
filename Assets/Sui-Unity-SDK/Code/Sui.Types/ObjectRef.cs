@@ -7,7 +7,7 @@ namespace Sui.Types
 {
     public interface IObjectRef : ISerializable
     {
-        public string ObjectId { get; set; }
+        public AccountAddress ObjectId { get; set; }
     }
 
 
@@ -27,13 +27,13 @@ namespace Sui.Types
     /// </summary>
     public class SuiObjectRef : IObjectRef
     {
-        private string objectId;
+        private AccountAddress objectId;
         public int version;
         public string digest;
 
-        public string ObjectId { get => objectId; set => objectId = value; }
+        public AccountAddress ObjectId { get => objectId; set => objectId = value; }
 
-        public SuiObjectRef(string objectId, int version, string digest)
+        public SuiObjectRef(AccountAddress objectId, int version, string digest)
         {
             this.objectId = objectId;
             this.version = version;
@@ -42,17 +42,16 @@ namespace Sui.Types
 
         public void Serialize(Serialization serializer)
         {
-            AccountAddress objectId = AccountAddress.FromHex(this.objectId);
             U64 version = new U64((ulong)this.version);
 
             Base58Encoder decoder = new Base58Encoder();
             byte[] decode = decoder.DecodeData(this.digest);
 
-            // TODO: Ask Marcus if SuiObjectReft also encodes an enum
+            // TODO: Ask Marcus if SuiObjectRef also encodes an enum
             // For objects the enum is 1, for pure is 0 // TODO: Add a list of enum,
             //serializer.SerializeU8(0);
 
-            objectId.Serialize(serializer);
+            this.objectId.Serialize(serializer);
             version.Serialize(serializer);
             serializer.Serialize(decode);
 
@@ -72,7 +71,7 @@ namespace Sui.Types
             BString digest = BString.Deserialize(deserializer);
 
             return new SuiObjectRef(
-                (string)objectId.GetValue(),
+                (AccountAddress)objectId.GetValue(),
                 (int)version.GetValue(),
                 (string)digest.GetValue()
             );
@@ -96,7 +95,7 @@ namespace Sui.Types
         /// <summary>
         /// Hex code as string representing the object id.
         /// </summary>
-        private string objectId;
+        private AccountAddress objectId;
 
         /// <summary>
         /// The version the object was shared at.
@@ -108,9 +107,9 @@ namespace Sui.Types
         /// </summary>
         public bool mutable;
 
-        public string ObjectId { get => objectId; set => objectId = value; }
+        public AccountAddress ObjectId { get => objectId; set => objectId = value; }
 
-        public SharedObjectRef(string objectId, int initialSharedVersion, bool mutable)
+        public SharedObjectRef(AccountAddress objectId, int initialSharedVersion, bool mutable)
         {
             this.ObjectId = objectId;
             this.InitialSharedVersion = initialSharedVersion;
@@ -119,11 +118,10 @@ namespace Sui.Types
 
         public void Serialize(Serialization serializer)
         {
-            AccountAddress objectId = AccountAddress.FromHex(this.ObjectId);
             U64 initialSharedVersion = new U64((ulong)this.InitialSharedVersion);
             Bool mutable = new Bool(this.mutable);
 
-            objectId.Serialize(serializer);
+            this.ObjectId.Serialize(serializer);
             initialSharedVersion.Serialize(serializer);
             mutable.Serialize(serializer);
         }
@@ -135,7 +133,7 @@ namespace Sui.Types
             Bool mutable = Bool.Deserialize(deserializer);
 
             return new SharedObjectRef(
-                (string)objectId.GetValue(),
+                (AccountAddress)objectId.GetValue(),
                 (int)initialSharedVersion.GetValue(),
                 (bool)mutable.GetValue()
             );

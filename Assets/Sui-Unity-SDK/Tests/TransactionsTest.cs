@@ -14,7 +14,7 @@ namespace Sui.Tests
     public class TransactionsTest : MonoBehaviour
     {
         string test             = "0x0000000000000000000000000000000000000000000000000000000000000BAD";
-        string objectId         = "1000000000000000000000000000000000000000000000000000000000000000";
+        string objectId         = "0x1000000000000000000000000000000000000000000000000000000000000000";
         int version             = int.Parse("10000");
         string digest           = "1Bhh3pU9gLXZhoVxkr5wyg9sX6";
         string suiAddressHex    = "0x0000000000000000000000000000000000000000000000000000000000000002";
@@ -26,7 +26,7 @@ namespace Sui.Tests
 
             // ////////////////////////////////////////
             // Programmable Transaction Block -- Inputs
-            SuiObjectRef paymentRef = new SuiObjectRef(objectId, version, digest);
+            SuiObjectRef paymentRef = new SuiObjectRef(AccountAddress.FromHex(objectId), version, digest);
             ICallArg[] inputs = new ICallArg[] { new ObjectCallArg(paymentRef) };
 
             MoveCall moveCallTransaction = new MoveCall(
@@ -75,7 +75,7 @@ namespace Sui.Tests
             TransactionExpiration expiration = new TransactionExpiration();
 
             SuiObjectRef paymentRef = new SuiObjectRef(
-                "1000000000000000000000000000000000000000000000000000000000000000",
+                AccountAddress.FromHex("0x1000000000000000000000000000000000000000000000000000000000000000"),
                 int.Parse("10000"),
                 "1Bhh3pU9gLXZhoVxkr5wyg9sX6"
             );
