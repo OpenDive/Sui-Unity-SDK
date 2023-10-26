@@ -748,7 +748,10 @@ namespace Sui.Transactions
                         }
                         */
 
-                        // TODO: NOTE IRVIN -- All this function does is "verify" that the input value matches the type that the MoveCall expects.
+                        //Type serType = Serializer.GetPureNormalizedTypeType(param, inputValue);
+
+                        // TODO: NOTE IRVIN -- All this `GetPureNormalizedTypeType` function does is "verify"
+                        // TODO:    that the input value matches the type that the MoveCall expects.
                         // TODO: HENCE we don't really need to return anything, all we have to do is just check that the type of the input value
                         // TODO: matches what is expected, if doesn't match then we return false, and break / end the program.
                         // TODO: We don't need a "serType" because we are already passing concrete types such as:
@@ -756,8 +759,9 @@ namespace Sui.Transactions
 
                         // TODO: NOW NOTE THAT -- for structs it's trickier because the MoveCall is expecting an object, and in the C# side
                         // TODO:    We can only work with class / objects, hence we just have to do a comparison of the properties of the expected object
-                        Type serType = Serializer.GetPureNormalizedTypeType(param, inputValue);
 
+
+                        //bool iSPureNormalizedType = Serializer.MatchesPureNormalizedType(param, inputValue);
                         // if(iSPureNormalizedType) { 
                         this.BlockDataBuilder.Inputs[inputArg.Index].Value = new PureCallArg(inputValue);
                         // }
@@ -826,19 +830,21 @@ namespace Sui.Transactions
                     objectsById.Add(id, obj);
                 }
 
-                // Check for invalid objects / objects with errors
+                // TODO Check for invalid objects / objects with errors
+                // TODO: Identify how to get error from object response -- talk to Marcus
                 //List<ObjectDataResponse> invalidObjects = objectsById.Values.ToList().Where(obj => obj.Error);// TODO: Identify how to get error from object response
                 //if(invalidObjects.Count > 0)
                 //{
                 //    throw new Exception("The following input objects are invalid: {}");
                 //}
 
-                foreach(ObjectToResolve objectToResolve in objectsToResolve)
+                foreach (ObjectToResolve objectToResolve in objectsToResolve)
                 {
                     ObjectDataResponse obj = objectsById[objectToResolve.Id];
                     //AccountAddress owner = obj.Data.Owner; // could be an object
                     Owner owner = obj.Data.Owner;
 
+                    // TODO: implement
                     // check if `initialSharedVErsion
 
                     // if(initialSharedVersion)
