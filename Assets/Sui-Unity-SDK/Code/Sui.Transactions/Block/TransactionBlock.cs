@@ -837,11 +837,13 @@ namespace Sui.Transactions
                     objectsById.Add(id, obj);
                 }
 
-                List<ObjectDataResponse> invalidObjects = (List<ObjectDataResponse>)objectsById.Values.ToList().Where(obj => obj.Error != null);
+                List<ObjectDataResponse> invalidObjects
+                    = (List<ObjectDataResponse>)objectsById.Values.ToList().Where(
+                        obj => obj.Error != null
+                    );
+
                 if (invalidObjects.Count > 0)
-                {
                     throw new Exception("The following input objects are invalid: {}");
-                }
 
                 foreach (ObjectToResolve objectToResolve in objectsToResolve)
                 {
@@ -853,8 +855,12 @@ namespace Sui.Transactions
 
                     if (initialSharedVersion != null)
                     {
-                        bool mutable = InputsHandler.isMutableSharedObjectInput((ICallArg)objectToResolve.Input.Value);
-                        inputs[objectToResolve.Input.Index].Value = new SharedObjectRef(objectToResolve.Id, (int)initialSharedVersion, mutable);
+                        bool mutable = InputsHandler.isMutableSharedObjectInput(
+                            (ICallArg)objectToResolve.Input.Value
+                        );
+
+                        inputs[objectToResolve.Input.Index].Value
+                            = new SharedObjectRef(objectToResolve.Id, (int)initialSharedVersion, mutable);
                     }
                     else if (objectToResolve.NormalizedType != null)
                     {
