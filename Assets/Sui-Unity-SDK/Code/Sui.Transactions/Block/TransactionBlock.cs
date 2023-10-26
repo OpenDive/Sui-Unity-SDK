@@ -216,8 +216,6 @@ namespace Sui.Transactions
         /// <returns></returns>
         public TransactionBlockInput AddObjectInput(AccountAddress objectIdValue)
         {
-            string newObjectId = objectIdValue.ToHex();
-
             List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
 
             // Search through the list of inputs in the transaction block
@@ -230,7 +228,7 @@ namespace Sui.Transactions
                     ObjectCallArg _objCallArg = (ObjectCallArg)blockInput.Value;
                     IObjectRef _objectRef = _objCallArg.ObjectArg;
 
-                    return newObjectId == _objectRef.ObjectId;
+                    return objectIdValue == _objectRef.ObjectId;
                 }
                 return false;
             });
@@ -249,7 +247,7 @@ namespace Sui.Transactions
 
         public TransactionBlockInput AddObjectInput(ObjectCallArg objectCallArg)
         {
-            string newObjectId = objectCallArg.ObjectArg.ObjectId;
+            AccountAddress newObjectId = objectCallArg.ObjectArg.ObjectId;
 
             List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
 
@@ -340,7 +338,7 @@ namespace Sui.Transactions
         /// <param name="version"></param>
         /// <param name="digest"></param>
         /// <returns></returns>
-        public TransactionBlockInput AddObjectRefInput(string objectId,
+        public TransactionBlockInput AddObjectRefInput(AccountAddress objectId,
             int version, string digest)
         {
             Sui.Types.SuiObjectRef objectRef = new Sui.Types.SuiObjectRef(
@@ -373,7 +371,7 @@ namespace Sui.Transactions
         /// <param name="initialSharedVersion"></param>
         /// <param name="mutable"></param>
         /// <returns></returns>
-        public TransactionBlockInput AddSharedObjectRefInput(string objectId,
+        public TransactionBlockInput AddSharedObjectRefInput(AccountAddress objectId,
             int initialSharedVersion, bool mutable)
         {
             SharedObjectRef sharedObjectRef = new SharedObjectRef(
@@ -738,15 +736,13 @@ namespace Sui.Transactions
                         ////input.Value = new Bytes(ser.GetBytes());
                         ///
 
-                        /*
                         string serType = Serializer.GetPureNormalizedType(param, inputValue);
                         if (serType != null)
                         {
                             // TODO: IRVIN update this to use a clone of the input list
-                            this.BlockDataBuilder.Inputs[inputArg.Index].Value = new PureCallArg(inputValue);
+                            inputs[inputArg.Index].Value = new PureCallArg(inputValue);
                             continue;
                         }
-                        */
 
                         //Type serType = Serializer.GetPureNormalizedTypeType(param, inputValue);
 
@@ -763,9 +759,8 @@ namespace Sui.Transactions
 
                         //bool iSPureNormalizedType = Serializer.MatchesPureNormalizedType(param, inputValue);
                         // if(iSPureNormalizedType) { 
-                        this.BlockDataBuilder.Inputs[inputArg.Index].Value = new PureCallArg(inputValue);
+                        //this.BlockDataBuilder.Inputs[inputArg.Index].Value = new PureCallArg(inputValue);
                         // }
-
 
                         ISuiMoveNormalizedType structVal = Serializer.ExtractStructType(param);
 
@@ -842,13 +837,11 @@ namespace Sui.Transactions
                     objectsById.Add(id, obj);
                 }
 
-                // TODO Check for invalid objects / objects with errors
-                // TODO: Identify how to get error from object response -- talk to Marcus
-                //List<ObjectDataResponse> invalidObjects = objectsById.Values.ToList().Where(obj => obj.Error);// TODO: Identify how to get error from object response
-                //if(invalidObjects.Count > 0)
-                //{
-                //    throw new Exception("The following input objects are invalid: {}");
-                //}
+                List<ObjectDataResponse> invalidObjects = (List<ObjectDataResponse>)objectsById.Values.ToList().Where(obj => obj.Error != null);
+                if (invalidObjects.Count > 0)
+                {
+                    throw new Exception("The following input objects are invalid: {}");
+                }
 
                 foreach (ObjectToResolve objectToResolve in objectsToResolve)
                 {
@@ -856,15 +849,29 @@ namespace Sui.Transactions
                     //AccountAddress owner = obj.Data.Owner; // could be an object
                     Owner owner = obj.Data.Owner;
 
-                    // TODO: implement
-                    // check if `initialSharedVErsion
+                    int? initialSharedVersion = owner.Shared.InitialSharedVersion;
 
-                    // if(initialSharedVersion)
-
-                        // There could be multiple transactions that reference the same shared object.
-                        // If one of them is a mutable reference, then we should mark the input
-                        // as mutable.
-
+                    if (initialSharedVersion != null)
+                    {
+                        bool mutable = InputsHandler.isMutableSharedObjectInput((ICallArg)objectToResolve.Input.Value);
+                        inputs[objectToResolve.Input.Index].Value = new SharedObjectRef(objectToResolve.Id, (int)initialSharedVersion, mutable);
+                    }
+                    else if (objectToResolve.NormalizedType != null)
+                    {
+                        // TODO: Implement Receiving Type casting
+                    }
+                    else
+                    {
+                        ObjectData data = obj.Data;
+                        if (data != null)
+                        {
+                            inputs[objectToResolve.Input.Index].Value = new Sui.Types.SuiObjectRef(
+                                AccountAddress.FromHex(data.ObjectId),
+                                (int)data.Version,
+                                data.Digest
+                            );
+                        }
+                    }
                 }
             }
         }
