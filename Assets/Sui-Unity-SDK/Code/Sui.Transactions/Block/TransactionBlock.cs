@@ -752,9 +752,9 @@ namespace Sui.Transactions
 
                         // TODO: NOTE IRVIN -- All this `GetPureNormalizedTypeType` function does is "verify"
                         // TODO:    that the input value matches the type that the MoveCall expects.
-                        // TODO: HENCE we don't really need to return anything, all we have to do is just check that the type of the input value
-                        // TODO: matches what is expected, if doesn't match then we return false, and break / end the program.
-                        // TODO: We don't need a "serType" because we are already passing concrete types such as:
+                        // TODO: NOTE: HENCE we don't really need to return anything, all we have to do is just check that the type of the input value
+                        // TODO:    matches what is expected, if doesn't match then we return false, and break / end the program.
+                        // TODO: NOTE: We don't need a "serType" because we are already passing concrete types such as:
                         // TODO:    `AccountAddress` or `U8` or `Bytes` for byte arrays, of Sequence for vectors
 
                         // TODO: NOW NOTE THAT -- for structs it's trickier because the MoveCall is expecting an object, and in the C# side
@@ -801,7 +801,8 @@ namespace Sui.Transactions
             if (objectsToResolve.Count != 0)
             {
                 List<AccountAddress> mappedIds = (List<AccountAddress>)objectsToResolve.Select(x => x.Id);
-                List<AccountAddress> dedupedIds = new HashSet<AccountAddress>(mappedIds).ToList(); // NOTE: Insertion order in HashSet will be maintain until removing or re-adding
+                // NOTE: Insertion order in HashSet will be maintain until removing or re-adding
+                List<AccountAddress> dedupedIds = new HashSet<AccountAddress>(mappedIds).ToList();
 
                 // TODO: In the TypeScript SDK they use `Set` which is a set that maintains insertion order
                 // TODO: Find data structure that does this in C#
@@ -815,14 +816,25 @@ namespace Sui.Transactions
                     ObjectDataOptions optionsObj = new ObjectDataOptions();
                     optionsObj.ShowOwner = true;
 
-                    RpcResult<IEnumerable<ObjectDataResponse>> response = await options.Client.MultiGetObjects(objectIds.ToArray(), optionsObj);
+                    #region RPC Call MultiGetObjects
+                    RpcResult<IEnumerable<ObjectDataResponse>> response
+                        = await options.Client.MultiGetObjects(
+                            objectIds.ToArray(),
+                            optionsObj
+                    );
+                    #endregion END - Call MultiGetObjects
+
                     List<ObjectDataResponse> objects = (List<ObjectDataResponse>)response.Result;
                     objectsResponse.Add(objects);
                 }
-                // Flatten responses
-                List<ObjectDataResponse> objectsFlatten = objectsResponse.SelectMany(x => x).ToList();
+                // Flatten responses from MultiGetObjects
+                List<ObjectDataResponse> objectsFlatten
+                    = objectsResponse.SelectMany(x => x).ToList();
 
-                Dictionary<AccountAddress, ObjectDataResponse> objectsById = new Dictionary<AccountAddress, ObjectDataResponse>();
+                // Create a map of IDs to ObjectDataResponse
+                Dictionary<AccountAddress, ObjectDataResponse> objectsById
+                    = new Dictionary<AccountAddress, ObjectDataResponse>();
+
                 for(int i = 0; i < dedupedIds.Count; i++)
                 {
                     AccountAddress id = dedupedIds[i];
