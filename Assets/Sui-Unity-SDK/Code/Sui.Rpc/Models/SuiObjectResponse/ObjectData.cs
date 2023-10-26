@@ -6,8 +6,11 @@ namespace Sui.Rpc.Models
     [JsonObject]
     public class ObjectDataResponse
     {
-        [JsonProperty("data")]
+        [JsonProperty("data", Required = Required.Default)]
         public ObjectData Data { get; set; }
+
+        [JsonProperty("error", Required = Required.Default)]
+        public string Error { get; set; }
     }
 
     [JsonObject]

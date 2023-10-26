@@ -762,7 +762,6 @@ namespace Sui.Transactions
                         //this.BlockDataBuilder.Inputs[inputArg.Index].Value = new PureCallArg(inputValue);
                         // }
 
-
                         ISuiMoveNormalizedType structVal = Serializer.ExtractStructType(param);
 
                         if (structVal != null || param as SuiMoveNormalziedTypeParameterType != null)
@@ -826,13 +825,11 @@ namespace Sui.Transactions
                     objectsById.Add(id, obj);
                 }
 
-                // TODO Check for invalid objects / objects with errors
-                // TODO: Identify how to get error from object response -- talk to Marcus
-                //List<ObjectDataResponse> invalidObjects = objectsById.Values.ToList().Where(obj => obj.Error);// TODO: Identify how to get error from object response
-                //if(invalidObjects.Count > 0)
-                //{
-                //    throw new Exception("The following input objects are invalid: {}");
-                //}
+                List<ObjectDataResponse> invalidObjects = (List<ObjectDataResponse>)objectsById.Values.ToList().Where(obj => obj.Error != null);
+                if (invalidObjects.Count > 0)
+                {
+                    throw new Exception("The following input objects are invalid: {}");
+                }
 
                 foreach (ObjectToResolve objectToResolve in objectsToResolve)
                 {
@@ -853,7 +850,15 @@ namespace Sui.Transactions
                     }
                     else
                     {
-                        //inputs[objectToResolve.Input.Index].Value = new SuiObjectRef(); TODO: Implement GetObjectReference function
+                        ObjectData data = obj.Data;
+                        if (data != null)
+                        {
+                            inputs[objectToResolve.Input.Index].Value = new Sui.Types.SuiObjectRef(
+                                AccountAddress.FromHex(data.ObjectId),
+                                (int)data.Version,
+                                data.Digest
+                            );
+                        }
                     }
                 }
             }
