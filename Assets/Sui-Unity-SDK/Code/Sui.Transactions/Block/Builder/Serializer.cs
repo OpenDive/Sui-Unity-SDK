@@ -54,6 +54,96 @@ namespace Sui.Transactions
             return null;
         }
 
+        static public Type GetPureNormalizedTypeType(ISuiMoveNormalizedType normalizedType, ISerializable argVal)
+        {
+            List<string> allowedTypes = new List<string>() { "Address", "Bool", "U8", "U16", "U32", "U64", "U128", "U256" };
+
+            if (normalizedType as SuiMoveNormalizedTypeString != null)
+            {
+                SuiMoveNormalizedTypeString stringType = (SuiMoveNormalizedTypeString)normalizedType;
+
+                if (allowedTypes.Contains(stringType.Value))
+                {
+                    List<string> allowedNumTypes = new List<string>() { "U8", "U16", "U32", "U64", "U128", "U256" };
+                    if (allowedNumTypes.Contains(stringType.Value)) {
+                        return Type.GetType(stringType.Value);
+                    }
+                    else if(stringType.Value == "Bool")
+                    {
+                        return typeof(Bool);
+                    }
+                    else if (stringType.Value == "Address")
+                    {
+                        return typeof(AccountAddress);
+                    }
+                    else
+                    {
+                        throw new NotSupportedException();
+                    }
+                }
+
+                throw new Exception($"Unknown pure normalized type {stringType.Value}");
+            }
+
+            if (normalizedType as SuiMoveNormalizedTypeVector != null)
+            {
+                do
+                {
+                    SuiMoveNormalizedTypeVector vectorType = (SuiMoveNormalizedTypeVector)normalizedType;
+
+                    if (argVal == null || argVal.GetType() == typeof(string))
+                    {
+                        Type type = GetPureNormalizedTypeType(vectorType.Vector, argVal);
+                        if ( type == typeof(U8))
+                        {
+                            return typeof(BString);
+                        }
+                    }
+
+                    if (argVal != null && !(argVal.GetType().IsArray))
+                    {
+                        throw new Exception($"Expect {argVal} to be an array, received {argVal.GetType()}");
+                    }
+
+                    Type innerType = GetPureNormalizedTypeType(vectorType.Vector, argVal);
+
+                    if (innerType == null)
+                        break;
+
+                    //return $"vector<{innerType}>";
+                    // TODO: Look into the logic for handling this in TransactionBlock
+                    Type listType = typeof(List<>).MakeGenericType(innerType);
+                    return listType;
+                }
+                while (false);
+            }
+
+            if (normalizedType as SuiMoveNormalziedTypeStruct != null)
+            {
+                do
+                {
+                    SuiMoveNormalziedTypeStruct structType = (SuiMoveNormalziedTypeStruct)normalizedType;
+
+                    if (IsSameStruct(structType.Struct, resolvedAsciiStr) || IsSameStruct(structType.Struct, resolvedUtf8Str))
+                    {
+                        return typeof(BString);
+                    }
+                    else if (IsSameStruct(structType.Struct, resolvedSuiId))
+                    {
+                        return typeof(AccountAddress);
+                    }
+                    else if (IsSameStruct(structType.Struct, resolvedStdOption))
+                    {
+                        //SuiMoveNormalizedTypeVector vectorType = new SuiMoveNormalizedTypeVector(structType.Struct.typeArgs[0]); TODO: Marcus: Implement case for option struct
+                    }
+                }
+                while (false);
+            }
+
+            return null;
+        }
+
+
         static public string GetPureNormalizedType(ISuiMoveNormalizedType normalizedType, ISerializable argVal)
         {
             List<string> allowedTypes = new List<string>() { "Address", "Bool", "U8", "U16", "U32", "U64", "U128", "U256" };
