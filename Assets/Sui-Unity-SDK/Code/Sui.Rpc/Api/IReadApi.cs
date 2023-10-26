@@ -218,6 +218,6 @@ namespace Sui.Rpc.Api
         /// <param name="objectIds">the IDs of the queried objects</param>
         /// <param name="options">options for specifying the content to be returned</param>
         /// <returns></returns>
-        Task<RpcResult<ObjectDataResponse[]>> MultiGetObjects(AccountAddress[] objectIds, ObjectDataOptions options);
+        Task<RpcResult<IEnumerable<ObjectDataResponse>>> MultiGetObjects(AccountAddress[] objectIds, ObjectDataOptions options);
     }
 }

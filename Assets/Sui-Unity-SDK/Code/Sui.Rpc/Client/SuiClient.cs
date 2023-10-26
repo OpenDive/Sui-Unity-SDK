@@ -318,9 +318,9 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<ObjectDataResponse[]>> MultiGetObjects(AccountAddress[] objectIds, ObjectDataOptions options)
+        public async Task<RpcResult<IEnumerable<ObjectDataResponse>>> MultiGetObjects(AccountAddress[] objectIds, ObjectDataOptions options)
         {
-            return await SendRpcRequestAsync<ObjectDataResponse[]>(
+            return await SendRpcRequestAsync<IEnumerable<ObjectDataResponse>>(
                 Methods.sui_multiGetObjects.ToString(),
                 ArgumentBuilder.BuildArguments(
                     objectIds.Select(x => x.ToHex()).ToArray(),
