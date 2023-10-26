@@ -557,20 +557,31 @@ namespace Sui.Transactions
             this.SetGasPrice(gasPrice);
         }
 
+        /// <summary>
+        /// Resolves all required Move modules and objects.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public async Task PrepareTransactions(Block.BuilidOptions options)
         {
+            // The inputs in the `TransactionBlock`
             List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
+            // The transactions in the `TransactionBlock`
             ITransaction[] transactions = this.BlockDataBuilder.Transactions;
 
+            // A list of move modules identified as needing to be resolved
             List<MoveCall> moveModulesToResolve = new List<MoveCall>();
-            //List<ObjectToResolve> objectsToResolve = new List<ObjectToResolve>();
+            // A list of object identified as needing to be resolved
+            List<ObjectToResolve> objectsToResolve = new List<ObjectToResolve>();
 
             foreach (TransactionBlockInput input in inputs)
             {
-                if (input.Value.GetType() == typeof(string))
+                // The value is an ObjectID (AccountAddress) add it to the objects to resolve
+                if (input.Value.GetType() == typeof(AccountAddress))
                 {
                     ObjectToResolve objectToResolve = new ObjectToResolve(
-                        ((BString)input.Value).ToString(),
+                        (AccountAddress)input.Value,
                         input,
                         null
                     );
@@ -578,7 +589,8 @@ namespace Sui.Transactions
                 }
             }
 
-            foreach(ITransaction transaction in transactions)
+            #region Process all transactions
+            foreach (ITransaction transaction in transactions)
             {
                 #region Process MoveCall Transaction
                 // Special case move call:
@@ -610,46 +622,62 @@ namespace Sui.Transactions
                     // If any of the arguments in the MoveCall need to be resolved
                     if(needsResolution)
                         moveModulesToResolve.Add(moveTx);
-                    continue;
+                    //continue; // TODO: Review this implementation
                 }
-                #endregion
-                else if(transaction.Kind == Kind.TransferObjects)
+                #endregion Process MoveCall Transaction
+
+                #region Process TransferObjects Transaction
+                else if (transaction.Kind == Kind.TransferObjects)
                 {
                     TransferObjects transferObjectsTx = (TransferObjects)transaction;
                     ITransactionArgument address = transferObjectsTx.Address;
 
                     if (address.GetType() == typeof(TransactionBlockInput))
                     {
+                        // Cast the address as a `TransactionBlockInput` to get index property
                         TransactionBlockInput addressInput = (TransactionBlockInput)address;
+                        // Get the TXBInput object at the index provided by the addressInput argument
                         TransactionBlockInput input = inputs[addressInput.Index];
 
+                        // If the value of the input is not an object type then it must be a Pure
                         if (input.Value.GetType() != typeof(IObjectRef))
                         {
-                            this.BlockDataBuilder.Inputs[addressInput.Index].Value = new PureCallArg(input.Value); ;
+                            // TODO: IRVIN update this to use a clone of the input list
+                            this.BlockDataBuilder.Inputs[addressInput.Index].Value = new PureCallArg(input.Value);
                         }
                     }
                 }
-                else if(transaction.Kind == Kind.SplitCoins)
+                #endregion Process TransferObjects Transaction
+
+                #region Process SplitCoins Transaction
+                // Special handling for values that where previously encoded using the wellKnownEncoding pattern.
+                // This should only happen when transaction block data was hydrated from an old version of the SDK
+                else if (transaction.Kind == Kind.SplitCoins)
                 {
                     SplitCoins splitCoinsTx = (SplitCoins)transaction;
                     ITransactionArgument[] amounts = splitCoinsTx.Amounts;
                     foreach(ITransactionArgument amount in amounts)
                     {
                         if(amount.GetType() == typeof(TransactionBlockInput))
-                        {
-                            TransactionBlockInput amountInput = (TransactionBlockInput)amount;
-                            TransactionBlockInput input = inputs[amountInput.Index];
+                        {   // Cast the amount as a `TransactionBlockInput` to get index property
+                            TransactionBlockInput amountTxbInput = (TransactionBlockInput)amount;
+                            // Get the TXBInput object at the index provided by the amount argument
+                            TransactionBlockInput input = inputs[amountTxbInput.Index];
 
+                            // If the value of the input is not an object type then it must be a Pure
                             if(input.Value.GetType() != typeof(IObjectRef))
                             {
-                                this.BlockDataBuilder.Inputs[amountInput.Index].Value = new PureCallArg(input.Value); ;
+                                // TODO: IRVIN update this to use a clone of the input list
+                                this.BlockDataBuilder.Inputs[amountTxbInput.Index].Value = new PureCallArg(input.Value); ;
                             }
                         }
                     }
                 }
-                // TODO: IRVIN, continue implementation
+                #endregion Process SplitCoins Transaction
             }
+            #endregion Process all transactions 
 
+            #region Resolve Move modules
             if (moveModulesToResolve.Count > 0)
             {
                 foreach(MoveCall moveCall in moveModulesToResolve)
@@ -671,16 +699,20 @@ namespace Sui.Transactions
                         && normalized.Parameters.Last() as SuiMoveNormalizedTypeString != null
                         && IsTxContext(new SuiStructTag(((SuiMoveNormalizedTypeString)normalized.Parameters.Last()).Value));
 
-                    List<ISuiMoveNormalizedType> moduleParams = (List<ISuiMoveNormalizedType>)(hasTxContext ? normalized.Parameters.Take(normalized.Parameters.Count - 1) : normalized.Parameters);
+                    // The list of parameters returned by the RPC call
+                    List<ISuiMoveNormalizedType> paramsList = (List<ISuiMoveNormalizedType>)(hasTxContext
+                        ? normalized.Parameters.Take(normalized.Parameters.Count - 1)
+                        : normalized.Parameters);
 
-                    if(moduleParams.Count != moveCall.Arguments.Length)
+                    if(paramsList.Count != moveCall.Arguments.Length)
                     {
-                        throw new Exception("Incorrect number of arguments.");
+                        // TODO: Irvin fix this -- we cannot throw an exception
+                        throw new ArgumentException("Incorrect number of arguments.");
                     }
 
-                    for(int i = 0; i < moduleParams.Count; i++)
+                    for(int i = 0; i < paramsList.Count; i++)
                     {
-                        ISuiMoveNormalizedType param = moduleParams[i];
+                        ISuiMoveNormalizedType param = paramsList[i];
 
                         ITransactionArgument arg = moveCall.Arguments[i];
                         if(arg.Kind != Types.Arguments.Kind.Input) continue;
@@ -688,9 +720,12 @@ namespace Sui.Transactions
                         TransactionBlockInput inputArg = (TransactionBlockInput)arg;
 
                         TransactionBlockInput input = inputs[inputArg.Index];
-                        // Skip if the input is already resolved
+                        // Skip if the input is already resolved, aka if the input is a BuilderArg
                         if (input.Value.GetType() == typeof(ICallArg)) continue;
 
+                        // When we reach here, this means that the value could be a BString, a U8, etc.
+                        // We need to compare agains the RPC response params to know how to cast to a concrete type
+                        // Once we know how to cast, then we will be able to serialize it later on
                         ISerializable inputValue = input.Value;
 
                         //Type t = Type.GetType(param); // for reference
@@ -703,25 +738,47 @@ namespace Sui.Transactions
                         ////input.Value = new Bytes(ser.GetBytes());
                         ///
 
+                        /*
                         string serType = Serializer.GetPureNormalizedType(param, inputValue);
-
                         if (serType != null)
                         {
+                            // TODO: IRVIN update this to use a clone of the input list
                             this.BlockDataBuilder.Inputs[inputArg.Index].Value = new PureCallArg(inputValue);
                             continue;
                         }
+                        */
+
+                        // TODO: NOTE IRVIN -- All this function does is "verify" that the input value matches the type that the MoveCall expects.
+                        // TODO: HENCE we don't really need to return anything, all we have to do is just check that the type of the input value
+                        // TODO: matches what is expected, if doesn't match then we return false, and break / end the program.
+                        // TODO: We don't need a "serType" because we are already passing concrete types such as:
+                        // TODO:    `AccountAddress` or `U8` or `Bytes` for byte arrays, of Sequence for vectors
+
+                        // TODO: NOW NOTE THAT -- for structs it's trickier because the MoveCall is expecting an object, and in the C# side
+                        // TODO:    We can only work with class / objects, hence we just have to do a comparison of the properties of the expected object
+                        Type serType = Serializer.GetPureNormalizedTypeType(param, inputValue);
+
+                        // if(iSPureNormalizedType) { 
+                        this.BlockDataBuilder.Inputs[inputArg.Index].Value = new PureCallArg(inputValue);
+                        // }
+
 
                         ISuiMoveNormalizedType structVal = Serializer.ExtractStructType(param);
 
                         if (structVal != null || param as SuiMoveNormalziedTypeParameterType != null)
                         {
-                            if (inputValue.GetType() != typeof(string))
-                                throw new Exception($"Expect the argument to be an object id string, got {inputValue}");
+                            if (inputValue.GetType() != typeof(AccountAddress))
+                                throw new Exception($"Expect the argument to be an object id string, got {inputValue.GetType()}");
 
-                            SuiMoveNormalizedTypeString inputString = (SuiMoveNormalizedTypeString)inputValue;
+                            //SuiMoveNormalizedTypeString inputString = (SuiMoveNormalizedTypeString)inputValue;
+                            //ObjectToResolve objectToResolve = new ObjectToResolve(
+                            //    inputString.Value,
+                            //    input,
+                            //    param
+                            //);
 
                             ObjectToResolve objectToResolve = new ObjectToResolve(
-                                inputString.Value,
+                                (AccountAddress)inputValue,
                                 input,
                                 param
                             );
@@ -731,15 +788,88 @@ namespace Sui.Transactions
                             continue;
                         }
 
-                        throw new Exception($"Unknown call arg type {param} for value {inputValue}");
+                        throw new Exception($"Unknown call arg type {param} for value {inputValue.GetType()}");
                     }
                 }
             }
+            #endregion Resolve MoveModules
 
             if (objectsToResolve.Count != 0)
             {
+                List<AccountAddress> mappedIds = (List<AccountAddress>)objectsToResolve.Select(x => x.Id);
+                List<AccountAddress> dedupedIds = new HashSet<AccountAddress>(mappedIds).ToList(); // NOTE: Insertion order in HashSet will be maintain until removing or re-adding
 
+                // TODO: In the TypeScript SDK they use `Set` which is a set that maintains insertion order
+                // TODO: Find data structure that does this in C#
+                // https://gist.github.com/gmamaladze/3d60c127025c991a087e
+
+                List<List<AccountAddress>> objectChunks = Chunk(dedupedIds, 50);
+
+                List<List<ObjectDataResponse>> objectsResponse = new List<List<ObjectDataResponse>>();
+                foreach(List<AccountAddress> objectIds in objectChunks)
+                {
+                    ObjectDataOptions optionsObj = new ObjectDataOptions();
+                    optionsObj.ShowOwner = true;
+
+                    RpcResult<IEnumerable<ObjectDataResponse>> response = await options.Client.MultiGetObjects(objectIds.ToArray(), optionsObj);
+                    List<ObjectDataResponse> objects = (List<ObjectDataResponse>)response.Result;
+                    objectsResponse.Add(objects);
+                }
+                // Flatten responses
+                List<ObjectDataResponse> objectsFlatten = objectsResponse.SelectMany(x => x).ToList();
+
+                Dictionary<AccountAddress, ObjectDataResponse> objectsById = new Dictionary<AccountAddress, ObjectDataResponse>();
+                for(int i = 0; i < dedupedIds.Count; i++)
+                {
+                    AccountAddress id = dedupedIds[i];
+                    ObjectDataResponse obj = objectsFlatten[i];
+                    objectsById.Add(id, obj);
+                }
+
+                // Check for invalid objects / objects with errors
+                //List<ObjectDataResponse> invalidObjects = objectsById.Values.ToList().Where(obj => obj.Error);// TODO: Identify how to get error from object response
+                //if(invalidObjects.Count > 0)
+                //{
+                //    throw new Exception("The following input objects are invalid: {}");
+                //}
+
+                foreach(ObjectToResolve objectToResolve in objectsToResolve)
+                {
+                    ObjectDataResponse obj = objectsById[objectToResolve.Id];
+                    //AccountAddress owner = obj.Data.Owner; // could be an object
+                    Owner owner = obj.Data.Owner;
+
+                    // check if `initialSharedVErsion
+
+                    // if(initialSharedVersion)
+
+                        // There could be multiple transactions that reference the same shared object.
+                        // If one of them is a mutable reference, then we should mark the input
+                        // as mutable.
+
+                }
             }
+        }
+
+        /// <summary>
+        /// Chuck the list of duduped ids so that it can be used in the RPC call for multi objects.
+        /// </summary>
+        /// <param name="dedupedIds"></param>
+        /// <param name="size"></param>
+        /// <returns></returns>
+        private List<List<AccountAddress>> Chunk(List<AccountAddress> dedupedIds, int size)
+        {
+            int length = (int)Math.Ceiling((double)(dedupedIds.Count / size));
+            List<List<AccountAddress>> ret = new List<List<AccountAddress>>();
+            int i = 0;
+            while(i < length)
+            {
+                // TODO: Check if this might break because of index out of bounds
+                List<AccountAddress> chunk = dedupedIds.GetRange(i * size, i * size + size);
+                ret.Add(chunk);
+                i++;
+            }
+            return ret;
         }
 
         /// <summary>
@@ -773,17 +903,17 @@ namespace Sui.Transactions
             }
         }
 
-        private class ObjectToResolve
+        public class ObjectToResolve
         {
-            string id { get; set; }
-            TransactionBlockInput input { get; set; }
-            ISuiMoveNormalizedType normalizedType;
+            public AccountAddress Id { get; set; }
+            public TransactionBlockInput Input { get; set; }
+            public ISuiMoveNormalizedType NormalizedType;
 
-            public ObjectToResolve(string id, TransactionBlockInput input, ISuiMoveNormalizedType normalizedType) 
+            public ObjectToResolve(AccountAddress id, TransactionBlockInput input, ISuiMoveNormalizedType normalizedType) 
             {
-                this.id = id;
-                this.input = input;
-                this.normalizedType = normalizedType;
+                this.Id = id;
+                this.Input = input;
+                this.NormalizedType = normalizedType;
             }
         }
 
