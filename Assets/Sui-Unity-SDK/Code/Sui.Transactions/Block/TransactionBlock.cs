@@ -564,14 +564,12 @@ namespace Sui.Transactions
         public async Task PrepareTransactions(Block.BuilidOptions options)
         {
             // The inputs in the `TransactionBlock`
-            List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
-            // The transactions in the `TransactionBlock`
-            ITransaction[] transactions = this.BlockDataBuilder.Transactions;
+            List<TransactionBlockInput> inputs      = this.BlockDataBuilder.Inputs;
+            ITransaction[] transactions             = this.BlockDataBuilder.Transactions;
 
             // A list of move modules identified as needing to be resolved
-            List<MoveCall> moveModulesToResolve = new List<MoveCall>();
-            // A list of object identified as needing to be resolved
-            List<ObjectToResolve> objectsToResolve = new List<ObjectToResolve>();
+            List<MoveCall> moveModulesToResolve     = new List<MoveCall>();
+            List<ObjectToResolve> objectsToResolve  = new List<ObjectToResolve>();
 
             foreach (TransactionBlockInput input in inputs)
             {
@@ -620,9 +618,8 @@ namespace Sui.Transactions
                     // If any of the arguments in the MoveCall need to be resolved
                     if(needsResolution)
                         moveModulesToResolve.Add(moveTx);
-                    //continue; // TODO: Review this implementation
                 }
-                #endregion Process MoveCall Transaction
+                #endregion END - Process MoveCall Transaction
 
                 #region Process TransferObjects Transaction
                 else if (transaction.Kind == Kind.TransferObjects)
@@ -645,7 +642,7 @@ namespace Sui.Transactions
                         }
                     }
                 }
-                #endregion Process TransferObjects Transaction
+                #endregion END - Process TransferObjects Transaction
 
                 #region Process SplitCoins Transaction
                 // Special handling for values that where previously encoded using the wellKnownEncoding pattern.
@@ -666,14 +663,15 @@ namespace Sui.Transactions
                             if(input.Value.GetType() != typeof(IObjectRef))
                             {
                                 // TODO: IRVIN update this to use a clone of the input list
-                                this.BlockDataBuilder.Inputs[amountTxbInput.Index].Value = new PureCallArg(input.Value); ;
+                                this.BlockDataBuilder.Inputs[amountTxbInput.Index].Value
+                                    = new PureCallArg(input.Value); ;
                             }
                         }
                     }
                 }
-                #endregion Process SplitCoins Transaction
+                #endregion END - Process SplitCoins Transaction
             }
-            #endregion Process all transactions 
+            #endregion END - Process all transactions 
 
             #region Resolve Move modules
             if (moveModulesToResolve.Count > 0)
@@ -684,21 +682,27 @@ namespace Sui.Transactions
                     string moduleName = moveCall.Target.module;
                     string functionName = moveCall.Target.name;
 
-                    // RPC Call
+                    #region RPC Call GetNormalizedMoveFunction
                     RpcResult<NormalizedMoveFunctionResponse> result
-                        = await options.Client.GetNormalizedMoveFunction(packageId, moduleName, functionName);
+                        = await options.Client.GetNormalizedMoveFunction(
+                            packageId,
+                            moduleName,
+                            functionName
+                    );
                     NormalizedMoveFunctionResponse normalized = result.Result;
+                    #endregion END - RPC Call
 
                     // Entry functions can have a mutable reference to an instance of the TxContext
                     // struct defined in the TxContext module as the last parameter. The caller of
                     // the function does not need to pass it in as an argument.
-
-                    bool hasTxContext = normalized.Parameters.Count > 0
+                    bool hasTxContext
+                        = normalized.Parameters.Count > 0
                         && normalized.Parameters.Last() as SuiMoveNormalizedTypeString != null
                         && IsTxContext(new SuiStructTag(((SuiMoveNormalizedTypeString)normalized.Parameters.Last()).Value));
 
                     // The list of parameters returned by the RPC call
-                    List<ISuiMoveNormalizedType> paramsList = (List<ISuiMoveNormalizedType>)(hasTxContext
+                    List<ISuiMoveNormalizedType> paramsList
+                        = (List<ISuiMoveNormalizedType>)(hasTxContext
                         ? normalized.Parameters.Take(normalized.Parameters.Count - 1)
                         : normalized.Parameters);
 
@@ -716,7 +720,6 @@ namespace Sui.Transactions
                         if(arg.Kind != Types.Arguments.Kind.Input) continue;
 
                         TransactionBlockInput inputArg = (TransactionBlockInput)arg;
-
                         TransactionBlockInput input = inputs[inputArg.Index];
                         // Skip if the input is already resolved, aka if the input is a BuilderArg
                         if (input.Value.GetType() == typeof(ICallArg)) continue;
@@ -769,21 +772,12 @@ namespace Sui.Transactions
                             if (inputValue.GetType() != typeof(AccountAddress))
                                 throw new Exception($"Expect the argument to be an object id string, got {inputValue.GetType()}");
 
-                            //SuiMoveNormalizedTypeString inputString = (SuiMoveNormalizedTypeString)inputValue;
-                            //ObjectToResolve objectToResolve = new ObjectToResolve(
-                            //    inputString.Value,
-                            //    input,
-                            //    param
-                            //);
-
                             ObjectToResolve objectToResolve = new ObjectToResolve(
                                 (AccountAddress)inputValue,
                                 input,
                                 param
                             );
-
                             objectsToResolve.Add(objectToResolve);
-
                             continue;
                         }
 
@@ -791,18 +785,19 @@ namespace Sui.Transactions
                     }
                 }
             }
-            #endregion Resolve MoveModules
-
+            #endregion END - Resolve MoveModules
+            #region Resolve objects
             if (objectsToResolve.Count != 0)
             {
                 List<AccountAddress> mappedIds = (List<AccountAddress>)objectsToResolve.Select(x => x.Id);
-                // NOTE: Insertion order in HashSet will be maintain until removing or re-adding
+                // NOTE: Insertion order in HashSet will be maintained until removing or re-adding
                 List<AccountAddress> dedupedIds = new HashSet<AccountAddress>(mappedIds).ToList();
 
                 // TODO: In the TypeScript SDK they use `Set` which is a set that maintains insertion order
                 // TODO: Find data structure that does this in C#
                 // https://gist.github.com/gmamaladze/3d60c127025c991a087e
 
+                // Chunk list of IDs into smaller lists to use in RPC Call `MultiGetObjects`
                 List<List<AccountAddress>> objectChunks = Chunk(dedupedIds, 50);
 
                 List<List<ObjectDataResponse>> objectsResponse = new List<List<ObjectDataResponse>>();
@@ -819,7 +814,8 @@ namespace Sui.Transactions
                     );
                     #endregion END - Call MultiGetObjects
 
-                    List<ObjectDataResponse> objects = (List<ObjectDataResponse>)response.Result;
+                    List<ObjectDataResponse> objects
+                        = (List<ObjectDataResponse>)response.Result;
                     objectsResponse.Add(objects);
                 }
                 // Flatten responses from MultiGetObjects
@@ -830,6 +826,7 @@ namespace Sui.Transactions
                 Dictionary<AccountAddress, ObjectDataResponse> objectsById
                     = new Dictionary<AccountAddress, ObjectDataResponse>();
 
+                // Populate map(Dictionary) `objectsById`
                 for(int i = 0; i < dedupedIds.Count; i++)
                 {
                     AccountAddress id = dedupedIds[i];
@@ -837,6 +834,7 @@ namespace Sui.Transactions
                     objectsById.Add(id, obj);
                 }
 
+                // Filter objects that returned an error
                 List<ObjectDataResponse> invalidObjects
                     = (List<ObjectDataResponse>)objectsById.Values.ToList().Where(
                         obj => obj.Error != null
@@ -844,6 +842,7 @@ namespace Sui.Transactions
 
                 if (invalidObjects.Count > 0)
                     throw new Exception("The following input objects are invalid: {}");
+
 
                 foreach (ObjectToResolve objectToResolve in objectsToResolve)
                 {
@@ -860,7 +859,11 @@ namespace Sui.Transactions
                         );
 
                         inputs[objectToResolve.Input.Index].Value
-                            = new SharedObjectRef(objectToResolve.Id, (int)initialSharedVersion, mutable);
+                            = new SharedObjectRef(
+                                objectToResolve.Id,
+                                (int)initialSharedVersion,
+                                mutable
+                        );
                     }
                     else if (objectToResolve.NormalizedType != null)
                     {
@@ -871,15 +874,17 @@ namespace Sui.Transactions
                         ObjectData data = obj.Data;
                         if (data != null)
                         {
-                            inputs[objectToResolve.Input.Index].Value = new Sui.Types.SuiObjectRef(
-                                AccountAddress.FromHex(data.ObjectId),
-                                (int)data.Version,
-                                data.Digest
+                            inputs[objectToResolve.Input.Index].Value
+                                = new Sui.Types.SuiObjectRef(
+                                    AccountAddress.FromHex(data.ObjectId),
+                                    (int)data.Version,
+                                    data.Digest
                             );
                         }
                     }
                 }
             }
+            #endregion END - Resolve objects
         }
 
         /// <summary>
