@@ -1,0 +1,44 @@
+﻿{
+    "jsonrpc": "2.0",
+    "result": {
+        "visibility": "Public",
+        "isEntry": false,
+        "typeParameters": [
+            {
+                "abilities": []
+            }
+        ],
+        "parameters": [
+            {
+                "MutableReference": {
+                    "Struct": {
+                        "address": "0x2",
+                        "module": "coin",
+                        "name": "TreasuryCap",
+                        "typeArguments": [
+                            {
+                                "TypeParameter": 0
+                            }
+                        ]
+                    }
+                }
+            }
+        ],
+        "return": [
+            {
+                "MutableReference": {
+                    "Struct": {
+                        "address": "0x2",
+                        "module": "balance",
+                        "name": "Supply",
+                        "typeArguments": [
+                            {
+                                "TypeParameter": 0
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    }
+}

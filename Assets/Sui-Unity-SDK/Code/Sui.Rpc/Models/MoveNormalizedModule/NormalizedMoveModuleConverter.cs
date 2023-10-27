@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEditor.Build.Player;
 using static UnityEditor.Progress;
+using NUnit.Framework;
 
 namespace Sui.Rpc.Models
 {
@@ -60,6 +61,41 @@ namespace Sui.Rpc.Models
         }
     }
 
+    public class NormalizedTypesConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(List<ISuiMoveNormalizedType>);
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            JArray typeObj = JArray.Load(reader);
+
+            List<ISuiMoveNormalizedType> normalizedTypes = new List<ISuiMoveNormalizedType>();
+
+            foreach (JToken typeObject in typeObj)
+            {
+                Debug.Log($"MARCUS::::: {typeObject.ToString()}");
+                NormalizedTypeConverter jsonConverter = new NormalizedTypeConverter();
+                ISuiMoveNormalizedType normalizedType = jsonConverter.ReadJson(
+                    typeObject.CreateReader(),
+                    typeof(ISuiMoveNormalizedType),
+                    null,
+                    serializer
+                ) as ISuiMoveNormalizedType;
+                normalizedTypes.Add(normalizedType);
+            }
+
+            return normalizedTypes;
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class NormalizedTypeConverter : JsonConverter
     {
         public static string NormalizeSuiAddress(string address)
@@ -90,27 +126,28 @@ namespace Sui.Rpc.Models
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            JObject typeObj = JObject.Load(reader);
-
-            if (reader.TokenType == JsonToken.StartObject)
-                typeObj = (JObject)typeObj["result"];
-
-            ISuiMoveNormalizedType normalziedType;
-
-            // NOTE: This only iterates once because there's only one object. For example,
-            // below there's only one "Struct" object hence the property is only "Struct"
-            // "type":{
-            //    "Struct":{
-            //      "address":"0x2",
-            //      "module":"object",
-            //      "name":"UID",
-            //      "typeArguments":[
-            //      ]
-            //    }
-            // }
-            foreach (JProperty typeObjectProp in typeObj.Properties())
+            try
             {
-                try
+                Debug.Log($"MARCUS::::: {reader}");
+                JObject typeObj = JObject.Load(reader);
+
+                if (reader.TokenType == JsonToken.StartObject)
+                    typeObj = (JObject)typeObj["result"];
+
+                ISuiMoveNormalizedType normalziedType;
+
+                // NOTE: This only iterates once because there's only one object. For example,
+                // below there's only one "Struct" object hence the property is only "Struct"
+                // "type":{
+                //    "Struct":{
+                //      "address":"0x2",
+                //      "module":"object",
+                //      "name":"UID",
+                //      "typeArguments":[
+                //      ]
+                //    }
+                // }
+                foreach (JProperty typeObjectProp in typeObj.Properties())
                 {
                     string objType = typeObjectProp.Name;
                     Debug.Log($"MARCUS::::: {typeObjectProp}");
@@ -166,7 +203,22 @@ namespace Sui.Rpc.Models
                             AccountAddress address = AccountAddress.FromHex(NormalizeSuiAddress((string)structTypeObj["address"]));
                             string module = (string)structTypeObj["module"];
                             string name = (string)structTypeObj["name"];
-                            SuiStructTag structTag = new SuiStructTag(address, module, name, Array.Empty<ISerializableTag>()); // TODO: Marcus: Implement Type Arguemtns parameter
+
+                            JArray arguments = (JArray)structTypeObj["typeArguments"];
+                            List<ISuiMoveNormalizedType> argumentsTypes = new List<ISuiMoveNormalizedType>();
+                            foreach (JToken argument in arguments)
+                            {
+                                var argumentsTypeConverter = new NormalizedTypeConverter();
+                                ISuiMoveNormalizedType argumentType = argumentsTypeConverter.ReadJson(
+                                    argument.CreateReader(),
+                                    typeof(ISuiMoveNormalizedType),
+                                    null,
+                                    serializer
+                                ) as ISuiMoveNormalizedType;
+                                argumentsTypes.Add(argumentType);
+                            }
+
+                            SuiStructTag structTag = new SuiStructTag(address, module, name, argumentsTypes.ToArray()); // TODO: Marcus: Implement Type Arguemtns parameter
                             normalziedType = new SuiMoveNormalziedTypeStruct(structTag);
                             Debug.Log($"MARCUS:::: STRUCT TAG NAME - {(normalziedType as SuiMoveNormalziedTypeStruct).Struct.name}");
                             break;
@@ -178,11 +230,12 @@ namespace Sui.Rpc.Models
                     if (normalziedType != null)
                         return normalziedType;
                 }
-                catch
-                {
-                    string objType = typeObjectProp.Name;
-                    return new SuiMoveNormalizedTypeString(objType);
-                }
+            }
+            catch (Exception e)
+            {
+                string objType = reader.ToString();
+                Debug.Log($"MARCUS:::: {objType}");
+                return new SuiMoveNormalizedTypeString(objType);
             }
 
             throw new NotImplementedException();

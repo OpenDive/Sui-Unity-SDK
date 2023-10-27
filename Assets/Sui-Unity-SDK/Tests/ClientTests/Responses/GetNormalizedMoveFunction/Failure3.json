@@ -1,0 +1,7 @@
+﻿{
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32602,
+    "message": "No function was found with function name not_a_function"
+  }
+}

@@ -1,0 +1,7 @@
+﻿{
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32602,
+    "message": "Package object does not exist with ID 0x0000000000000000000000000000000000000000000000000000000000000012"
+  }
+}

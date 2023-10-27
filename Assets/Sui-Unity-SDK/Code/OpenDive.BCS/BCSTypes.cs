@@ -1,4 +1,5 @@
 ﻿using Sui.Accounts;
+using Sui.Rpc.Models;
 using Sui.Utilities;
 using System;
 using System.Collections.Generic;
@@ -1059,9 +1060,9 @@ namespace OpenDive.BCS
         public AccountAddress address;
         public string module;
         public string name;
-        public ISerializableTag[] typeArgs;
+        public ISuiMoveNormalizedType[] typeArgs;
 
-        public SuiStructTag(AccountAddress address, string module, string name, ISerializableTag[] typeArgs)
+        public SuiStructTag(AccountAddress address, string module, string name, ISuiMoveNormalizedType[] typeArgs)
         {
             this.address = address;
             this.module = module;
@@ -1119,21 +1120,22 @@ namespace OpenDive.BCS
             string name = deserializer.DeserializeString();
 
             int length = deserializer.DeserializeUleb128();
-            List<ISerializableTag> typeArgsList = new List<ISerializableTag>();
+            // TODO: Implement deserializer for ISuiMoveNormalizedType
+            //List<ISerializableTag> typeArgsList = new List<ISuiMoveNormalizedType>();
 
-            while (typeArgsList.Count < length)
-            {
-                ISerializableTag val = ISerializableTag.DeserializeTag(deserializer);
-                typeArgsList.Add(val);
-            }
+            //while (typeArgsList.Count < length)
+            //{
+            //    ISerializableTag val = ISerializableTag.DeserializeTag(deserializer);
+            //    typeArgsList.Add(val);
+            //}
 
-            ISerializableTag[] typeArgsArr = typeArgsList.ToArray();
+            //ISerializableTag[] typeArgsArr = typeArgsList.ToArray();
 
             SuiStructTag structTag = new SuiStructTag(
                 address,
                 module,
                 name,
-                typeArgsArr
+                Array.Empty<ISuiMoveNormalizedType>()
             );
 
             return structTag;
@@ -1203,7 +1205,7 @@ namespace OpenDive.BCS
                 address,
                 split[1],
                 split[2],
-                new ISerializableTag[] { }
+                new ISuiMoveNormalizedType[] { }
             );
         }
 

@@ -15,10 +15,10 @@ namespace Sui.Rpc.Models
         [JsonProperty("typeParameters")]
         public List<TypeParameter> TypeParameters { get; set; }
 
-        [JsonProperty("parameters"), JsonConverter(typeof(NormalizedTypeConverter))]
+        [JsonProperty("parameters"), JsonConverter(typeof(NormalizedTypesConverter))]
         public List<ISuiMoveNormalizedType> Parameters { get; set; }
 
-        [JsonProperty("return")]
+        [JsonProperty("return"), JsonConverter(typeof(NormalizedTypesConverter))]
         public List<ISuiMoveNormalizedType> Return { get; set; }
     }
 
@@ -27,5 +27,24 @@ namespace Sui.Rpc.Models
     {
         [JsonProperty("abilities")]
         public List<string> Abilities { get; set; }
+    }
+
+    [JsonObject]
+    public class NormalizedTest
+    {
+        [JsonProperty("visibility")]
+        public string Visibility { get; set; }
+
+        [JsonProperty("isEntry")]
+        public bool IsEntry { get; set; }
+
+        //[JsonProperty("typeParameters")]
+        //public List<TypeParameter> TypeParameters { get; set; }
+
+        //[JsonProperty("parameters"), JsonConverter(typeof(NormalizedTypesConverter))]
+        //public List<ISuiMoveNormalizedType> Parameters { get; set; }
+
+        //[JsonProperty("return"), JsonConverter(typeof(NormalizedTypesConverter))]
+        //public List<ISuiMoveNormalizedType> Return { get; set; }
     }
 }
