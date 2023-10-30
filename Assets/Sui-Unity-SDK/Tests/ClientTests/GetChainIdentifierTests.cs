@@ -66,4 +66,3 @@ namespace Sui.Tests.Client
         }
     }
 }
-
