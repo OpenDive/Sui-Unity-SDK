@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Sui.Accounts;
 
 namespace Sui.Rpc.Models
 {
@@ -7,8 +8,8 @@ namespace Sui.Rpc.Models
         [JsonProperty("module_name")]
         public string ModuleName { get; set; }
 
-        [JsonProperty("package")]
-        public ObjectId Package { get; set; }
+        [JsonProperty("package"), JsonConverter(typeof(AccountAddressConverter))]
+        public AccountAddress Package { get; set; }
 
         [JsonProperty("struct_name")]
         public string StructName { get; set; }

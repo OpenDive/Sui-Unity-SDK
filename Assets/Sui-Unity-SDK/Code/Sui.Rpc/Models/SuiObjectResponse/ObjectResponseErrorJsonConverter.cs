@@ -1,6 +1,8 @@
 using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Sui.Accounts;
+using UnityEngine;
 
 namespace Sui.Rpc.Models
 {
@@ -21,24 +23,30 @@ namespace Sui.Rpc.Models
             var jsonObject = JObject.Load(reader);
             ObjectResponseError error;
 
-            string code = jsonObject["Code"]?.ToString();
+            string code = jsonObject["code"]?.ToString();
 
             switch (code)
             {
-                case "NotExistsError":
-                    error = new NotExistsError();
+                case "notExists":
+                    AccountAddress objectId = AccountAddress.FromHex(jsonObject["object_id"]?.ToString());
+                    error = new NotExistsError(objectId);
                     break;
-                case "DynamicFieldNotFoundError":
-                    error = new DynamicFieldNotFoundError();
+                case "dynamicFieldNotFound":
+                    AccountAddress parentObjectId = AccountAddress.FromHex(jsonObject["parent_object_id"]?.ToString());
+                    error = new DynamicFieldNotFoundError(parentObjectId);
                     break;
-                case "DeletedError":
-                    error = new DeletedError();
+                case "deleted":
+                    error = new DeletedError(
+                        jsonObject["digest"]?.ToString(),
+                        AccountAddress.FromHex(jsonObject["object_id"]?.ToString()),
+                        jsonObject["version"]?.ToString()
+                    );
                     break;
-                case "UnknownError":
+                case "unknown":
                     error = new UnknownError();
                     break;
-                case "DisplayError":
-                    error = new DisplayError();
+                case "displayError":
+                    error = new DisplayError(jsonObject["error"]?.ToString());
                     break;
                 default:
                     throw new JsonSerializationException($"Unsupported type: {code}");

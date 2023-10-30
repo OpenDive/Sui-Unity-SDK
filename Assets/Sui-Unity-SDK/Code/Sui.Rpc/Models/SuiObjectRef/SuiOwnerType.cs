@@ -7,6 +7,5 @@ namespace Sui.Rpc.Models
         ObjectOwner,
         Shared,
         Immutable
-
     }
 }

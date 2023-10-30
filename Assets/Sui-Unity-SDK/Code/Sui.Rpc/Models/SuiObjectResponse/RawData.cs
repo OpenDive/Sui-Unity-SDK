@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using Newtonsoft.Json;
+using Sui.Accounts;
 
 namespace Sui.Rpc.Models
 {
@@ -27,8 +28,8 @@ namespace Sui.Rpc.Models
 
     public class PackageRawData : RawData
     {
-        [JsonProperty("id")]
-        public ObjectId Id { get; set; }
+        [JsonProperty("id"), JsonConverter(typeof(AccountAddressConverter))]
+        public AccountAddress Id { get; set; }
 
         [JsonProperty("linkageTable")]
         public Dictionary<string, UpgradeInfo> LinkageTable { get; set; }
