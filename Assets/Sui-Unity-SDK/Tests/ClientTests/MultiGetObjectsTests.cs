@@ -11,7 +11,7 @@ using System.Numerics;
 
 namespace Sui.Tests.Client
 {
-	public class MultiGetObjectTest
+	public class MultiGetObjectsTests
 	{
         string path = Application.dataPath + "/Sui-Unity-SDK/Tests/ClientTests/Responses";
 
@@ -22,7 +22,7 @@ namespace Sui.Tests.Client
             StreamReader reader = new StreamReader(success1Path);
             string rawRpcResponse = reader.ReadToEnd();
 
-            RpcResult<SuiObjectResponse[]> jsonObject = JsonConvert.DeserializeObject<RpcResult<SuiObjectResponse[]>>(rawRpcResponse);
+            RpcResult<ObjectDataResponse[]> jsonObject = JsonConvert.DeserializeObject<RpcResult<ObjectDataResponse[]>>(rawRpcResponse);
 
             Assert.NotNull(jsonObject);
             Assert.AreEqual(2, jsonObject.Result.Length);
@@ -43,7 +43,7 @@ namespace Sui.Tests.Client
             StreamReader reader = new StreamReader(success2Path);
             string rawRpcResponse = reader.ReadToEnd();
 
-            RpcResult<SuiObjectResponse[]> jsonObject = JsonConvert.DeserializeObject<RpcResult<SuiObjectResponse[]>>(rawRpcResponse);
+            RpcResult<ObjectDataResponse[]> jsonObject = JsonConvert.DeserializeObject<RpcResult<ObjectDataResponse[]>>(rawRpcResponse);
 
             Assert.NotNull(jsonObject);
             Assert.AreEqual(4, jsonObject.Result.Length);

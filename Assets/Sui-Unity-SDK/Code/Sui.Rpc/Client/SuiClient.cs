@@ -274,7 +274,7 @@ namespace Sui.Rpc
         }
 
         public async Task<RpcResult<ObjectData>> GetDynamicFieldObject(
-            string parentObjectId, string name)
+            string parentObjectId, DynamicFieldName name)
         {
             return await SendRpcRequestAsync<ObjectData>(
                 Methods.suix_getDynamicFieldObject.ToString(),
@@ -315,6 +315,17 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<AccountAddress>(
                 Methods.suix_resolveNameServiceAddress.ToString(),
                 ArgumentBuilder.BuildArguments(name)
+            );
+        }
+
+        public async Task<RpcResult<ObjectDataResponse>> GetObject(AccountAddress objectId, ObjectDataOptions options)
+        {
+            return await SendRpcRequestAsync<ObjectDataResponse>(
+                Methods.sui_getObject.ToString(),
+                ArgumentBuilder.BuildArguments(
+                    objectId.ToHex(),
+                    options
+                )
             );
         }
 

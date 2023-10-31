@@ -9,7 +9,7 @@ using Sui.Rpc.Client;
 
 namespace Sui.Tests.Client
 {
-    public class GetLatestCheckpointSequenceNumber
+    public class GetLatestCheckpointSequenceNumberTests
     {
         string path = Application.dataPath + "/Sui-Unity-SDK/Tests/ClientTests/Responses";
 

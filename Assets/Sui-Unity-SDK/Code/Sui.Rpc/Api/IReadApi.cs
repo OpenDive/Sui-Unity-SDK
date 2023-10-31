@@ -180,7 +180,7 @@ namespace Sui.Rpc.Api
         /// <param name="parentObjectId">The ID of the queried parent object</param>
         /// <param name="name">The Name of the dynamic field</param>
         /// <returns></returns>
-        Task<RpcResult<ObjectData>> GetDynamicFieldObject(string parentObjectId, string name);
+        Task<RpcResult<ObjectData>> GetDynamicFieldObject(string parentObjectId, DynamicFieldName name);
 
         /// <summary>
         /// Return the list of dynamic field objects owned by an object.
@@ -219,5 +219,14 @@ namespace Sui.Rpc.Api
         /// <param name="options">options for specifying the content to be returned</param>
         /// <returns></returns>
         Task<RpcResult<IEnumerable<ObjectDataResponse>>> MultiGetObjects(AccountAddress[] objectIds, ObjectDataOptions options);
+
+        /// <summary>
+        /// Return the object information for a specified object
+        /// https://docs.sui.io/sui-jsonrpc#sui_getObject
+        /// </summary>
+        /// <param name="objectId">the ID of the queried object</param>
+        /// <param name="options">options for specifying the content to be returned</param>
+        /// <returns></returns>
+        Task<RpcResult<ObjectDataResponse>> GetObject(AccountAddress objectId, ObjectDataOptions options);
     }
 }
