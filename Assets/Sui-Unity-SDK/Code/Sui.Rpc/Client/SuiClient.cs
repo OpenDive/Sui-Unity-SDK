@@ -339,5 +339,18 @@ namespace Sui.Rpc
                 )
             );
         }
+
+        public async Task<RpcResult<PaginatedObjectsResponse>> GetOwnedObjects(AccountAddress owner, string cursor = null, string limit = null, IObjectDataFilter filter = null, ObjectDataOptions options = null)
+        {
+            return await SendRpcRequestAsync<PaginatedObjectsResponse>(
+                Methods.suix_getOwnedObjects.ToString(),
+                ArgumentBuilder.BuildArguments(
+                    owner.ToHex(),
+                    cursor,
+                    limit,
+                    new ObjectResponseQuery(filter, options)
+                )
+            );
+        }
     }
 }

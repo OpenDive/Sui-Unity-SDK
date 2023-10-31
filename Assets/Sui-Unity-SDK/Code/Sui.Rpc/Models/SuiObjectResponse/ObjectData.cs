@@ -4,6 +4,19 @@ using Newtonsoft.Json;
 namespace Sui.Rpc.Models
 {
     [JsonObject]
+    public class PaginatedObjectsResponse
+    {
+        [JsonProperty("data")]
+        public ObjectDataResponse[] Data { get; set; }
+
+        [JsonProperty("hasNextPage")]
+        public bool HasNextPage { get; set; }
+
+        [JsonProperty("nextCursor", Required = Required.Default)]
+        public string NextCursor { get; set; }
+    }
+
+    [JsonObject]
     public class ObjectDataResponse
     {
         [JsonProperty("data", Required = Required.Default)]
