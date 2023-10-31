@@ -180,7 +180,7 @@ namespace Sui.Rpc.Api
         /// <param name="parentObjectId">The ID of the queried parent object</param>
         /// <param name="name">The Name of the dynamic field</param>
         /// <returns></returns>
-        Task<RpcResult<ObjectData>> GetDynamicFieldObject(string parentObjectId, DynamicFieldName name);
+        Task<RpcResult<ObjectDataResponse>> GetDynamicFieldObject(string parentObjectId, DynamicFieldName name);
 
         /// <summary>
         /// Return the list of dynamic field objects owned by an object.

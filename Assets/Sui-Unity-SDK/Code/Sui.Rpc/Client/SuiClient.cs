@@ -273,10 +273,10 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<ObjectData>> GetDynamicFieldObject(
+        public async Task<RpcResult<ObjectDataResponse>> GetDynamicFieldObject(
             string parentObjectId, DynamicFieldName name)
         {
-            return await SendRpcRequestAsync<ObjectData>(
+            return await SendRpcRequestAsync<ObjectDataResponse>(
                 Methods.suix_getDynamicFieldObject.ToString(),
                 ArgumentBuilder.BuildArguments(parentObjectId, name)
             );
