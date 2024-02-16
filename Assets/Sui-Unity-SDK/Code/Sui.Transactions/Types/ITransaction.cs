@@ -18,18 +18,7 @@ namespace Sui.Transactions.Types
     /// A TransactionObject can be:
     /// MakeMove, MergeCoin, MoveCall, Publish, SplitCOins, TransferObject, Upgrade
     /// </summary>
-    public interface ITransaction : ISerializable { // ITransactionArgument
-        //public enum Kind
-        //{
-        //    MoveCallTransaction,
-        //    TransferObjectsTransaction,
-        //    SplitCoinsTransaction,
-        //    MergeCoinsTransaction,
-        //    PublishTransaction,
-        //    UpgradeTransaction,
-        //    MakeMoveVecTransaction,
-        //}
-
+    public interface ITransaction : ISerializable {
         public Kind Kind { get; }
     }
 }

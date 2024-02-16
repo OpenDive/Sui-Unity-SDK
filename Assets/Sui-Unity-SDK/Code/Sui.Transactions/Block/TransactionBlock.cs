@@ -138,7 +138,6 @@ namespace Sui.Transactions
             return this.BlockDataBuilder.Snapshot();
         }
 
-
         //public TransactionBlockInput AddObjectInput(IObjectRef objectRef)
         //{
         //    Type objectType = objectRef.GetType();

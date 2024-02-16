@@ -5,54 +5,52 @@ using UnityEngine;
 
 namespace Sui.Types
 {
-    /// <summary>
-    /// Indicates the expiration time for a transaction.
-    /// This can be a null values, an object with property `None` or
-    /// an object with `Epoch` property.
-    /// 
-    /// TODO: Create a pull request in Sui GitHub to fix type in documentation
-    /// https://github.com/MystenLabs/sui/blob/948be00ce391e300b17cca9b74c2fc3981762b87/sdk/typescript/src/bcs/index.ts#L102C4-L102C54
-    /// <code>
-    /// export type TransactionExpiration = { None: null } | { Epoch: number };
-    /// </code>
-    /// </summary>
-    public class TransactionExpiration : ISerializable
+    public interface ITransactionExpiration: ISerializable
     {
-        private bool None { get; set; }
-        private int Epoch { get; set; }
-
-        public TransactionExpiration()
+        public enum Type
         {
-            None = true;
+            None,
+            Epoch
+        }
+    }
+
+    public class TransactionExpirationNone: ITransactionExpiration
+    {
+        public ITransactionExpiration.Type ExpirationType = ITransactionExpiration.Type.None;
+
+        public void Serialize(Serialization serializer)
+        {
+            serializer.SerializeU8(0);
         }
 
-        /// <summary>
-        /// TODO: Inquire on validation for epoch number
-        /// </summary>
-        /// <param name="epoch"></param>
-        public TransactionExpiration(int epoch)
+        public static ISerializable Deserialize(Deserialization deserializer)
         {
-            None = false;
-            Epoch = epoch;
+            return new TransactionExpirationNone();
+        }
+    }
+
+    public class TransactionExpirationEpoch: ITransactionExpiration
+    {
+        public ITransactionExpiration.Type ExpirationType = ITransactionExpiration.Type.Epoch;
+        public int Epoch { get; set; }
+
+        public TransactionExpirationEpoch(int epoch)
+        {
+            this.Epoch = epoch;
         }
 
         public void Serialize(Serialization serializer)
         {
-            if (None == true)
-                serializer.SerializeU8(0); // Nothing
-            else
-            {
-                serializer.SerializeU8(1);
-                serializer.SerializeU64((ulong)Epoch);
-            }
-
-            Debug.Log("TransactionExpiration ::: ");
-            Debug.Log(serializer.GetBytes().ByteArrayToString());
+            serializer.SerializeU8(1);
+            serializer.SerializeU64((ulong)Epoch);
         }
 
-        public static ISerializable Deserialize(Deserialization deserialization)
+        public static ISerializable Deserialize(Deserialization deserializer)
         {
-            throw new NotImplementedException();
+            deserializer.DeserializeUleb128();
+            return new TransactionExpirationEpoch(
+                (int)deserializer.DeserializeU64()
+            );
         }
     }
 }

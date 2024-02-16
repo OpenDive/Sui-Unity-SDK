@@ -11,47 +11,58 @@ using Sui.Types;
 
 namespace Sui.Transactions.Builder
 {
-    /// <summary>
-    ///
-    /// <code>
-    ///     version = 1 as const;
-    ///     sender?: string;
-    ///     expiration?: TransactionExpiration;
-    ///     gasConfig: GasConfig;
-    ///     inputs: TransactionBlockInput[];
-    ///     transactions: TransactionType[];
-    /// </code>
-    /// </summary>
     public class TransactionBlockDataBuilder : ISerializable
     {
+        /// <summary>
+        /// Represents the version of the serialized transaction data.
+        /// </summary>
         public int Version { get; set; }
-        public TransactionExpiration Expiration;
+
+        /// <summary>
+        /// The account address of the sender of the transaction. It is optional and can be nil.
+        /// </summary>
         public AccountAddress Sender { get; set; }
+
+        /// <summary>
+        /// Represents the expiration of the transaction. It is optional and defaults to `TransactionExpiration.none`.
+        /// </summary>
+        public TransactionExpiration Expiration;
+
+        /// <summary>
+        /// Holds the configuration for gas in the transaction.
+        /// </summary>
         public GasConfig GasConfig { get; set; }
-        // TODO: Consider whether we actually need a TransactionBlockInput abstraction, otherwise just use Serializable
-        // public ISerializable[] transactionBlockInput; //TransactionBlockInput
+
+        /// <summary>
+        /// An array of inputs for the transaction block.
+        /// </summary>
         public List<TransactionBlockInput> Inputs { get; set; }
 
         /// <summary>
-        /// A list of transaction, e.g. MoveCallTransaction, TransferObjectTransaction, etc
+        /// A list of transaction, e.g. MoveCallTransaction, TransferObjectTransaction, etc.
         /// </summary>
         public ITransaction[] Transactions { get; set; }
 
         /// <summary>
-        /// TODO: Implement
-        /// https://github.com/MystenLabs/sui/blob/3253d9a3c629fb142dbf492c22afca14114d1df8/sdk/typescript/src/builder/TransactionBlockData.ts#L156
-        /// https://github.com/MystenLabs/sui/blob/948be00ce391e300b17cca9b74c2fc3981762b87/sdk/typescript/src/builder/Transactions.ts#L29C14-L29C35
+        /// Initializes a new instance of `SerializedTransactionDataBuilder`.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="gasConfig"></param>
-        public TransactionBlockDataBuilder(
+        /// <param name="version">Represents the version of the transaction. Defaults to 1.</param>
+        /// <param name="sender">The account address of the sender of the transaction. Defaults to null.</param>
+        /// <param name="expiration">Represents the expiration of the transaction. Defaults to null.</param>
+        /// <param name="gasConfig">Holds the configuration for gas in the transaction. Defaults to null.</param>
+        /// <param name="inputs">An array of inputs for the transaction block. Defaults to null.</param>
+        /// <param name="transactions">An array of transactions. Defaults to null.</param>
+        public TransactionBlockDataBuilder
+        (
+            int version = 1,
             AccountAddress sender = null,
             TransactionExpiration expiration = null,
             GasConfig gasConfig = null,
             List<TransactionBlockInput> inputs = null,
             ITransaction[] transactions = null
-            )
+        )
         {
+            this.Version = version;
             this.Sender = sender;
             this.Expiration = expiration;
             this.GasConfig = gasConfig;
@@ -60,7 +71,7 @@ namespace Sui.Transactions.Builder
         }
 
         public TransactionBlockDataBuilder()
-            => new TransactionBlockDataBuilder(null, null, null, null, null);
+            => new TransactionBlockDataBuilder(1, null, null, null, null, null);
 
         public byte[] Build(
             int? maxSizeBytes = null,

@@ -7,10 +7,18 @@ using UnityEngine;
 
 namespace Sui.Transactions.Builder
 {
-    public class TransactionData : ISerializable
+    public interface ITransactionData : ISerializable
+    {
+        public enum Type
+        {
+            V1
+        }
+    }
+
+    public class TransactionDataV1 : ITransactionData
     {
         public AccountAddress Sender { get; set; }
-        public TransactionExpiration Expiration { get; set; }
+        public ITransactionExpiration Expiration { get; set; }
         public GasConfig GasData { get; set; }
 
         /// <summary>
@@ -19,9 +27,9 @@ namespace Sui.Transactions.Builder
         /// </summary>
         public ITransactionKind Transaction { get; set; }
 
-        public TransactionData(
+        public TransactionDataV1(
             AccountAddress sender,
-            TransactionExpiration transactionExpiration,
+            ITransactionExpiration transactionExpiration,
             GasConfig gasdata,
             ITransactionKind transaction)
         {
@@ -33,27 +41,22 @@ namespace Sui.Transactions.Builder
 
         public void Serialize(Serialization serializer)
         {
-            // TransactionaDat V1 == 0 enum // TODO: Create Enum
             serializer.SerializeU8(0); // We add the version number V1 - 0 byte
             Transaction.Serialize(serializer);
             Sender.Serialize(serializer);
             GasData.Serialize(serializer);
             Expiration.Serialize(serializer);
-
-            Serialization ser = new Serialization();
-            ser.SerializeU8(0); // We add the version number V1 - 0 byte
-            Transaction.Serialize(ser);
-            Sender.Serialize(ser);
-            GasData.Serialize(ser);
-            Expiration.Serialize(ser);
-
-            Debug.Log("===  TransactionData");
-            Debug.Log(ser.GetBytes().ByteArrayToString());
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            throw new NotImplementedException();
+            deserializer.DeserializeUleb128();
+            return new TransactionDataV1(
+                AccountAddress.Deserialize(deserializer),
+                (ITransactionExpiration)ITransactionExpiration.Deserialize(deserializer),
+                (GasConfig)GasConfig.Deserialize(deserializer),
+                (ITransactionKind)ITransactionKind.Deserialize(deserializer)
+            );
         }
     }
 }
