@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Numerics;
 using OpenDive.BCS;
 using Sui.Accounts;
@@ -8,22 +9,21 @@ using UnityEngine;
 
 namespace Sui.Transactions.Builder
 {
-    //const GasConfig = object({
-    //	budget: optional(StringEncodedBigint),
-    //	price: optional(StringEncodedBigint),
-    //	payment: optional(array(SuiObjectRef)),
-    //	owner: optional(string()),
-    //});
     public class GasConfig : ISerializable
     {
-        public long? Budget { get; set; }    // BigInt
+        public BigInteger? Budget { get; set; }    // BigInt
         public BigInteger? Price { get; set; }     // BigInt
         public SuiObjectRef[] Payment { get; set; }
         public AccountAddress Owner { get; set; }
 
-        public GasConfig(string budget = null, string price = null, SuiObjectRef[] payment = null, AccountAddress owner = null)
+        public GasConfig(
+            string budget = null,
+            string price = null,
+            SuiObjectRef[] payment = null,
+            AccountAddress owner = null
+        )
         {
-            this.Budget = budget != null ? long.Parse(budget) : null;
+            this.Budget = budget != null ? BigInteger.Parse(budget) : null;
             this.Price = price != null ? BigInteger.Parse(price) : null;
             this.Payment = payment;
             this.Owner = owner;
@@ -36,21 +36,16 @@ namespace Sui.Transactions.Builder
             serializer.Serialize(Owner);
             serializer.SerializeU64((ulong)Price);
             serializer.SerializeU64((ulong)Budget);
-
-            Serialization ser = new Serialization();
-            Sequence paymentSeq2 = new Sequence(Payment);
-            ser.Serialize(paymentSeq2);
-            ser.Serialize(Owner);
-            ser.SerializeU64((ulong)Price);
-            ser.SerializeU64((ulong)Budget);
-
-            Debug.Log(" === GasConfig ::: ");
-            Debug.Log(ser.GetBytes().ByteArrayToString());
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            throw new NotImplementedException();
+            return new GasConfig(
+                deserializer.DeserializeU64().ToString(),
+                deserializer.DeserializeU64().ToString(),
+                deserializer.DeserializeSequence(typeof(SuiObjectRef)).Cast<SuiObjectRef>().ToArray(),
+                AccountAddress.Deserialize(deserializer)
+            );
         }
     }
 }
