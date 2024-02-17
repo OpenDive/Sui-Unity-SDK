@@ -1,3 +1,4 @@
+using System.Linq;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.Transactions.Types.Arguments;
@@ -43,32 +44,29 @@ public class TransferObjects : ITransaction
         /// </summary>
         /// <param name="objects">Objects that we are transferring.</param>
         /// <param name="address">The recepient address (AccountAddress) nested within the TransactionBlockInput.
-        /// This will be what Sui refers to as "Pure". TODO: Check if we need to simply encode it as byte array.
+        /// This will be what Sui refers to as "Pure".
         /// </param>
         //public TransferObjects(ITransaction[] objects, TransactionBlockInput address)
         public TransferObjects(ITransactionArgument[] objects, ITransactionArgument address)
         {
-            Objects = objects;
-            Address = address;
-
-            //SuiObjectRef objectRef = new SuiObjectRef();
-            //ObjectCallArg addressObjectCallArg = new ObjectCallArg(new SuiObjectRef(address));
-
-            //Type callArgType = address.Value.GetType();
-            //if (callArgType == typeof(PureCallArg)
-            //    && ((PureCallArg)address.Value).Value.GetType() == typeof(AccountAddress)) {
-            //    Address = address;
-            //}
-            //else
-            //{
-            //    throw new ArgumentException("TransactionBlockInput must be of Pure type and and AccountAddress");
-            //}
+            this.Objects = objects;
+            this.Address = address;
         }
 
         public void Serialize(Serialization serializer)
         {
+            serializer.SerializeU128(1);
             serializer.Serialize(Objects);
             serializer.Serialize(Address);
+        }
+
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            deserializer.DeserializeUleb128();
+            return new TransferObjects(
+                deserializer.DeserializeSequence(typeof(ITransactionArgument)).Cast<ITransactionArgument>().ToArray(),
+                (ITransactionArgument)ITransactionArgument.Deserialize(deserializer)
+            );
         }
     }
 }
