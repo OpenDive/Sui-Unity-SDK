@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using OpenDive.BCS;
 using Sui.Transactions.Types;
 using Sui.Types;
@@ -31,23 +32,18 @@ namespace Sui.Transactions.Kinds
             Sequence inputSeq = new Sequence(Inputs);
             Sequence transactionSeq = new Sequence(Transactions);
 
-            // TODO: Ask Marcus
-            // Serialize the kind enum -- for programmable transaction  it's 0
             serializer.SerializeU8(0);
             serializer.Serialize(inputSeq);
             serializer.Serialize(transactionSeq);
-
-            Serialization ser = new Serialization();
-            ser.SerializeU8(0);
-            ser.Serialize(inputSeq);
-            ser.Serialize(transactionSeq);
-            Debug.Log("==== ProgrammableTransaction");
-            Debug.Log(ser.GetBytes().ByteArrayToString());
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            throw new NotImplementedException();
+            deserializer.DeserializeUleb128();
+            return new ProgrammableTransaction(
+                deserializer.DeserializeSequence(typeof(ICallArg)).Cast<ICallArg>().ToArray(),
+                deserializer.DeserializeSequence(typeof(ITransaction)).Cast<ITransaction>().ToArray()
+            );
         }
     }
 }

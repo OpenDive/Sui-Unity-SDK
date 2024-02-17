@@ -27,11 +27,13 @@ namespace Sui.Transactions.Builder
         /// </summary>
         public ITransactionKind Transaction { get; set; }
 
-        public TransactionDataV1(
+        public TransactionDataV1
+        (
             AccountAddress sender,
             ITransactionExpiration transactionExpiration,
             GasConfig gasdata,
-            ITransactionKind transaction)
+            ITransactionKind transaction
+        )
         {
             this.Sender = sender;
             this.Expiration = transactionExpiration;
