@@ -65,7 +65,7 @@ public class TransferObjects : ITransaction
             deserializer.DeserializeUleb128();
             return new TransferObjects(
                 deserializer.DeserializeSequence(typeof(ITransactionArgument)).Cast<ITransactionArgument>().ToArray(),
-                (ITransactionArgument)ITransactionArgument.Deserialize(deserializer)
+                (ITransactionArgument)ISerializable.Deserialize(deserializer)
             );
         }
     }

@@ -7,17 +7,6 @@ using UnityEngine;
 
 namespace Sui.Transactions.Types
 {
-    //public class NormalizedStructTag : StructTag
-    //{
-    //    public NormalizedStructTag(AccountAddress address, string module, string name, ISerializableTag[] typeArgs) : base()
-    //    {
-    //        this.address = address;
-    //        this.module = module;
-    //        this.name = name;
-    //        this.typeArgs = typeArgs;
-    //    }
-    //}
-
     /// <summary>
     ///
     /// <code>

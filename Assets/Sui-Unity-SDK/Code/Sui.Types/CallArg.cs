@@ -2,6 +2,13 @@ using OpenDive.BCS;
 
 namespace Sui.Types
 {
+    public enum Type
+    {
+        Pure,
+        Object,
+        ObjectVec
+    }
+
     /// <summary>
     /// A Sui type that represents a transaction call arguments.
     /// A call arg can be a (1) vector / list of byte (BCS U8),
@@ -20,12 +27,7 @@ namespace Sui.Types
     /// </summary>
     public interface ICallArg: ISerializable
     {
-        public enum Type
-        {
-            Pure,
-            Object,
-            ObjectVec
-        }
+        public Type Type { get; }
     }
 
     /// <summary>
@@ -34,7 +36,7 @@ namespace Sui.Types
     public class PureCallArg : ICallArg
     {
         public ISerializable Value { get; set; }
-        public ICallArg.Type ArgType = ICallArg.Type.Pure;
+        public Type Type => Type.Pure;
 
         /// <summary>
         /// 
@@ -47,8 +49,7 @@ namespace Sui.Types
 
         public void Serialize(Serialization serializer)
         {
-            // TODO: Add enum byte of Pure => 0, ObjectRef => 1
-            serializer.SerializeU32AsUleb128((uint)ICallArg.Type.Pure);
+            serializer.SerializeU32AsUleb128((uint)Type.Pure);
             serializer.Serialize(Value);
         }
 
@@ -68,10 +69,10 @@ namespace Sui.Types
     /// is below:
     /// 
     /// <code>
-	///	    ObjectArg: {
-	///		    ImmOrOwned: 'SuiObjectRef',
-	///		    Shared: 'SharedObjectRef',
-	///	    },
+    ///	    ObjectArg: {
+    ///		    ImmOrOwned: 'SuiObjectRef',
+    ///		    Shared: 'SharedObjectRef',
+    ///	    },
     /// </code>
     ///
     /// This interface extends ISeriliazable which allows these objects that
@@ -81,32 +82,25 @@ namespace Sui.Types
     public class ObjectCallArg : ICallArg
     {
         public IObjectRef ObjectArg { get; set; }
-        public ICallArg.Type ArgType = ICallArg.Type.Object;
+        public Type Type => Type.Object;
 
         public ObjectCallArg(IObjectRef objectArg)
         {
             ObjectArg = objectArg;
         }
 
-        public enum Type
-        {
-            ImmOrOwned,     // SuiObjectRef
-            Shared          // SharedObjectRef
-        }
-
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128((uint)ICallArg.Type.Object);
+            serializer.SerializeU32AsUleb128((uint)Type.Object);
+            serializer.Serialize(this.ObjectArg);
+        }
 
-            System.Type objectType = ObjectArg.GetType();
-
-            if (objectType == typeof(SuiObjectRef))
-                serializer.SerializeU32AsUleb128((uint)ObjectCallArg.Type.ImmOrOwned);
-            else
-                serializer.SerializeU32AsUleb128((uint)ObjectCallArg.Type.Shared);
-
-            serializer.Serialize(ObjectArg);
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            deserializer.DeserializeUleb128();
+            return new PureCallArg(
+                ISerializable.Deserialize(deserializer)
+            );
         }
     }
-
 }
