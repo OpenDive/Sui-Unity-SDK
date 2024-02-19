@@ -9,33 +9,33 @@ namespace Sui.Transactions.Types
         public Kind Kind => Kind.MakeMoveVec;
 
         public IObjectRef[] Objects;
-        public string Type;
+        public SuiStructTag Type;
 
         /// <summary>
         /// Byt default "type" is not used.
         /// </summary>
         /// <param name="objects"></param>
-        /// <param name="type">TODO: Check if this is a normalized struct tag, (SuiStructTag)</param>
-        public MakeMoveVec(IObjectRef[] objects, string type = null)
+        /// <param name="type"></param>
+        public MakeMoveVec(IObjectRef[] objects, SuiStructTag type = null)
         {
             this.Objects = objects;
             this.Type = type;
         }
 
-        public MakeMoveVec(string[] objects, string type = null)
-        {
-            // Grab that list of strings, create a list of Tx Objects
-            //this.Objects = objects;
-
-            //this.Type = type;
-            IObjectRef[] objectRefs = objects.Select(o => new SuiObjectRef(null, 0, null)).ToArray();
-        }
-
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128(0);
+            serializer.SerializeU32AsUleb128(5);
             serializer.Serialize(Objects);
-            if (Type != null) serializer.SerializeString(Type);
+            if (Type != null) serializer.Serialize(Type);
+        }
+
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            deserializer.DeserializeUleb128();
+            return new MakeMoveVec(
+                deserializer.DeserializeSequence(typeof(IObjectRef)).Cast<IObjectRef>().ToArray(),
+                SuiStructTag.Deserialize(deserializer)
+            );
         }
     }
 }
