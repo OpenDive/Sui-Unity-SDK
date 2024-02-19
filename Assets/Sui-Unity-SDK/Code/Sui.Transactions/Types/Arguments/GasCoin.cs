@@ -18,5 +18,11 @@ namespace Sui.Transactions.Types.Arguments
         {
             serializer.SerializeU32AsUleb128((uint)Kind.GasCoin); ;
         }
+
+        public static GasCoin Deserialize(Deserialization deserializer)
+        {
+            deserializer.DeserializeUleb128();
+            return new GasCoin();
+        }
     }
 }

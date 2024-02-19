@@ -35,7 +35,11 @@ namespace Sui.Types
         private AccountAddress objectId;
         public int version;
         public string digest;
-        public ObjectRefType Type => ObjectRefType.ImmOrOwned;
+
+        public ObjectRefType Type
+        {
+            get => ObjectRefType.ImmOrOwned;
+        }
 
         public AccountAddress ObjectId { get => objectId; set => objectId = value; }
 
@@ -103,7 +107,10 @@ namespace Sui.Types
         /// </summary>
         public bool mutable;
 
-        public ObjectRefType Type => ObjectRefType.Shared;
+        public ObjectRefType Type
+        {
+            get => ObjectRefType.Shared;
+        }
 
         public AccountAddress ObjectId { get => objectId; set => objectId = value; }
 

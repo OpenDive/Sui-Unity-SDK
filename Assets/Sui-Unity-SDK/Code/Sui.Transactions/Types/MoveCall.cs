@@ -89,6 +89,13 @@ namespace Sui.Transactions.Types
             Arguments       = arguments;
         }
 
+        // TODO: Full implementation is needed
+        public MoveCall(ModuleId moduleId, string function, ISerializableTag[] serializableTags, ISerializable[] serializables)
+        {
+            ModuleId = moduleId;
+            Function = function;
+        }
+
         public string EncodeTransaction()
         {
             throw new System.NotImplementedException();
@@ -96,25 +103,15 @@ namespace Sui.Transactions.Types
 
         public void Serialize(Serialization serializer)
         {
-            // Check for kind
             serializer.SerializeU8(0);
             serializer.Serialize(Target);
             serializer.Serialize(TypeArguments);
             serializer.Serialize(Arguments);
-
-            Serialization ser = new Serialization();
-            ser.SerializeU8(0);
-            Debug.Log(" === MoveCallTransaction ::: 1 :: " + ser.GetBytes().ByteArrayToString());
-            Target.Serialize(ser);
-            Debug.Log(" === MoveCallTransaction ::: 2 :: " + ser.GetBytes().ByteArrayToString());
-            ser.Serialize((ISerializableTag[])TypeArguments.GetValue());
-            Debug.Log(" === MoveCallTransaction ::: 3 :: " + ser.GetBytes().ByteArrayToString());
-            ser.Serialize(Arguments);
-            Debug.Log(" === MoveCallTransaction ::: 4 :: " + ser.GetBytes().ByteArrayToString());
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
+            deserializer.DeserializeUleb128();
             BString target = BString.Deserialize(deserializer);
             TagSequence typeArguments = TagSequence.Deserialize(deserializer);
             Sequence arguments = Sequence.Deserialize(deserializer);
@@ -124,14 +121,13 @@ namespace Sui.Transactions.Types
             ModuleId moduleId = new ModuleId(AccountAddress.FromHex(split[0]), split[1]);
             string function = split[2];
 
-            //return new MoveCallTransaction(
-            //    moduleId,
-            //    function,
-            //    (ISerializableTag[])typeArguments.GetValue(),
-            //    (ISerializable[])arguments.GetValue()
-            //);
-
-            throw new NotImplementedException();
+            // TODO: Full implementation is needed
+            return new MoveCall(
+                moduleId,
+                function,
+                (ISerializableTag[])typeArguments.GetValue(),
+                (ISerializable[])arguments.GetValue()
+            );
         }
     }
 }

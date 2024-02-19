@@ -58,13 +58,18 @@ namespace Sui.Transactions.Types
 
         public void Serialize(Serialization serializer)
         {
+            serializer.SerializeU8(2);
             serializer.Serialize(Coin);
             serializer.Serialize(Amounts);
         }
 
         public static SplitCoins Deserialize(Deserialization deserializer)
         {
-            throw new NotImplementedException();
+            deserializer.DeserializeUleb128();
+            return new SplitCoins(
+                GasCoin.Deserialize(deserializer),
+                deserializer.DeserializeSequence(typeof(ITransactionArgument)).Cast<ITransactionArgument>().ToArray()
+            );
         }
     }
 }

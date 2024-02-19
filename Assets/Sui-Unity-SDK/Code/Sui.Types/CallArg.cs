@@ -36,7 +36,10 @@ namespace Sui.Types
     public class PureCallArg : ICallArg
     {
         public ISerializable Value { get; set; }
-        public Type Type => Type.Pure;
+        public Type Type
+        {
+            get => Type.Pure;
+        }
 
         /// <summary>
         /// 
@@ -82,7 +85,11 @@ namespace Sui.Types
     public class ObjectCallArg : ICallArg
     {
         public IObjectRef ObjectArg { get; set; }
-        public Type Type => Type.Object;
+
+        public Type Type
+        {
+            get => Type.Object;
+        }
 
         public ObjectCallArg(IObjectRef objectArg)
         {
