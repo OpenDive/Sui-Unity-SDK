@@ -79,7 +79,7 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="expiration"></param>
         /// <returns></returns>
-        public TransactionBlock SetExpiration(TransactionExpiration expiration)
+        public TransactionBlock SetExpiration(ITransactionExpiration expiration)
         {
             this.BlockDataBuilder.Expiration = expiration;
             return this;
@@ -194,11 +194,11 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="objectRef"></param>
         /// <returns></returns>
-        public TransactionBlockInput AddObjectInput(string objectId)
-        {
-            AccountAddress address = AccountAddress.FromHex(objectId);
-            return AddObjectInput(address);
-        }
+        //public TransactionBlockInput AddObjectInput(string objectId)
+        //{
+        //    AccountAddress address = AccountAddress.FromHex(objectId);
+        //    return AddObjectInput(address);
+        //}
 
         /// <summary>
         /// Utility function that creates a `TransactionBlockInput` from a
@@ -213,67 +213,67 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="objectRef"></param>
         /// <returns></returns>
-        public TransactionBlockInput AddObjectInput(AccountAddress objectIdValue)
-        {
-            List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
+        //public TransactionBlockInput AddObjectInput(AccountAddress objectIdValue)
+        //{
+        //    List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
 
-            // Search through the list of inputs in the transaction block
-            // for a block input that has the name id as a `newObjectId`
-            TransactionBlockInput inserted = inputs.Find((blockInput) =>
-            {
-                Type blockInputValueType = blockInput.Value.GetType();
-                if (blockInputValueType == typeof(ObjectCallArg))
-                {
-                    ObjectCallArg _objCallArg = (ObjectCallArg)blockInput.Value;
-                    IObjectRef _objectRef = _objCallArg.ObjectArg;
+        //    // Search through the list of inputs in the transaction block
+        //    // for a block input that has the name id as a `newObjectId`
+        //    TransactionBlockInput inserted = inputs.Find((blockInput) =>
+        //    {
+        //        Type blockInputValueType = blockInput.Value.GetType();
+        //        if (blockInputValueType == typeof(ObjectCallArg))
+        //        {
+        //            ObjectCallArg _objCallArg = (ObjectCallArg)blockInput.Value;
+        //            IObjectRef _objectRef = _objCallArg.ObjectArg;
 
-                    return objectIdValue == _objectRef.ObjectId;
-                }
-                return false;
-            });
+        //            return objectIdValue == _objectRef.ObjectId;
+        //        }
+        //        return false;
+        //    });
 
-            // If it it's already in the list of inputs, then don't insert it
-            if (inserted != null)
-                return inserted;
+        //    // If it it's already in the list of inputs, then don't insert it
+        //    if (inserted != null)
+        //        return inserted;
 
-            // Otherwise,
-            // create ObjectCallArg which will add the appropriate byte when serializing
-            // then add it to the list of inputs
-            return this.CreateAddInput(objectIdValue);
+        //    // Otherwise,
+        //    // create ObjectCallArg which will add the appropriate byte when serializing
+        //    // then add it to the list of inputs
+        //    return this.CreateAddInput(objectIdValue);
 
-            throw new NotSupportedException();
-        }
+        //    throw new NotSupportedException();
+        //}
 
-        public TransactionBlockInput AddObjectInput(ObjectCallArg objectCallArg)
-        {
-            AccountAddress newObjectId = objectCallArg.ObjectArg.ObjectId;
+        //public TransactionBlockInput AddObjectInput(ObjectCallArg objectCallArg)
+        //{
+        //    AccountAddress newObjectId = objectCallArg.ObjectArg.ObjectId;
 
-            List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
+        //    List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
 
-            // Search through the list of inputs in the transaction block
-            // for a block input that has the name id as a `newObjectId`
-            TransactionBlockInput inserted = inputs.Find((blockInput) =>
-            {
-                Type blockInputValueType = blockInput.Value.GetType();
-                if (blockInputValueType == typeof(ObjectCallArg))
-                {
-                    ObjectCallArg _objCallArg = (ObjectCallArg)blockInput.Value;
-                    IObjectRef _objectRef = _objCallArg.ObjectArg;
+        //    // Search through the list of inputs in the transaction block
+        //    // for a block input that has the name id as a `newObjectId`
+        //    TransactionBlockInput inserted = inputs.Find((blockInput) =>
+        //    {
+        //        Type blockInputValueType = blockInput.Value.GetType();
+        //        if (blockInputValueType == typeof(ObjectCallArg))
+        //        {
+        //            ObjectCallArg _objCallArg = (ObjectCallArg)blockInput.Value;
+        //            IObjectRef _objectRef = _objCallArg.ObjectArg;
 
-                    return newObjectId == _objectRef.ObjectId;
-                }
-                return false;
-            });
+        //            return newObjectId == _objectRef.ObjectId;
+        //        }
+        //        return false;
+        //    });
 
-            // If it it's already in the list of inputs, then don't insert it
-            if (inserted != null)
-                return inserted;
+        //    // If it it's already in the list of inputs, then don't insert it
+        //    if (inserted != null)
+        //        return inserted;
 
-            // Otherwise,
-            // create ObjectCallArg which will add the appropriate byte when serializing
-            // then add it to the list of inputs
-            return this.CreateAddInput(objectCallArg);
-        }
+        //    // Otherwise,
+        //    // create ObjectCallArg which will add the appropriate byte when serializing
+        //    // then add it to the list of inputs
+        //    return this.CreateAddInput(objectCallArg);
+        //}
 
         /// <summary>
         /// Dynamically create a new input, which is separate from the `input`. This is important
@@ -337,16 +337,16 @@ namespace Sui.Transactions
         /// <param name="version"></param>
         /// <param name="digest"></param>
         /// <returns></returns>
-        public TransactionBlockInput AddObjectRefInput(AccountAddress objectId,
-            int version, string digest)
-        {
-            Sui.Types.SuiObjectRef objectRef = new Sui.Types.SuiObjectRef(
-                objectId,
-                version,
-                digest
-            );
-            return this.AddObjectRefInput(objectRef);
-        }
+        //public TransactionBlockInput AddObjectRefInput(AccountAddress objectId,
+        //    int version, string digest)
+        //{
+        //    Sui.Types.SuiObjectRef objectRef = new Sui.Types.SuiObjectRef(
+        //        objectId,
+        //        version,
+        //        digest
+        //    );
+        //    return this.AddObjectRefInput(objectRef);
+        //}
 
         /// <summary>
         /// Adds a Sui Object Ref (`ImmOrOwned`) to the inputs of
@@ -354,11 +354,11 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="objectRef"></param>
         /// <returns></returns>
-        public TransactionBlockInput AddObjectRefInput(Sui.Types.SuiObjectRef objectRef)
-        {
-            ObjectCallArg newObjCallArg = new ObjectCallArg(objectRef);
-            return this.AddObjectInput(newObjCallArg);
-        }
+        //public TransactionBlockInput AddObjectRefInput(Sui.Types.SuiObjectRef objectRef)
+        //{
+        //    ObjectCallArg newObjCallArg = new ObjectCallArg(objectRef);
+        //    return this.AddObjectInput(newObjCallArg);
+        //}
 
         /// <summary>
         /// Add a new shared object input to the transaction using
@@ -370,28 +370,28 @@ namespace Sui.Transactions
         /// <param name="initialSharedVersion"></param>
         /// <param name="mutable"></param>
         /// <returns></returns>
-        public TransactionBlockInput AddSharedObjectRefInput(AccountAddress objectId,
-            int initialSharedVersion, bool mutable)
-        {
-            SharedObjectRef sharedObjectRef = new SharedObjectRef(
-                objectId,
-                initialSharedVersion,
-                mutable
-            );
-            return this.AddSharedObjectRefInput(sharedObjectRef);
-        }
+        //public TransactionBlockInput AddSharedObjectRefInput(AccountAddress objectId,
+        //    int initialSharedVersion, bool mutable)
+        //{
+        //    SharedObjectRef sharedObjectRef = new SharedObjectRef(
+        //        objectId,
+        //        initialSharedVersion,
+        //        mutable
+        //    );
+        //    return this.AddSharedObjectRefInput(sharedObjectRef);
+        //}
 
         /// <summary>
         /// Add a new shared object input to the programmable transaction.
         /// </summary>
         /// <param name="sharedObjectRef"></param>
         /// <returns></returns>
-        public TransactionBlockInput AddSharedObjectRefInput(
-            SharedObjectRef sharedObjectRef)
-        {
-            ObjectCallArg objectCallArg = new ObjectCallArg(sharedObjectRef);
-            return this.AddObjectInput(objectCallArg);
-        }
+        //public TransactionBlockInput AddSharedObjectRefInput(
+        //    SharedObjectRef sharedObjectRef)
+        //{
+        //    ObjectCallArg objectCallArg = new ObjectCallArg(sharedObjectRef);
+        //    return this.AddObjectInput(objectCallArg);
+        //}
 
         /// <summary>
         /// Add a new non-object input to the transaction.
@@ -498,8 +498,8 @@ namespace Sui.Transactions
         /// <param name="typeArguments"></param>
         /// <param name="arguments"></param>
         /// <returns></returns>
-        public TransactionBlock AddMoveCallTx(SuiStructTag target,
-            ISerializableTag[] typeArguments = null, ITransactionArgument[] arguments = null)
+        public TransactionBlock AddMoveCallTx(SuiMoveNormalizedStructType target,
+            ISerializableTag[] typeArguments = null, SuiTransactionArgument[] arguments = null)
         {
             MoveCall moveCallTx = new MoveCall(target, typeArguments, arguments);
             return this;
@@ -564,7 +564,7 @@ namespace Sui.Transactions
         {
             // The inputs in the `TransactionBlock`
             List<TransactionBlockInput> inputs      = this.BlockDataBuilder.Inputs;
-            ITransaction[] transactions             = this.BlockDataBuilder.Transactions;
+            Types.SuiTransaction[] transactions             = this.BlockDataBuilder.Transactions;
 
             // A list of move modules identified as needing to be resolved
             List<MoveCall> moveModulesToResolve     = new List<MoveCall>();
@@ -595,13 +595,13 @@ namespace Sui.Transactions
                     // - If they don't, then this is good to go.
                     // - If they do, then we need to fetch the normalized move module.
                     MoveCall moveTx = (MoveCall)transaction;
-                    ITransactionArgument[] arguments = moveTx.Arguments;
+                    SuiTransactionArgument[] arguments = moveTx.Arguments;
 
                     bool needsResolution = arguments.Any(arg => {
-                        bool isInput = (arg.Kind == Types.Arguments.Kind.Input);
+                        bool isInput = (arg.TransactionArgument.Kind == Types.Arguments.Kind.Input);
                         if(isInput)
                         {
-                            TransactionBlockInput argInput = (TransactionBlockInput)arg;
+                            TransactionBlockInput argInput = (TransactionBlockInput)arg.TransactionArgument;
                             int index = argInput.Index;
 
                             // Is it a PureCallArg or ObjectCallArg?
@@ -677,9 +677,9 @@ namespace Sui.Transactions
             {
                 foreach(MoveCall moveCall in moveModulesToResolve)
                 {
-                    string packageId = moveCall.Target.address.ToHex();
-                    string moduleName = moveCall.Target.module;
-                    string functionName = moveCall.Target.name;
+                    string packageId = moveCall.Target.StructTag.address.ToHex();
+                    string moduleName = moveCall.Target.StructTag.module;
+                    string functionName = moveCall.Target.StructTag.name;
 
                     #region RPC Call GetNormalizedMoveFunction
                     RpcResult<NormalizedMoveFunctionResponse> result
@@ -715,10 +715,10 @@ namespace Sui.Transactions
                     {
                         ISuiMoveNormalizedType param = paramsList[i];
 
-                        ITransactionArgument arg = moveCall.Arguments[i];
-                        if(arg.Kind != Types.Arguments.Kind.Input) continue;
+                        SuiTransactionArgument arg = moveCall.Arguments[i];
+                        if(arg.TransactionArgument.Kind != Types.Arguments.Kind.Input) continue;
 
-                        TransactionBlockInput inputArg = (TransactionBlockInput)arg;
+                        TransactionBlockInput inputArg = (TransactionBlockInput)arg.TransactionArgument;
                         TransactionBlockInput input = inputs[inputArg.Index];
                         // Skip if the input is already resolved, aka if the input is a BuilderArg
                         if (input.Value.GetType() == typeof(ICallArg)) continue;
@@ -915,28 +915,28 @@ namespace Sui.Transactions
         /// with a "pure" value.
         /// </summary>
         /// <param name="index"></param>
-        private void EncodeInput(int index)
-        {
-            TransactionBlockInput input = BlockDataBuilder.Inputs[index];
+        //private void EncodeInput(int index)
+        //{
+        //    TransactionBlockInput input = BlockDataBuilder.Inputs[index];
 
-            Type type = input.Value.GetType();
+        //    Type type = input.Value.GetType();
 
-            // If the value of the `TransactionBlockInput` input is already a `BuilderCallArg`
-            if (type == typeof(ICallArg)) return;
+        //    // If the value of the `TransactionBlockInput` input is already a `BuilderCallArg`
+        //    if (type == typeof(ICallArg)) return;
 
-            if(type == typeof(AccountAddress))
-            {
-                // TODO: Figure out porting logic from TypeScript where they pass `input` by reference
-                // <code> input.value = Inputs.Pure(input.value, wellKnownEncoding.type); </code>
-            } else if(type == typeof(Bytes))// else if (wellKnownEncoding.kind === 'pure') 
-            {
-                //input.Value = input.Value.Serialize
-            }
-            else
-            {
+        //    if(type == typeof(AccountAddress))
+        //    {
+        //        // TODO: Figure out porting logic from TypeScript where they pass `input` by reference
+        //        // <code> input.value = Inputs.Pure(input.value, wellKnownEncoding.type); </code>
+        //    } else if(type == typeof(Bytes))// else if (wellKnownEncoding.kind === 'pure') 
+        //    {
+        //        //input.Value = input.Value.Serialize
+        //    }
+        //    else
+        //    {
 
-            }
-        }
+        //    }
+        //}
 
         public class ObjectToResolve
         {

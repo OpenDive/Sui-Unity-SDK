@@ -26,7 +26,7 @@ namespace Sui.Transactions.Builder
         /// <summary>
         /// Represents the expiration of the transaction. It is optional and defaults to `TransactionExpiration.none`.
         /// </summary>
-        public TransactionExpiration Expiration;
+        public ITransactionExpiration Expiration;
 
         /// <summary>
         /// Holds the configuration for gas in the transaction.
@@ -41,7 +41,7 @@ namespace Sui.Transactions.Builder
         /// <summary>
         /// A list of transaction, e.g. MoveCallTransaction, TransferObjectTransaction, etc.
         /// </summary>
-        public ITransaction[] Transactions { get; set; }
+        public SuiTransaction[] Transactions { get; set; }
 
         /// <summary>
         /// Initializes a new instance of `SerializedTransactionDataBuilder`.
@@ -56,10 +56,10 @@ namespace Sui.Transactions.Builder
         (
             int version = 1,
             AccountAddress sender = null,
-            TransactionExpiration expiration = null,
+            ITransactionExpiration expiration = null,
             GasConfig gasConfig = null,
             List<TransactionBlockInput> inputs = null,
-            ITransaction[] transactions = null
+            SuiTransaction[] transactions = null
         )
         {
             this.Version = version;
@@ -78,7 +78,7 @@ namespace Sui.Transactions.Builder
             bool onlyTransactionKind = false,
             AccountAddress sender = null,
             GasConfig gasConfig = null,
-            TransactionExpiration expiration = null)
+            ITransactionExpiration expiration = null)
         {
             // Resolve inputs down to values:
             ICallArg[] inputs = (ICallArg[])Inputs.Select(
@@ -122,7 +122,7 @@ namespace Sui.Transactions.Builder
                 throw new Exception("Missing gas price");
             }
 
-            TransactionData transactionData = new TransactionData(
+            TransactionDataV1 transactionData = new TransactionDataV1(
                 Sender,
                 Expiration,
                 GasConfig,
@@ -163,7 +163,7 @@ namespace Sui.Transactions.Builder
         public static TransactionBlockDataBuilder FromBytes(byte[] bytes)
         {
             Deserialization deserializer = new Deserialization(bytes);
-            TransactionData data = (TransactionData)TransactionData.Deserialize(deserializer);
+            TransactionDataV1 data = (TransactionDataV1)TransactionDataV1.Deserialize(deserializer);
             TransactionBlockDataBuilder txBlockDataBuilder = new TransactionBlockDataBuilder();
             txBlockDataBuilder.Version = 1;
             txBlockDataBuilder.Sender = data.Sender;

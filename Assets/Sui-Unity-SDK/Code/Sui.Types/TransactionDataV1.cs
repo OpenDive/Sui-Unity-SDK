@@ -18,9 +18,9 @@ namespace Sui.Types
     {
         public string sender;
         public GasData gasData;
-        public TransactionExpiration expiration;
+        public ITransactionExpiration expiration;
 
-        public TransactionDataV1(string sender, GasData gasData, TransactionExpiration expiration)
+        public TransactionDataV1(string sender, GasData gasData, ITransactionExpiration expiration)
         {
             this.sender = sender;
             this.gasData = gasData;

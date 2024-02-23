@@ -1,3 +1,4 @@
+using System;
 using OpenDive.BCS;
 
 namespace Sui.Transactions.Types.Arguments
@@ -23,4 +24,56 @@ namespace Sui.Transactions.Types.Arguments
         public Kind Kind { get; }
     }
 
+    public class SuiTransactionArgument: ISerializable
+    {
+        public ITransactionArgument TransactionArgument;
+
+        public SuiTransactionArgument(ITransactionArgument transactionArgument)
+        {
+            this.TransactionArgument = transactionArgument;
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            switch (TransactionArgument.Kind)
+            {
+                case Kind.GasCoin:
+                    break;
+                case Kind.Input:
+                    serializer.SerializeU8(1);
+                    break;
+                case Kind.Result:
+                    serializer.SerializeU8(2);
+                    break;
+                case Kind.NestedResult:
+                    serializer.SerializeU8(3);
+                    break;
+            }
+            serializer.Serialize(TransactionArgument);
+        }
+
+        public static SuiTransactionArgument Deserialize(Deserialization deserializer)
+        {
+            var value = deserializer.DeserializeU8();
+            switch (value)
+            {
+                case 0:
+                    return new SuiTransactionArgument(new GasCoin());
+                case 1:
+                    return new SuiTransactionArgument(
+                        TransactionBlockInput.Deserialize(deserializer)
+                    );
+                case 2:
+                    return new SuiTransactionArgument(
+                        TransactionResult.Deserialize(deserializer)
+                    );
+                case 3:
+                    return new SuiTransactionArgument(
+                        NestedResult.Deserialize(deserializer)
+                    );
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+    }
 }

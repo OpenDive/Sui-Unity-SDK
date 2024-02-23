@@ -198,30 +198,31 @@ namespace Sui.Rpc.Models
                             break;
                         // SuiMoveNormalizedStructType
                         case "Struct":
-                            Debug.Log("MARCUS::: STRUCT");
-                            JObject structTypeObj = (JObject)typeObj[objType];
-                            AccountAddress address = AccountAddress.FromHex(NormalizeSuiAddress((string)structTypeObj["address"]));
-                            string module = (string)structTypeObj["module"];
-                            string name = (string)structTypeObj["name"];
+                            //Debug.Log("MARCUS::: STRUCT");
+                            //JObject structTypeObj = (JObject)typeObj[objType];
+                            //AccountAddress address = AccountAddress.FromHex(NormalizeSuiAddress((string)structTypeObj["address"]));
+                            //string module = (string)structTypeObj["module"];
+                            //string name = (string)structTypeObj["name"];
 
-                            JArray arguments = (JArray)structTypeObj["typeArguments"];
-                            List<ISuiMoveNormalizedType> argumentsTypes = new List<ISuiMoveNormalizedType>();
-                            foreach (JToken argument in arguments)
-                            {
-                                var argumentsTypeConverter = new NormalizedTypeConverter();
-                                ISuiMoveNormalizedType argumentType = argumentsTypeConverter.ReadJson(
-                                    argument.CreateReader(),
-                                    typeof(ISuiMoveNormalizedType),
-                                    null,
-                                    serializer
-                                ) as ISuiMoveNormalizedType;
-                                argumentsTypes.Add(argumentType);
-                            }
+                            //JArray arguments = (JArray)structTypeObj["typeArguments"];
+                            //List<ISuiMoveNormalizedType> argumentsTypes = new List<ISuiMoveNormalizedType>();
+                            //foreach (JToken argument in arguments)
+                            //{
+                            //    var argumentsTypeConverter = new NormalizedTypeConverter();
+                            //    ISuiMoveNormalizedType argumentType = argumentsTypeConverter.ReadJson(
+                            //        argument.CreateReader(),
+                            //        typeof(ISuiMoveNormalizedType),
+                            //        null,
+                            //        serializer
+                            //    ) as ISuiMoveNormalizedType;
+                            //    argumentsTypes.Add(argumentType);
+                            //}
 
-                            SuiStructTag structTag = new SuiStructTag(address, module, name, argumentsTypes.ToArray()); // TODO: Marcus: Implement Type Arguemtns parameter
-                            normalziedType = new SuiMoveNormalziedTypeStruct(structTag);
-                            Debug.Log($"MARCUS:::: STRUCT TAG NAME - {(normalziedType as SuiMoveNormalziedTypeStruct).Struct.name}");
-                            break;
+                            //SuiStructTag structTag = new SuiStructTag(address, module, name, argumentsTypes.ToArray()); // TODO: Marcus: Implement Type Arguemtns parameter
+                            //normalziedType = new SuiMoveNormalziedTypeStruct(structTag);
+                            //Debug.Log($"MARCUS:::: STRUCT TAG NAME - {(normalziedType as SuiMoveNormalziedTypeStruct).Struct.name}");
+                            //break;
+                            throw new ArgumentException();
                         // String
                         default:
                             throw new ArgumentException();

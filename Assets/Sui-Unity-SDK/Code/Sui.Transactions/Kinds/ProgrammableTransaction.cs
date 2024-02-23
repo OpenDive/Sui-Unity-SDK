@@ -19,9 +19,9 @@ namespace Sui.Transactions.Kinds
         /// <summary>
         /// Holds a set of transactions, e.g. MoveCallTransaction, TransferObjectsTransaction, etc.
         /// </summary>
-        public ITransaction[] Transactions { get; private set; }
+        public SuiTransaction[] Transactions { get; private set; }
 
-        public ProgrammableTransaction(ICallArg[] inputs, ITransaction[] transactions)
+        public ProgrammableTransaction(ICallArg[] inputs, SuiTransaction[] transactions)
         {
             Inputs = inputs;
             Transactions = transactions;
@@ -42,7 +42,7 @@ namespace Sui.Transactions.Kinds
             deserializer.DeserializeUleb128();
             return new ProgrammableTransaction(
                 deserializer.DeserializeSequence(typeof(ICallArg)).Cast<ICallArg>().ToArray(),
-                deserializer.DeserializeSequence(typeof(ITransaction)).Cast<ITransaction>().ToArray()
+                deserializer.DeserializeSequence(typeof(SuiTransaction)).Cast<SuiTransaction>().ToArray()
             );
         }
     }

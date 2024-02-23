@@ -16,7 +16,7 @@ namespace Sui.Transactions.Types.Arguments
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128((uint)Kind.GasCoin); ;
+            serializer.SerializeU32AsUleb128((uint)(int)Kind);
         }
 
         public static GasCoin Deserialize(Deserialization deserializer)

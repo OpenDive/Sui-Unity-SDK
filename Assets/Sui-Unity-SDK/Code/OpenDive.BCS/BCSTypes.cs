@@ -40,6 +40,7 @@ namespace OpenDive.BCS
 
         public void SerializeTag(Serialization serializer)
         {
+            serializer.SerializeU32AsUleb128((uint)(int)this.Variant());
             this.Serialize(serializer);
         }
 
@@ -930,33 +931,11 @@ namespace OpenDive.BCS
 
         public void Serialize(Serialization serializer)
         {
-            // TODO: Check on this. Was removed to prevents extra byte in Sui serialization
             serializer.SerializeU32AsUleb128((uint)this.Variant());
             this.address.Serialize(serializer);
             serializer.Serialize(this.module);
             serializer.Serialize(this.name);
-            // TODO: Find a way to implement a custom struct tag for Sui
-            serializer.SerializeU32AsUleb128((uint)this.typeArgs.Length);
-
-            for (int i = 0; i < this.typeArgs.Length; i++)
-                this.typeArgs[i].Serialize(serializer);
-
-            Serialization ser = new Serialization();
-            ser.SerializeU32AsUleb128((uint)this.Variant());
-            Debug.Log("===== StructTag ::: " + ser.GetBytes().ByteArrayToString());
-            this.address.Serialize(ser);
-            Debug.Log("===== StructTag ::: " + ser.GetBytes().ByteArrayToString());
-            ser.Serialize(this.module);
-            Debug.Log("===== StructTag ::: " + ser.GetBytes().ByteArrayToString());
-            ser.Serialize(this.name);
-            Debug.Log("===== StructTag ::: " + ser.GetBytes().ByteArrayToString());
-            //ser.SerializeU32AsUleb128((uint)this.typeArgs.Length);
-
-            //for (int i = 0; i < this.typeArgs.Length; i++)
-            //    this.typeArgs[i].Serialize(ser);
-
-
-            Debug.Log("===== StructTag ::: " + module);
+            serializer.Serialize(this.typeArgs);
         }
 
         public static StructTag Deserialize(Deserialization deserializer)
@@ -1060,9 +1039,9 @@ namespace OpenDive.BCS
         public AccountAddress address;
         public string module;
         public string name;
-        public ISuiMoveNormalizedType[] typeArgs;
+        public ISerializableTag[] typeArgs;
 
-        public SuiStructTag(AccountAddress address, string module, string name, ISuiMoveNormalizedType[] typeArgs)
+        public SuiStructTag(AccountAddress address, string module, string name, ISerializableTag[] typeArgs)
         {
             this.address = address;
             this.module = module;
@@ -1077,41 +1056,50 @@ namespace OpenDive.BCS
 
         public SuiStructTag(string suiStructTag)
         {
-            string[] split = suiStructTag.Split("::");
-            this.address = AccountAddress.FromHex(split[0]);
-            this.module = split[1];
-            this.name = split[2];
+            SuiStructTag result = FromStr(suiStructTag);
+            this.address = result.address;
+            this.module = result.module;
+            this.name = result.name;
+            this.typeArgs = result.typeArgs;
         }
 
         public void Serialize(Serialization serializer)
         {
-            // TODO: Check on this. Was removed to prevents extra byte in Sui serialization
-            //serializer.SerializeU32AsUleb128((uint)this.Variant());
             this.address.Serialize(serializer);
             serializer.Serialize(this.module);
             serializer.Serialize(this.name);
-            // TODO: Find a way to implement a custom struct tag for Sui
-            //serializer.SerializeU32AsUleb128((uint)this.typeArgs.Length);
-
-            //for (int i = 0; i < this.typeArgs.Length; i++)
-            //    this.typeArgs[i].Serialize(serializer);
-
-
-            Serialization ser = new Serialization();
-            //ser.SerializeU32AsUleb128((uint)this.Variant());
-            this.address.Serialize(ser);
-            ser.Serialize(this.module);
-            ser.Serialize(this.name);
-            //ser.SerializeU32AsUleb128((uint)this.typeArgs.Length);
-
-            //for (int i = 0; i < this.typeArgs.Length; i++)
-            //    this.typeArgs[i].Serialize(ser);
-
-
-            Debug.Log("===== StructTag ::: " + module);
-            Debug.Log(ser.GetBytes().ByteArrayToString());
-
+            serializer.Serialize(this.typeArgs);
         }
+
+        //public void Serialize(Serialization serializer)
+        //{
+        //    // TODO: Check on this. Was removed to prevents extra byte in Sui serialization
+        //    //serializer.SerializeU32AsUleb128((uint)this.Variant());
+        //    this.address.Serialize(serializer);
+        //    serializer.Serialize(this.module);
+        //    serializer.Serialize(this.name);
+        //    // TODO: Find a way to implement a custom struct tag for Sui
+        //    //serializer.SerializeU32AsUleb128((uint)this.typeArgs.Length);
+
+        //    //for (int i = 0; i < this.typeArgs.Length; i++)
+        //    //    this.typeArgs[i].Serialize(serializer);
+
+
+        //    Serialization ser = new Serialization();
+        //    //ser.SerializeU32AsUleb128((uint)this.Variant());
+        //    this.address.Serialize(ser);
+        //    ser.Serialize(this.module);
+        //    ser.Serialize(this.name);
+        //    //ser.SerializeU32AsUleb128((uint)this.typeArgs.Length);
+
+        //    //for (int i = 0; i < this.typeArgs.Length; i++)
+        //    //    this.typeArgs[i].Serialize(ser);
+
+
+        //    Debug.Log("===== StructTag ::: " + module);
+        //    Debug.Log(ser.GetBytes().ByteArrayToString());
+
+        //}
 
         public static SuiStructTag Deserialize(Deserialization deserializer)
         {
@@ -1135,7 +1123,7 @@ namespace OpenDive.BCS
                 address,
                 module,
                 name,
-                Array.Empty<ISuiMoveNormalizedType>()
+                Array.Empty<ISerializableTag>()
             );
 
             return structTag;
@@ -1171,7 +1159,7 @@ namespace OpenDive.BCS
                 this.name.ToString()
             );
 
-            if (this.typeArgs.Length > 0)
+            if (this.typeArgs != null && this.typeArgs.Length > 0)
             {
                 value += string.Format("<{0}", this.typeArgs[0].ToString());
                 foreach (ISerializableTag typeArg in this.typeArgs[1..])
@@ -1205,13 +1193,46 @@ namespace OpenDive.BCS
                 address,
                 split[1],
                 split[2],
-                new ISuiMoveNormalizedType[] { }
+                Array.Empty<ISerializableTag>()
             );
         }
 
         public override int GetHashCode()
         {
             return base.GetHashCode();
+        }
+    }
+
+    public class SuiMoveNormalizedStructType: ISerializable
+    {
+        public SuiStructTag StructTag;
+
+        public SuiMoveNormalizedStructType(SuiStructTag structTag)
+        {
+            this.StructTag = structTag;
+        }
+
+        public SuiMoveNormalizedStructType(string structTag)
+        {
+            this.StructTag = SuiStructTag.FromStr(structTag);
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            this.StructTag.address.Serialize(serializer);
+            serializer.Serialize(this.StructTag.module);
+            serializer.Serialize(this.StructTag.name);
+            if (StructTag.typeArgs.Length != 0)
+            {
+                serializer.Serialize(this.StructTag.typeArgs);
+            }
+        }
+
+        public static SuiMoveNormalizedStructType Deserialize(Deserialization deserializer)
+        {
+            return new SuiMoveNormalizedStructType(
+                SuiStructTag.Deserialize(deserializer)
+            );
         }
     }
 }

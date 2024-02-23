@@ -146,11 +146,13 @@ namespace Sui.Accounts
             }
 
             // TODO: Document that Sui changed their address length from 20 to 32, hence some old addresses are shorter
-            if (addr.Length < AccountAddress.OldLength * 2)
+            if (addr.Length < AccountAddress.Length * 2)
             {
                 string pad = new string('0', AccountAddress.Length * 2 - addr.Length);
                 addr = pad + addr;
             }
+
+            Debug.Log("MARCUS:::HEX STRING - " + addr.HexStringToByteArray().ByteArrayToString());
 
             return new AccountAddress(addr.HexStringToByteArray());
         }

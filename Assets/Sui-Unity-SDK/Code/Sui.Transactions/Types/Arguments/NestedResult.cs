@@ -38,9 +38,16 @@ namespace Sui.Transactions.Types.Arguments
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128((uint)Kind.NestedResult);
-            serializer.SerializeU16(Convert.ToUInt16(Index));
-            serializer.SerializeU16(Convert.ToUInt16(ResultIndex));
+            serializer.SerializeU16((ushort)Index);
+            serializer.SerializeU16((ushort)ResultIndex);
+        }
+
+        public static NestedResult Deserialize(Deserialization deserializer)
+        {
+            return new NestedResult(
+                deserializer.DeserializeU16(),
+                deserializer.DeserializeU16()
+            );
         }
     }
 }

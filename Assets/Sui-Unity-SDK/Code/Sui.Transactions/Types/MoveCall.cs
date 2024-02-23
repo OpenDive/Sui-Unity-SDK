@@ -55,7 +55,7 @@ namespace Sui.Transactions.Types
         /// <summary>
         /// The target
         /// </summary>
-        public SuiStructTag Target { get; private set; }
+        public SuiMoveNormalizedStructType Target { get; private set; }
 
         /// <summary>
         ///
@@ -66,7 +66,7 @@ namespace Sui.Transactions.Types
         /// <summary>
         /// The sequence of arguments
         /// </summary>
-        public ITransactionArgument[] Arguments { get; private set; }
+        public SuiTransactionArgument[] Arguments { get; private set; }
 
         /// <summary>
         /// Create a MoveCall transaction
@@ -80,9 +80,9 @@ namespace Sui.Transactions.Types
         ///     and convert it to `TransactionBlockInput`.
         /// </param>
         public MoveCall(
-            SuiStructTag target,
+            SuiMoveNormalizedStructType target,
             ISerializableTag[] typeArguments = null,
-            ITransactionArgument[] arguments = null)
+            SuiTransactionArgument[] arguments = null)
         {
             Target          = target;
             TypeArguments   = new TagSequence(typeArguments);
@@ -103,7 +103,6 @@ namespace Sui.Transactions.Types
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU8(0);
             serializer.Serialize(Target);
             serializer.Serialize(TypeArguments);
             serializer.Serialize(Arguments);
