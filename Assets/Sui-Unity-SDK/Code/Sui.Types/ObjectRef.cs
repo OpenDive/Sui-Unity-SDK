@@ -1,3 +1,4 @@
+using System;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.Utilities;
@@ -7,14 +8,48 @@ namespace Sui.Types
 {
     public enum ObjectRefType
     {
-        ImmOrOwned,     // SuiObjectRef
-        Shared          // SharedObjectRef
+        ImmOrOwned = 0,     // SuiObjectRef
+        Shared = 1          // SharedObjectRef
     }
 
     public interface IObjectRef : ISerializable
     {
         public AccountAddress ObjectId { get; set; }
-        public ObjectRefType Type { get; }
+    }
+
+    public class ObjectArg : ISerializable
+    {
+        public ObjectRefType Type;
+        public IObjectRef ObjectRef;
+
+        public ObjectArg(ObjectRefType type, IObjectRef object_ref)
+        {
+            this.Type = type;
+            this.ObjectRef = object_ref;
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            serializer.Serialize((byte) Type);
+            serializer.Serialize(ObjectRef);
+        }
+
+        public static ObjectArg Deserialize(Deserialization deserializer)
+        {
+            byte type = deserializer.DeserializeU8();
+
+            switch(type)
+            {
+                case 0:
+                    SuiObjectRef objectRef = (SuiObjectRef)SuiObjectRef.Deserialize(deserializer);
+                    return new ObjectArg(ObjectRefType.ImmOrOwned, objectRef);
+                case 1:
+                    SharedObjectRef sharedObjectRef = (SharedObjectRef)SharedObjectRef.Deserialize(deserializer);
+                    return new ObjectArg(ObjectRefType.Shared, sharedObjectRef);
+                default:
+                    throw new NotImplementedException();
+            }
+        }
     }
 
     /// <summary>
@@ -36,11 +71,6 @@ namespace Sui.Types
         public int version;
         public string digest;
 
-        public ObjectRefType Type
-        {
-            get => ObjectRefType.ImmOrOwned;
-        }
-
         public AccountAddress ObjectId { get => objectId; set => objectId = value; }
 
         public SuiObjectRef(AccountAddress objectId, int version, string digest)
@@ -52,7 +82,7 @@ namespace Sui.Types
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128(0);
+            //serializer.SerializeU32AsUleb128(0);
             U64 version = new U64((ulong)this.version);
 
             Base58Encoder decoder = new Base58Encoder();
@@ -65,7 +95,6 @@ namespace Sui.Types
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            deserializer.DeserializeUleb128();
             AccountAddress objectId = new AccountAddress(deserializer.FixedBytes(AccountAddress.Length));
             U64 version = U64.Deserialize(deserializer);
             BString digest = BString.Deserialize(deserializer);
@@ -107,11 +136,6 @@ namespace Sui.Types
         /// </summary>
         public bool mutable;
 
-        public ObjectRefType Type
-        {
-            get => ObjectRefType.Shared;
-        }
-
         public AccountAddress ObjectId { get => objectId; set => objectId = value; }
 
         public SharedObjectRef(AccountAddress objectId, int initialSharedVersion, bool mutable)
@@ -123,7 +147,6 @@ namespace Sui.Types
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128(1);
             U64 initialSharedVersion = new U64((ulong)this.InitialSharedVersion);
             Bool mutable = new Bool(this.mutable);
 
@@ -134,7 +157,6 @@ namespace Sui.Types
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            deserializer.DeserializeUleb128();
             AccountAddress objectId = new AccountAddress(deserializer.FixedBytes(AccountAddress.Length));
             U64 initialSharedVersion = U64.Deserialize(deserializer);
             Bool mutable = Bool.Deserialize(deserializer);

@@ -31,7 +31,7 @@ namespace Sui.Transactions.Builder
 
         public void Serialize(Serialization serializer)
         {
-            Sequence paymentSeq = new Sequence(Payment);
+            Sequence paymentSeq = new(Payment);
             serializer.Serialize(paymentSeq);
             serializer.Serialize(Owner);
             serializer.SerializeU64((ulong)Price);

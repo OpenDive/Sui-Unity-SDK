@@ -20,9 +20,9 @@ namespace Sui.Transactions
 			if (arg as ObjectCallArg != null)
 			{
 				ObjectCallArg objectCallArg = (ObjectCallArg)arg;
-				if (objectCallArg.ObjectArg as SharedObjectRef != null)
+				if (objectCallArg.ObjectArg.ObjectRef as SharedObjectRef != null)
 				{
-					return (SharedObjectRef)objectCallArg.ObjectArg;
+					return (SharedObjectRef)objectCallArg.ObjectArg.ObjectRef;
 				}
             }
 			return null;

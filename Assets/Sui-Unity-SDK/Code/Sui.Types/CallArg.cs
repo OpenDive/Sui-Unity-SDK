@@ -84,14 +84,14 @@ namespace Sui.Types
     ///
     public class ObjectCallArg : ICallArg
     {
-        public IObjectRef ObjectArg { get; set; }
+        public ObjectArg ObjectArg { get; set; }
 
         public Type Type
         {
             get => Type.Object;
         }
 
-        public ObjectCallArg(IObjectRef objectArg)
+        public ObjectCallArg(ObjectArg objectArg)
         {
             ObjectArg = objectArg;
         }

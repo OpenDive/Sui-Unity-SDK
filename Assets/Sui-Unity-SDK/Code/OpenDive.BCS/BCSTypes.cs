@@ -931,7 +931,7 @@ namespace OpenDive.BCS
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128((uint)this.Variant());
+            //serializer.SerializeU32AsUleb128((uint)this.Variant());
             this.address.Serialize(serializer);
             serializer.Serialize(this.module);
             serializer.Serialize(this.name);

@@ -55,9 +55,9 @@ namespace Sui.Transactions.Builder
             deserializer.DeserializeUleb128();
             return new TransactionDataV1(
                 AccountAddress.Deserialize(deserializer),
-                (ITransactionExpiration)ITransactionExpiration.Deserialize(deserializer),
+                (ITransactionExpiration)ISerializable.Deserialize(deserializer),
                 (GasConfig)GasConfig.Deserialize(deserializer),
-                (ITransactionKind)ITransactionKind.Deserialize(deserializer)
+                (ITransactionKind)ISerializable.Deserialize(deserializer)
             );
         }
     }
