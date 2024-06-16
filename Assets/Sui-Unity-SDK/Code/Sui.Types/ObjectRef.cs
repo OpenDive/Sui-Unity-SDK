@@ -27,7 +27,7 @@ namespace Sui.Types
             this.Type = type;
             this.ObjectRef = object_ref;
         }
-
+        
         public void Serialize(Serialization serializer)
         {
             serializer.Serialize((byte) Type);
@@ -82,7 +82,6 @@ namespace Sui.Types
 
         public void Serialize(Serialization serializer)
         {
-            //serializer.SerializeU32AsUleb128(0);
             U64 version = new U64((ulong)this.version);
 
             Base58Encoder decoder = new Base58Encoder();

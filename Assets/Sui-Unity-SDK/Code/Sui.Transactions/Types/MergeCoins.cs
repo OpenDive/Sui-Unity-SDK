@@ -1,5 +1,6 @@
 using System.Linq;
 using OpenDive.BCS;
+using Sui.Transactions.Types.Arguments;
 using Sui.Types;
 
 namespace Sui.Transactions.Types
@@ -8,10 +9,10 @@ namespace Sui.Transactions.Types
     {
         public Kind Kind => Kind.MergeCoins;
 
-        IObjectRef Destination;
-        IObjectRef[] Sources;
+        ITransactionArgument Destination;
+        ITransactionArgument[] Sources;
 
-        public MergeCoins(IObjectRef destination, IObjectRef[] sources)
+        public MergeCoins(ITransactionArgument destination, ITransactionArgument[] sources)
         {
             this.Destination = destination;
             this.Sources = sources;
@@ -19,17 +20,15 @@ namespace Sui.Transactions.Types
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128(3);
             serializer.Serialize(Destination);
             serializer.Serialize(Sources);
         }
 
         public static MergeCoins Deserialize(Deserialization deserializer)
         {
-            deserializer.DeserializeUleb128();
             return new MergeCoins(
-                (IObjectRef)IObjectRef.Deserialize(deserializer),
-                deserializer.DeserializeSequence(typeof(IObjectRef)).Cast<IObjectRef>().ToArray()
+                (ITransactionArgument)ITransactionArgument.Deserialize(deserializer),
+                deserializer.DeserializeSequence(typeof(ITransactionArgument)).Cast<ITransactionArgument>().ToArray()
             );
         }
     }

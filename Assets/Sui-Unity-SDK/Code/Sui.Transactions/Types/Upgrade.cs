@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenDive.BCS;
 using Sui.Accounts;
+using Sui.Transactions.Types.Arguments;
 using Sui.Types;
 
 namespace Sui.Transactions.Types
@@ -14,13 +15,13 @@ namespace Sui.Transactions.Types
         public byte[][] Modules;
         public AccountAddress[] Dependencies;
         public string PackagID;
-        public IObjectRef Ticket;
+        public ITransactionArgument Ticket;
 
         public Upgrade(
             byte[][] modules,
             AccountAddress[] dependencies,
             string packageId,
-            IObjectRef ticket
+            ITransactionArgument ticket
         )
         {
             this.Modules = modules;
@@ -31,7 +32,6 @@ namespace Sui.Transactions.Types
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128(6);
             serializer.SerializeU64((ulong)Modules.Length);
             foreach (byte[] module in Modules)
             {
@@ -44,7 +44,6 @@ namespace Sui.Transactions.Types
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            deserializer.DeserializeUleb128();
             List<byte[]> modules = new List<byte[]>();
             ulong length = deserializer.DeserializeU64();
             for (ulong i = 0; i < length; ++i)
@@ -55,7 +54,7 @@ namespace Sui.Transactions.Types
                 modules.ToArray(),
                 deserializer.DeserializeSequence(typeof(AccountAddress)).Cast<AccountAddress>().ToArray(),
                 deserializer.DeserializeString(),
-                (IObjectRef)IObjectRef.Deserialize(deserializer)
+                (ITransactionArgument)ITransactionArgument.Deserialize(deserializer)
             );
         }
     }

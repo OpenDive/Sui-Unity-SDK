@@ -41,7 +41,7 @@ namespace Sui.Transactions.Builder
         /// <summary>
         /// A list of transaction, e.g. MoveCallTransaction, TransferObjectTransaction, etc.
         /// </summary>
-        public SuiTransaction[] Transactions { get; set; }
+        public List<SuiTransaction> Transactions { get; set; }
 
         /// <summary>
         /// Initializes a new instance of `SerializedTransactionDataBuilder`.
@@ -59,7 +59,7 @@ namespace Sui.Transactions.Builder
             ITransactionExpiration expiration = null,
             GasConfig gasConfig = null,
             List<TransactionBlockInput> inputs = null,
-            SuiTransaction[] transactions = null
+            List<SuiTransaction> transactions = null
         )
         {
             this.Version = version;
@@ -176,7 +176,7 @@ namespace Sui.Transactions.Builder
 
             for (int i = 0; i < callArgs.Length; i++)
             {
-                TransactionBlockInput input = new TransactionBlockInput(i, callArgs[i]);
+                TransactionBlockInput input = new TransactionBlockInput(i, callArgs[i], null);
             }
 
             txBlockDataBuilder.Inputs = txBlockInputs;

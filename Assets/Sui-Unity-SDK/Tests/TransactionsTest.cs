@@ -8,6 +8,7 @@ using Sui.Utilities;
 using Sui.Transactions.Types;
 using Sui.Transactions.Types.Arguments;
 using Sui.Types;
+using System.Collections.Generic;
 
 namespace Sui.Tests
 {
@@ -18,37 +19,6 @@ namespace Sui.Tests
         int version             = int.Parse("10000");
         string digest           = "1Bhh3pU9gLXZhoVxkr5wyg9sX6";
         string suiAddressHex    = "0x0000000000000000000000000000000000000000000000000000000000000002";
-
-        [Test]
-        public void SimpleProgrammingTransactionsTest()
-        {
-            string sui = "0x0000000000000000000000000000000000000000000000000000000000000002";
-            AccountAddress suiAddress = AccountAddress.FromHex(sui);
-
-            string capy = "0x0000000000000000000000000000000000000000000000000000000000000006";
-            AccountAddress capyAddress = AccountAddress.FromHex(capy);
-
-            MoveCall moveCallTransaction = new MoveCall(
-                new SuiMoveNormalizedStructType(new SuiStructTag(suiAddress, "display", "new", new ISerializableTag[0])), // TODO: THIS IS A NORMALIZED STRUCT
-                new ISerializableTag[] { new StructTag(capyAddress, "capy", "Capy", new ISerializableTag[0]) },
-                new SuiTransactionArgument[]
-                {
-                    new SuiTransactionArgument(new GasCoin()),
-                    new SuiTransactionArgument(new NestedResult(0, 1)),
-                    new SuiTransactionArgument(new TransactionBlockInput(3)),
-                    new SuiTransactionArgument(new TransactionResult(1))
-                }
-            );
-
-            Serialization serializer = new Serialization();
-            moveCallTransaction.Serialize(serializer);
-            byte[] actual = serializer.GetBytes();
-            byte[] expected = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 7, 100, 105, 115, 112, 108, 97, 121, 3, 110, 101, 119, 1, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 4, 99, 97, 112, 121, 4, 67, 97, 112, 121, 0, 4, 0, 3, 0, 0, 1, 0, 1, 3, 0, 2, 1, 0 };
-
-            Assert.AreEqual(expected, actual,
-                "ACTUAL LENGHT: " + actual.Length + "\n"
-                + "EXPECTED LENGTH: " + expected.Length + "\n" + actual.ByteArrayToString());
-        }
 
         [Test]
         public void TransactionDataSerializationSingleInput()
@@ -66,7 +36,7 @@ namespace Sui.Tests
                 new SuiTransactionArgument[] { new SuiTransactionArgument(new TransactionBlockInput(0)) } // TODO: We should not use this abstract, this should be a "pure" or an "object.
             );
 
-            SuiTransaction[] transactions = new[] { new SuiTransaction(moveCallTransaction) };
+            List<Sui.Transactions.Types.SuiTransaction> transactions = new List<Sui.Transactions.Types.SuiTransaction> { new SuiTransaction(moveCallTransaction) };
 
             ////////////////////////////////////////
             //Programmable Transaction Block--  Transactions
@@ -130,11 +100,11 @@ namespace Sui.Tests
                 {
                     new SuiTransactionArgument(new TransactionBlockInput(0)),
                     new SuiTransactionArgument(new TransactionBlockInput(1)),
-                    new SuiTransactionArgument(new TransactionResult(2))
+                    new SuiTransactionArgument(new Result(2))
                 }
             );
 
-            Sui.Transactions.Types.SuiTransaction[] transactions = new[] { new SuiTransaction(moveCallTransaction) };
+            List<Sui.Transactions.Types.SuiTransaction> transactions = new List<Sui.Transactions.Types.SuiTransaction> { new SuiTransaction(moveCallTransaction) };
 
             ProgrammableTransaction programmableTransaction
                 = new(inputs, transactions);

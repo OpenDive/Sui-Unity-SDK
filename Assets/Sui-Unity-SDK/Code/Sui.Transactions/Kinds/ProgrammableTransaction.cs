@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using OpenDive.BCS;
 using Sui.Transactions.Types;
@@ -19,9 +20,9 @@ namespace Sui.Transactions.Kinds
         /// <summary>
         /// Holds a set of transactions, e.g. MoveCallTransaction, TransferObjectsTransaction, etc.
         /// </summary>
-        public SuiTransaction[] Transactions { get; private set; }
+        public List<SuiTransaction> Transactions { get; private set; }
 
-        public ProgrammableTransaction(ICallArg[] inputs, SuiTransaction[] transactions)
+        public ProgrammableTransaction(ICallArg[] inputs, List<SuiTransaction> transactions)
         {
             Inputs = inputs;
             Transactions = transactions;
@@ -30,7 +31,7 @@ namespace Sui.Transactions.Kinds
         public void Serialize(Serialization serializer)
         {
             Sequence inputSeq = new Sequence(Inputs);
-            Sequence transactionSeq = new Sequence(Transactions);
+            Sequence transactionSeq = new Sequence(Transactions.ToArray());
 
             serializer.SerializeU8(0);
             serializer.Serialize(inputSeq);
@@ -42,7 +43,7 @@ namespace Sui.Transactions.Kinds
             deserializer.DeserializeUleb128();
             return new ProgrammableTransaction(
                 deserializer.DeserializeSequence(typeof(ICallArg)).Cast<ICallArg>().ToArray(),
-                deserializer.DeserializeSequence(typeof(SuiTransaction)).Cast<SuiTransaction>().ToArray()
+                deserializer.DeserializeSequence(typeof(SuiTransaction)).Cast<SuiTransaction>().ToList()
             );
         }
     }

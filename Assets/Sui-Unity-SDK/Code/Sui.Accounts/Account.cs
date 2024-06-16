@@ -72,7 +72,7 @@ namespace Sui.Accounts
         /// Generates an account from a random seed.
         /// </summary>
         /// <param name="signatureScheme"></param>
-        private Account(SignatureScheme signatureScheme = SignatureScheme.ED25519)
+        public Account(SignatureScheme signatureScheme = SignatureScheme.ED25519)
         {
             SignatureScheme = signatureScheme;
 

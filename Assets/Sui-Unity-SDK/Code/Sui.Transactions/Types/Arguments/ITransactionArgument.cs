@@ -65,7 +65,7 @@ namespace Sui.Transactions.Types.Arguments
                     );
                 case 2:
                     return new SuiTransactionArgument(
-                        TransactionResult.Deserialize(deserializer)
+                        Result.Deserialize(deserializer)
                     );
                 case 3:
                     return new SuiTransactionArgument(

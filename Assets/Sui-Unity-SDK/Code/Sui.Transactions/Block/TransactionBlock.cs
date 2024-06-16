@@ -17,31 +17,127 @@ using Kind = Sui.Transactions.Types.Kind;
 
 namespace Sui.Transactions
 {
+    public enum ObjectArgumentType
+    {
+        stringArgument,
+        transactionObjectArgument
+    }
+
+    public interface IObjectArgument
+    {
+        public ObjectArgumentType Type { get; }
+    }
+
+    public class StringObjectArgument : IObjectArgument
+    {
+        public ObjectArgumentType Type => ObjectArgumentType.stringArgument;
+        public string Argument;
+
+        public StringObjectArgument(string argument)
+        {
+            this.Argument = argument;
+        }
+    }
+
+    public class TransactionObjectArgument : IObjectArgument
+    {
+        public ObjectArgumentType Type => ObjectArgumentType.transactionObjectArgument;
+        public ITransactionArgument Argument;
+
+        public TransactionObjectArgument(ITransactionArgument argument)
+        {
+            this.Argument = argument;
+        }
+    }
+
+    public enum TransactionObjectInputType
+    {
+        stringArgument,
+        objectCallArgument,
+        transactionObjectArgument
+    }
+
+    public interface ITransactionObjectInput
+    {
+        public TransactionObjectInputType Type { get; }
+    }
+
+    public class StringTransactionObjectInput : ITransactionObjectInput
+    {
+        public TransactionObjectInputType Type => TransactionObjectInputType.stringArgument;
+        public string Input;
+
+        public StringTransactionObjectInput(string id)
+        {
+            this.Input = id;
+        }
+    }
+
+    public class CallArgTransactionObjectInput : ITransactionObjectInput
+    {
+        public TransactionObjectInputType Type => TransactionObjectInputType.objectCallArgument;
+        public ObjectArg Input;
+
+        public CallArgTransactionObjectInput(ObjectArg input)
+        {
+            this.Input = input;
+        }
+    }
+
+    public class TransactionArgumentTransactionObjectInput : ITransactionObjectInput
+    {
+        public TransactionObjectInputType Type => TransactionObjectInputType.transactionObjectArgument;
+        public ITransactionArgument Input;
+
+        public TransactionArgumentTransactionObjectInput(ITransactionArgument input)
+        {
+            this.Input = input;
+        }
+    }
+
     /// <summary>
     /// A transaction block builder.
     /// </summary>
     public class TransactionBlock : ISerializable
     {
         /// <summary>
+        /// A dictionary containing default offline limits with string keys and integer values.
+        /// </summary> ✅
+        public Dictionary<string, long> DefaultOfflineLimits = new Dictionary<string, long> {
+            { "maxPureArgumentSize", (16 * 1024) },
+            { "maxTxGas", 50_000_000_000 },
+            { "maxGasObjects", 256 },
+            { "maxTxSizeBytes", (128 * 1024) }
+        };
+
+        /// ✅
+        public Dictionary<string, long> TransactionConstants = new Dictionary<string, long> {
+            { "MAX_GAS_OBJECTS", 256 },
+            { "MAX_GAS", 50_000_000_000 },
+            { "GAS_SAFE_OVERHEAD", 1_000 },
+            { "MAX_OBJECTS_PER_FETCH", 50 }
+        };
+
+        /// <summary>
         /// The transaction block builder.
-        /// </summary>
+        /// </summary> ✅
         public TransactionBlockDataBuilder BlockDataBuilder { get; set; }
 
         /// <summary>
         /// The list of transaction the "transaction builder" will use to create
         /// the transaction block. This can be any transaction type defined
         /// in the `ITransaction` interface, e.g. `MoveCall`, `SplitCoins`.
-        /// </summary>
+        /// </summary> ✅
         public List<ITransaction> Transactions { get; set; }
 
         /// <summary>
         /// A list of object that we need to resolve by first querying the RPC API.
-        /// </summary>
+        /// </summary> ✅
         private List<ObjectToResolve> objectsToResolve = new List<ObjectToResolve>();
 
         /// <summary>
         /// Creates a TransactionBlock object from an existing TransactionBlock.
-        /// </summary>
+        /// </summary> ✅
         /// <param name="transactionBlock"></param>
         public TransactionBlock(TransactionBlock transactionBlock = null)
         {
@@ -51,7 +147,7 @@ namespace Sui.Transactions
                 BlockDataBuilder = new TransactionBlockDataBuilder();
         }
 
-        /// <summary>
+        /// <summary> ✅
         /// Set the sender for the programmable transaction block.
         /// </summary>
         /// <param name="sender"></param>
@@ -62,7 +158,7 @@ namespace Sui.Transactions
             return this;
         }
 
-        /// <summary>
+        /// <summary> ✅
         /// The the Sender, if it has not been set in the programmable transaction.
         /// </summary>
         /// <param name="sender"></param>
@@ -74,7 +170,7 @@ namespace Sui.Transactions
             return this;
         }
 
-        /// <summary>
+        /// <summary> ✅
         /// Set expiration for the programmable transaction.
         /// </summary>
         /// <param name="expiration"></param>
@@ -85,7 +181,7 @@ namespace Sui.Transactions
             return this;
         }
 
-        /// <summary>
+        /// <summary> ✅
         /// Sets the gas price.
         /// </summary>
         /// <param name="price"></param>
@@ -96,7 +192,7 @@ namespace Sui.Transactions
             return this;
         }
 
-        /// <summary>
+        /// <summary> ✅
         /// Set the gas budget for the programmable transaction block.
         /// </summary>
         /// <param name="budget"></param>
@@ -107,7 +203,7 @@ namespace Sui.Transactions
             return this;
         }
 
-        /// <summary>
+        /// <summary> ✅
         /// Set the gas owner for the programmable transaction block.
         /// </summary>
         /// <param name="owner"></param>
@@ -119,279 +215,109 @@ namespace Sui.Transactions
         }
 
         /// <summary>
+        /// A `TransactionArgument` representing the gas of the transaction.
+        /// </summary> ✅
+        public ITransactionArgument gas = new GasCoin();
+
+        /// <summary> ✅
         /// Set the gas payment for the programmable transaction block.
         /// </summary>
         /// <param name="payments"></param>
         /// <returns></returns>
         public TransactionBlock SetGasPayment(Sui.Types.SuiObjectRef[] payments)
         {
+            if (payments.Count() >= TransactionConstants["MAX_GAS_OBJECTS"])
+                throw new Exception("Gas Payment is too high.");
+
             this.BlockDataBuilder.GasConfig.Payment = payments;
             return this;
         }
-
+    
         /// <summary>
-        /// Gets the programmable transaction block data.
-        /// </summary>
-        /// <returns></returns>
-        public Builder.TransactionBlockData GetBlockData()
+        /// Creates and appends a `TransactionBlockInput` object to the `blockData.builder.inputs`
+        /// array and returns it. The type and value of the `TransactionBlockInput` are specified
+        /// by the function parameters.
+        /// </summary> ✅
+        /// <param name="type">A `Sui.Types.Type` representing the type of the input.</param>
+        /// <param name="value">An `ISerializable` representing the value of the input.</param>
+        /// <returns>A `TransactionBlockInput` object.</returns>
+        public TransactionBlockInput AddInput
+        (
+            Sui.Types.Type type,
+            ISerializable value
+        )
         {
-            return this.BlockDataBuilder.Snapshot();
-        }
-
-        //public TransactionBlockInput AddObjectInput(IObjectRef objectRef)
-        //{
-        //    Type objectType = objectRef.GetType();
-        //    string newObjectId = "";
-        //    //if (objectType == typeof(SuiObjectRef))
-        //    //{
-        //    //    SuiObjectRef ImmObjectRef =  (SuiObjectRef)objectRef;
-        //    //    newObjectId = ImmObjectRef.ObjectId;
-        //    //}
-        //    //else
-        //    //{
-        //    //    SharedObjectRef sharedObjectRef = (SharedObjectRef)objectRef;
-        //    //    newObjectId = sharedObjectRef.ObjectId;
-        //    //}
-
-        //    newObjectId = objectRef.ObjectId;
-
-        //    List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
-
-        //    // Search through the list of inputs in the transaction block
-        //    // for a block input that has the name id as a `newObjectId`
-        //    TransactionBlockInput inserted = inputs.Find((blockInput) =>
-        //    {
-        //        Type blockInputValueType = blockInput.Value.GetType();
-        //        if (blockInputValueType == typeof(ObjectCallArg))
-        //        {
-        //            ObjectCallArg _objCallArg = (ObjectCallArg)blockInput.Value;
-        //            IObjectRef _objectRef = _objCallArg.ObjectArg;
-
-        //            return newObjectId == _objectRef.ObjectId;
-        //        }
-        //        return false;
-        //    });
-
-        //    // If it it's already in the list of inputs, then don't insert it
-        //    if (inserted != null)
-        //        return inserted;
-
-        //    // Otherwise,
-        //    // create ObjectCallArg which will add the appropriate byte when serializing
-        //    // then add it to the list of inputs
-        //    ObjectCallArg newObjCallArg = new ObjectCallArg(objectRef);
-        //    return this.CreateAddInput(newObjCallArg);
-        //}
-
-        /// <summary>
-        /// Utility function to create and add an object input to the TransactionBlock.
-        /// <code>
-        ///     // In TypeScript SDK
-        ///     txb.object(object_id)
-        ///
-        ///     object(value: string | ObjectCallArg)
-        /// </code>
-        /// </summary>
-        /// <param name="objectRef"></param>
-        /// <returns></returns>
-        //public TransactionBlockInput AddObjectInput(string objectId)
-        //{
-        //    AccountAddress address = AccountAddress.FromHex(objectId);
-        //    return AddObjectInput(address);
-        //}
-
-        /// <summary>
-        /// Utility function that creates a `TransactionBlockInput` from a
-        /// given objectID address.
-        ///
-        /// <code>
-        ///     // In TypeScript SDK
-        ///     txb.object(object_id)
-        ///
-        ///     object(value: string | ObjectCallArg)
-        /// </code>
-        /// </summary>
-        /// <param name="objectRef"></param>
-        /// <returns></returns>
-        //public TransactionBlockInput AddObjectInput(AccountAddress objectIdValue)
-        //{
-        //    List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
-
-        //    // Search through the list of inputs in the transaction block
-        //    // for a block input that has the name id as a `newObjectId`
-        //    TransactionBlockInput inserted = inputs.Find((blockInput) =>
-        //    {
-        //        Type blockInputValueType = blockInput.Value.GetType();
-        //        if (blockInputValueType == typeof(ObjectCallArg))
-        //        {
-        //            ObjectCallArg _objCallArg = (ObjectCallArg)blockInput.Value;
-        //            IObjectRef _objectRef = _objCallArg.ObjectArg;
-
-        //            return objectIdValue == _objectRef.ObjectId;
-        //        }
-        //        return false;
-        //    });
-
-        //    // If it it's already in the list of inputs, then don't insert it
-        //    if (inserted != null)
-        //        return inserted;
-
-        //    // Otherwise,
-        //    // create ObjectCallArg which will add the appropriate byte when serializing
-        //    // then add it to the list of inputs
-        //    return this.CreateAddInput(objectIdValue);
-
-        //    throw new NotSupportedException();
-        //}
-
-        //public TransactionBlockInput AddObjectInput(ObjectCallArg objectCallArg)
-        //{
-        //    AccountAddress newObjectId = objectCallArg.ObjectArg.ObjectId;
-
-        //    List<TransactionBlockInput> inputs = this.BlockDataBuilder.Inputs;
-
-        //    // Search through the list of inputs in the transaction block
-        //    // for a block input that has the name id as a `newObjectId`
-        //    TransactionBlockInput inserted = inputs.Find((blockInput) =>
-        //    {
-        //        Type blockInputValueType = blockInput.Value.GetType();
-        //        if (blockInputValueType == typeof(ObjectCallArg))
-        //        {
-        //            ObjectCallArg _objCallArg = (ObjectCallArg)blockInput.Value;
-        //            IObjectRef _objectRef = _objCallArg.ObjectArg;
-
-        //            return newObjectId == _objectRef.ObjectId;
-        //        }
-        //        return false;
-        //    });
-
-        //    // If it it's already in the list of inputs, then don't insert it
-        //    if (inserted != null)
-        //        return inserted;
-
-        //    // Otherwise,
-        //    // create ObjectCallArg which will add the appropriate byte when serializing
-        //    // then add it to the list of inputs
-        //    return this.CreateAddInput(objectCallArg);
-        //}
-
-        /// <summary>
-        /// Dynamically create a new input, which is separate from the `input`. This is important
-        /// for generated clients to be able to define unique inputs that are non-overlapping with the
-        /// defined inputs.
-        /// 
-        /// For `Uint8Array` type automatically convert the input into a `Pure` CallArg, since this
-        /// is the format required for custom serialization.
-        /// <code>
-        ///     #input(type: 'object' | 'pure', value?: unknown) {
-        /// </code>
-        /// </summary>
-        /// <param name="value">Can be a `PureCallArg` or an `ObjectCallArg`</param>
-        /// <returns></returns>
-        private TransactionBlockInput CreateAddInput(ICallArg value)
-        {
-            // Get the index of of the legth of inputs, and use it as an index
-            int index = this.BlockDataBuilder.Inputs.Count;
-            TransactionBlockInput input = new TransactionBlockInput(
-                index,
-                value
-            );
+            int index = this.BlockDataBuilder.Inputs.Count();
+            var input = new TransactionBlockInput(index, value, type);
             this.BlockDataBuilder.Inputs.Add(input);
             return input;
         }
 
-        /// <summary>
-        /// Utility function with method signature for
-        /// creating a `TransactionBlockInput` (input) with an objectID address.
-        /// We explicitly define this method signature for readability,
-        /// otherwise we can use a `TransactionBlockInput` method signature that
-        /// takes in an `ISerializable` object
-        /// NOTE: `AccountAddress` and `ICallArg` are both `ISerializable`.
-        /// NOTE: The input created will later need to be resolved to an actual object definition.
-        /// </summary>
-        /// <param name="value">An objectId</param>
-        /// <returns></returns>
-        private TransactionBlockInput CreateAddInput(AccountAddress objectIdValue)
+        ///  ✅
+        public ITransactionArgument AddObjectInput(ITransactionObjectInput value)
         {
-            // Get the index of of the legth of inputs, and use it as an index
-            int index = this.BlockDataBuilder.Inputs.Count;
-            TransactionBlockInput input = new TransactionBlockInput(
-                index,
-                objectIdValue
-            );
-            this.BlockDataBuilder.Inputs.Add(input);
-            return input;
+            if (value.Type == TransactionObjectInputType.transactionObjectArgument)
+                return ((TransactionArgumentTransactionObjectInput)value).Input;
+
+            string id = InputsHandler.GetIDFromCallArg(value);
+            TransactionBlockInput[] inserted_arr = BlockDataBuilder.Inputs.Where((input) => {
+                if (input.Value == null || input.Value.GetType() != typeof(string))
+                    return false;
+                return id == NormalizedTypeConverter.NormalizeSuiAddress(((BString)input.Value).value);
+            }).ToArray();
+
+            if (inserted_arr.Count() != 0)
+                return inserted_arr[0];
+
+            switch(value.Type)
+            {
+                case TransactionObjectInputType.stringArgument:
+                    string string_argument = ((StringTransactionObjectInput)value).Input;
+                    return AddInput(Sui.Types.Type.Object, new BString(string_argument));
+                case TransactionObjectInputType.objectCallArgument:
+                    ObjectArg object_call_argument = ((CallArgTransactionObjectInput)value).Input;
+                    return AddInput(Sui.Types.Type.Object, object_call_argument);
+                case TransactionObjectInputType.transactionObjectArgument:
+                    ITransactionArgument transaction_argument = ((TransactionArgumentTransactionObjectInput)value).Input;
+                    return AddInput(Sui.Types.Type.Object, transaction_argument);
+            }
+
+            throw new Exception("Not Implemented");
         }
 
-        /// <summary>
-        /// Add a new object ref (`ImmOrOwned`) input to the transaction
-        /// using the fully-resolved object reference.
-        /// If you only have an object ID, use `builder.object(id)` instead.
-        ///
-        /// In the TypeScript SDK, this is:
-        /// <code>
-        ///     objectRef(...args: Parameters<(typeof Inputs)['ObjectRef']>) {
-        /// </code>
-        /// </summary>
-        /// <param name="objectId"></param>
-        /// <param name="version"></param>
-        /// <param name="digest"></param>
-        /// <returns></returns>
-        //public TransactionBlockInput AddObjectRefInput(AccountAddress objectId,
-        //    int version, string digest)
-        //{
-        //    Sui.Types.SuiObjectRef objectRef = new Sui.Types.SuiObjectRef(
-        //        objectId,
-        //        version,
-        //        digest
-        //    );
-        //    return this.AddObjectRefInput(objectRef);
-        //}
+        /// ✅
+        public ITransactionArgument AddObjectInput(string id)
+        {
+            return AddObjectInput(new StringTransactionObjectInput(id));
+        }
 
-        /// <summary>
-        /// Adds a Sui Object Ref (`ImmOrOwned`) to the inputs of
-        /// a programmable transaction.
-        /// </summary>
-        /// <param name="objectRef"></param>
-        /// <returns></returns>
-        //public TransactionBlockInput AddObjectRefInput(Sui.Types.SuiObjectRef objectRef)
-        //{
-        //    ObjectCallArg newObjCallArg = new ObjectCallArg(objectRef);
-        //    return this.AddObjectInput(newObjCallArg);
-        //}
+        /// ✅
+        public ITransactionArgument AddObjectInput(IObjectArgument object_argument)
+        {
+            switch(object_argument.Type)
+            {
+                case ObjectArgumentType.stringArgument:
+                    string argument_string = ((StringObjectArgument)object_argument).Argument;
+                    return AddObjectInput(new StringTransactionObjectInput(argument_string));
+                case ObjectArgumentType.transactionObjectArgument:
+                    ITransactionArgument argument_transaction = ((TransactionObjectArgument)object_argument).Argument;
+                    return AddObjectInput(new TransactionArgumentTransactionObjectInput(argument_transaction));
+            }
 
-        /// <summary>
-        /// Add a new shared object input to the transaction using
-        /// the fully-resolved shared object reference.
-        ///
-        /// If you only have an object ID, use `builder.object(id)` instead.
-        /// </summary>
-        /// <param name="objectId"></param>
-        /// <param name="initialSharedVersion"></param>
-        /// <param name="mutable"></param>
-        /// <returns></returns>
-        //public TransactionBlockInput AddSharedObjectRefInput(AccountAddress objectId,
-        //    int initialSharedVersion, bool mutable)
-        //{
-        //    SharedObjectRef sharedObjectRef = new SharedObjectRef(
-        //        objectId,
-        //        initialSharedVersion,
-        //        mutable
-        //    );
-        //    return this.AddSharedObjectRefInput(sharedObjectRef);
-        //}
+            throw new Exception("Not Implemented");
+        }
 
-        /// <summary>
-        /// Add a new shared object input to the programmable transaction.
-        /// </summary>
-        /// <param name="sharedObjectRef"></param>
-        /// <returns></returns>
-        //public TransactionBlockInput AddSharedObjectRefInput(
-        //    SharedObjectRef sharedObjectRef)
-        //{
-        //    ObjectCallArg objectCallArg = new ObjectCallArg(sharedObjectRef);
-        //    return this.AddObjectInput(objectCallArg);
-        //}
+        /// ✅
+        public ITransactionArgument AddObjectRef(ObjectArg object_arg)
+        {
+            return AddObjectInput(new CallArgTransactionObjectInput(object_arg));
+        }
+
+        /// ✅
+        public ITransactionArgument AddSharedObjectRef(SharedObjectRef shared_object_ref)
+        {
+            return AddObjectInput(new CallArgTransactionObjectInput(InputsHandler.SharedObjectRef(shared_object_ref)));
+        }
 
         /// <summary>
         /// Add a new non-object input to the transaction.
@@ -401,38 +327,57 @@ namespace Sui.Transactions
         ///     The pure value that will be used as the input value.
         ///     If this is a Uint8Array, then the value is assumed
         ///     to be raw bytes, and will be used directly.
-        /// </param>
+        /// </param> ✅
         /// <returns></returns>
-        public TransactionBlockInput AddPureInput(ISerializable value)
+        public TransactionBlockInput AddPure(ISerializable value)
         {
-            PureCallArg pureCallArg = new PureCallArg(value);
-            return this.CreateAddInput(pureCallArg);
+            return AddInput(Sui.Types.Type.Pure, value);
         }
 
         /// <summary>
-        /// Adds a transaction to the programmable transaction block.
+        /// Add a new non-object input to the transaction.
         /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="resultsLength"></param>
+        /// <param name="value">
+        ///     A byte array representing the raw data of the
+        ///     pure value.
+        /// </param> ✅
         /// <returns></returns>
-        public List<TransactionResult> AddTx(ITransaction transaction, int resultsLength = 0)
+        public TransactionBlockInput AddPure(byte[] value)
         {
-            this.Transactions.Add(transaction);
-            int index = this.Transactions.Count;
-
-            TransactionResult txResult =  this.CreateTransactionResult(index - 1);
-            List<TransactionResult> txResults = new List<TransactionResult>();
-            return txResults;
+            return AddInput(Sui.Types.Type.Pure, new Bytes(value));
         }
 
         /// <summary>
-        /// Creates a TransactionResult object for the given transaction index.
+        /// Appends a `SuiTransaction` object to the `BlockDataBuilder.Transactions` array and
+        /// returns a `TransactionArgument` object representing the result.
         /// </summary>
-        /// <param name="index"></param>
-        /// <returns></returns>
-        public TransactionResult CreateTransactionResult(int index)
+        /// <param name="transaction">A `SuiTransaction` object to be added.</param>
+        /// <param name="return_value_count">
+        /// If using a `MoveCall` transaction, this is the amount
+        /// of return values (if greater than 1) that will be returned by the move call.
+        /// </param> ✅
+        /// <returns>An `ITransactionArgument` object representing the result of the addition.</returns>
+        public List<ITransactionArgument> AddTransaction(Types.SuiTransaction transaction, int? return_value_count = null)
         {
-            throw new NotImplementedException();
+            BlockDataBuilder.Transactions.Add(transaction);
+
+            int index = BlockDataBuilder.Transactions.Count();
+
+            TransactionResult transaction_result = new TransactionResult((ushort)(index - 1), (ushort?)return_value_count);
+
+            List<ITransactionArgument> results = new List<ITransactionArgument>();
+
+            if (return_value_count == null)
+                results.Add(transaction_result.TransactionArgument);
+            else
+            {
+                foreach(ITransactionArgument nested_result in transaction_result)
+                    results.Add(nested_result);
+
+                results.Reverse();
+            }
+
+            return results;
         }
 
         /// <summary>
@@ -456,25 +401,38 @@ namespace Sui.Transactions
         ///     const [nft1, nft2] = txb.moveCall({ target: '0x2::nft::mint_many' });
         ///     txb.transferObjects([nft1, nft2], txb.pure(address));
         /// </code>
-        /// </summary>
+        /// </summary> ✅
         /// <param name="coin">GasCoin is a type of `TransactionArgument`.</param>
         /// <param name="amounts">A list of respective amounts for each coin we are splitting.</param>
         /// <returns>A list of `TransactionResult`s.</returns>
-        public List<TransactionResult> AddSplitCoinsTx(GasCoin coin, params ITransactionArgument[] amounts)
+        public List<ITransactionArgument> AddSplitCoinsTx(ITransactionArgument coin, params TransactionBlockInput[] amounts)
         {
             SplitCoins splitCoinsTx = new SplitCoins(coin, amounts);
-            return this.AddTx(splitCoinsTx);
-
+            return this.AddTransaction(new Types.SuiTransaction(splitCoinsTx));
         }
 
-        public TransactionBlock AddMergeCoinsTx()
+        /// <summary>
+        /// Merges multiple source coins into a single destination coin.
+        /// </summary> ✅
+        /// <param name="destination">An `ITransactionArgument` representing the destination coin.</param>
+        /// <param name="sources">An array of `ITransactionArgument` representing the source coins.</param>
+        /// <returns>An `ITransactionArgument` array representing the result of the merge coin operation.</returns>
+        public List<ITransactionArgument> AddMergeCoinsTx(ITransactionArgument destination, ITransactionArgument[] sources)
         {
-            return this;
+            MergeCoins merge_coins_tx = new MergeCoins(destination, sources);
+            return this.AddTransaction(new Types.SuiTransaction(merge_coins_tx));
         }
 
-        public TransactionBlock AddPublishTx()
+        /// <summary>
+        /// Publishes modules with given dependencies.
+        /// </summary> ✅
+        /// <param name="modules">An array of `byte[]` representing the modules to be published.</param>
+        /// <param name="dependencies">An array of `AccountAddress` representing the dependencies.</param>
+        /// <returns>An `ITransactionArgument` array representing the result of the publish operation.</returns>
+        public List<ITransactionArgument> AddPublishTx(byte[][] modules, AccountAddress[] dependencies)
         {
-            return this;
+            Publish publish_tx = new Publish(modules, dependencies);
+            return this.AddTransaction(new Types.SuiTransaction(publish_tx));
         }
 
         public TransactionBlock AddUpgradeTx()
@@ -525,17 +483,17 @@ namespace Sui.Transactions
             throw new NotImplementedException();
         }
 
-        public byte[] Build(Block.BuilidOptions options)
-        {
-            // Coroutine _prepare = new Coroutine(PrepareCor(options));
-            // await _prepare;
+        //public byte[] Build(Block.BuilidOptions options)
+        //{
+        //    Coroutine _prepare = new Coroutine(PrepareCor(options));
+        //    await _prepare;
 
-            // int maxSizeBytes = this.getConfig("maxTxSizeBytes, options);
-            // bool onlyTransactionKind = options.OnlyTransactionKin
+        //    int maxSizeBytes = this.getConfig("maxTxSizeBytes, options);
 
-            //return this.BlockDataBuilder.Build(maxSizeBytes, onlyTransactionKind);
-            throw new NotImplementedException();
-        }
+        //    bool onlyTransactionKind = options.OnlyTransactionKin
+
+        //    return this.BlockDataBuilder.Build(maxSizeBytes, onlyTransactionKind);
+        //}
 
         /// <summary>
         /// Queries RPC for reference gas price, then sets the price to the
@@ -563,8 +521,8 @@ namespace Sui.Transactions
         public async Task PrepareTransactions(Block.BuilidOptions options)
         {
             // The inputs in the `TransactionBlock`
-            List<TransactionBlockInput> inputs      = this.BlockDataBuilder.Inputs;
-            Types.SuiTransaction[] transactions             = this.BlockDataBuilder.Transactions;
+            List<TransactionBlockInput> inputs              = this.BlockDataBuilder.Inputs;
+            Types.SuiTransaction[] transactions             = this.BlockDataBuilder.Transactions.ToArray();
 
             // A list of move modules identified as needing to be resolved
             List<MoveCall> moveModulesToResolve     = new List<MoveCall>();
@@ -598,8 +556,7 @@ namespace Sui.Transactions
                     SuiTransactionArgument[] arguments = moveTx.Arguments;
 
                     bool needsResolution = arguments.Any(arg => {
-                        bool isInput = (arg.TransactionArgument.Kind == Types.Arguments.Kind.Input);
-                        if(isInput)
+                        if (arg.TransactionArgument.Kind == Types.Arguments.Kind.Input)
                         {
                             TransactionBlockInput argInput = (TransactionBlockInput)arg.TransactionArgument;
                             int index = argInput.Index;
@@ -615,8 +572,44 @@ namespace Sui.Transactions
                     });
 
                     // If any of the arguments in the MoveCall need to be resolved
+                    // This loop verifies that the move calls within the resolve list
+                    // match up with that in the current transaction within the outer loop
+                    // of blockDataBuilder's transactions
                     if(needsResolution)
+                    {
+                        foreach(MoveCall move_call in moveModulesToResolve)
+                        {
+                            foreach (var argument_outer in moveTx.Arguments.Select((value, i) => new { i, value }))
+                            {
+                                if (argument_outer.value.TransactionArgument.Kind == Types.Arguments.Kind.Input)
+                                {
+                                    foreach (var argument_inner in move_call.Arguments.Select((value, i) => new { i, value }))
+                                    {
+                                        if
+                                        (
+                                            argument_inner.value.TransactionArgument.Kind == Types.Arguments.Kind.Input
+                                        )
+                                        {
+                                            TransactionBlockInput outer_input =
+                                                (TransactionBlockInput)argument_outer.value.TransactionArgument;
+                                            TransactionBlockInput inner_input =
+                                                (TransactionBlockInput)argument_inner.value.TransactionArgument;
+
+                                            if
+                                            (
+                                                outer_input.Value == inner_input.Value &&
+                                                outer_input.Index != inner_input.Index
+                                            )
+                                            {
+                                                moveTx.Arguments[argument_outer.i] = move_call.Arguments[argument_inner.i];
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         moveModulesToResolve.Add(moveTx);
+                    }
                 }
                 #endregion END - Process MoveCall Transaction
 
@@ -708,15 +701,17 @@ namespace Sui.Transactions
                     if(paramsList.Count != moveCall.Arguments.Length)
                     {
                         // TODO: Irvin fix this -- we cannot throw an exception
+                        // MARCUS: Maybe we can look into error enums for handling
+                        // different exception issues.
                         throw new ArgumentException("Incorrect number of arguments.");
                     }
 
-                    for(int i = 0; i < paramsList.Count; i++)
+                    foreach(var param_enumerated in paramsList.Select((param, i) => new { i, param }))
                     {
-                        ISuiMoveNormalizedType param = paramsList[i];
+                        SuiTransactionArgument arg = moveCall.Arguments[param_enumerated.i];
 
-                        SuiTransactionArgument arg = moveCall.Arguments[i];
-                        if(arg.TransactionArgument.Kind != Types.Arguments.Kind.Input) continue;
+                        if (arg.TransactionArgument.Kind != Types.Arguments.Kind.Input)
+                            continue;
 
                         TransactionBlockInput inputArg = (TransactionBlockInput)arg.TransactionArgument;
                         TransactionBlockInput input = inputs[inputArg.Index];
@@ -738,7 +733,7 @@ namespace Sui.Transactions
                         ////input.Value = new Bytes(ser.GetBytes());
                         ///
 
-                        string serType = Serializer.GetPureNormalizedType(param, inputValue);
+                        string serType = Serializer.GetPureNormalizedType(param_enumerated.param, inputValue);
                         if (serType != null)
                         {
                             // TODO: IRVIN update this to use a clone of the input list
@@ -764,9 +759,9 @@ namespace Sui.Transactions
                         //this.BlockDataBuilder.Inputs[inputArg.Index].Value = new PureCallArg(inputValue);
                         // }
 
-                        ISuiMoveNormalizedType structVal = Serializer.ExtractStructType(param);
+                        ISuiMoveNormalizedType structVal = Serializer.ExtractStructType(param_enumerated.param);
 
-                        if (structVal != null || param as SuiMoveNormalziedTypeParameterType != null)
+                        if (structVal != null || param_enumerated.param as SuiMoveNormalziedTypeParameterType != null)
                         {
                             if (inputValue.GetType() != typeof(AccountAddress))
                                 throw new Exception($"Expect the argument to be an object id string, got {inputValue.GetType()}");
@@ -774,18 +769,20 @@ namespace Sui.Transactions
                             ObjectToResolve objectToResolve = new ObjectToResolve(
                                 (AccountAddress)inputValue,
                                 input,
-                                param
+                                param_enumerated.param
                             );
                             objectsToResolve.Add(objectToResolve);
                             continue;
                         }
 
-                        throw new Exception($"Unknown call arg type {param} for value {inputValue.GetType()}");
+                        throw new Exception($"Unknown call arg type {param_enumerated.param} for value {inputValue.GetType()}");
                     }
                 }
             }
             #endregion END - Resolve MoveModules
             #region Resolve objects
+            Debug.Log($"MARCUS: OBJECTS TO RESOLVE COUNT - {objectsToResolve.Count}");
+            throw new Exception($"Not Implemented");
             if (objectsToResolve.Count != 0)
             {
                 List<AccountAddress> mappedIds = (List<AccountAddress>)objectsToResolve.Select(x => x.Id);

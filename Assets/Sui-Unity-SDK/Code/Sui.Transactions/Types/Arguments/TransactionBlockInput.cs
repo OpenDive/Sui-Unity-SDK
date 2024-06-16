@@ -42,15 +42,21 @@ namespace Sui.Transactions.Types.Arguments
         public ISerializable? Value { get; set; } // An object ref, or a core type like address or u8
 
         /// <summary>
+        /// The type of Input being used.
+        /// </summary>
+        public Sui.Types.Type? Type { get; set; }
+
+        /// <summary>
         /// Create a TransactionBlockInput object
         /// </summary>
         /// <param name="index"></param>
         /// <param name="value"></param>
         //public TransactionBlockInput(int index, ICallArg value) TODO: Look into this
-        public TransactionBlockInput(int index, ISerializable? value)
+        public TransactionBlockInput(int index, ISerializable? value, Sui.Types.Type? type)
         {
             this.Index = index;
             this.Value = value;
+            this.Type = type;
         }
 
         public TransactionBlockInput(ushort index)
