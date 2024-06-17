@@ -37,8 +37,6 @@ public class TransferObjects : ITransaction
         /// </summary>
         public ITransactionArgument Address { get; set; }
 
-        //public TransactionBlockInput Address { get; set; }
-
         /// <summary>
         /// Creates TransferObjects transaction.
         /// </summary>
@@ -55,14 +53,12 @@ public class TransferObjects : ITransaction
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU128(1);
             serializer.Serialize(Objects);
             serializer.Serialize(Address);
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            deserializer.DeserializeUleb128();
             return new TransferObjects(
                 deserializer.DeserializeSequence(typeof(ITransactionArgument)).Cast<ITransactionArgument>().ToArray(),
                 (ITransactionArgument)ISerializable.Deserialize(deserializer)

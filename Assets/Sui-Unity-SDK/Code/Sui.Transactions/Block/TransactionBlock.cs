@@ -435,42 +435,62 @@ namespace Sui.Transactions
             return this.AddTransaction(new Types.SuiTransaction(publish_tx));
         }
 
-        public TransactionBlock AddUpgradeTx()
+        /// <summary>
+        /// Upgrades modules with given dependencies, packageId, and ticket.
+        /// </summary> ✅
+        /// <param name="modules">An array of `byte[]` representing the modules to be upgraded.</param>
+        /// <param name="dependencies">An array of `AccountAddress` representing the dependencies.</param>
+        /// <param name="packageId">A `string` representing the package ID.</param>
+        /// <param name="ticket">An `ITransactionArgument` representing the ticket.</param>
+        /// <returns>An `ITransactionArgument` representing the result of the upgrade operation.</returns>
+        public List<ITransactionArgument> AddUpgradeTx
+        (
+            byte[][] modules,
+            AccountAddress[] dependencies,
+            string packageId,
+            ITransactionArgument ticket
+        )
         {
-            return this;
+            Upgrade upgrade_tx = new Upgrade(modules, dependencies, packageId, ticket);
+            return this.AddTransaction(new Types.SuiTransaction(upgrade_tx));
         }
 
         /// <summary>
-        /// <code>
-        ///     const [nft1, nft2] = txb.moveCall({ target: "0x2::nft::mint_many" });
-        ///     txb.transferObjects([nft1, nft2], txb.pure(address));
-        ///
-        /// const coin = tx.splitCoins(tx.gas, [tx.pure(amount)]);
-        /// tx.moveCall({
-        ///     target: `${SUI_SYSTEM_ADDRESS}::${SUI_SYSTEM_MODULE_NAME}::${ ADD_STAKE_FUN_NAME}`,
-        ///     arguments:[tx.object(SUI_SYSTEM_STATE_OBJECT_ID), coin, tx.pure(validatorAddress)],
-        /// })
-        /// </code>
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="typeArguments"></param>
-        /// <param name="arguments"></param>
-        /// <returns></returns>
-        public TransactionBlock AddMoveCallTx(SuiMoveNormalizedStructType target,
-            ISerializableTag[] typeArguments = null, SuiTransactionArgument[] arguments = null)
+        /// Makes a move call with target, optional arguments, and optional type arguments.
+        /// </summary> ✅
+        /// <param name="target">A `SuiMoveNormalizedStructType` representing the target of the move call.</param>
+        /// <param name="typeArguments">An optional array of `ISerializableTag` representing the arguments of the move call.</param>
+        /// <param name="arguments">An optional array of `SuiTransactionArgument` representing the type arguments of the move call.</param>
+        /// <param name="return_value_count">The number of return values, greater than 1, that are returned by the move call.</param>
+        /// <returns>An array of `ITransactionArgument` representing the result of the move call.</returns>
+        public List<ITransactionArgument> AddMoveCallTx
+        (
+            SuiMoveNormalizedStructType target,
+            ISerializableTag[] typeArguments = null,
+            SuiTransactionArgument[] arguments = null,
+            int? return_value_count = null
+        )
         {
             MoveCall moveCallTx = new MoveCall(target, typeArguments, arguments);
-            return this;
+            return AddTransaction(new Types.SuiTransaction(moveCallTx), return_value_count);
         }
 
-        public TransactionBlock AddTransferObjectsTx()
+        /// <summary>
+        /// Transfers objects to a specified address.
+        /// </summary> ✅
+        /// <param name="objects">An array of `ITransactionArgument` representing the objects to be transferred.</param>
+        /// <param name="address">An `ITransactionArgument` representing the address to transfer objects to.</param>
+        /// <returns>An array of `ITransactionArgument` representing the result of the transfer object operation.</returns>
+        public List<ITransactionArgument> AddTransferObjectsTx(ITransactionArgument[] objects, ITransactionArgument address)
         {
-            return this;
+            TransferObjects transfer_tx = new TransferObjects(objects, address);
+            return this.AddTransaction(new Types.SuiTransaction(transfer_tx));
         }
 
-        public TransactionBlock AddMoveVectTx()
+        public List<ITransactionArgument> AddMakeMoveVecTx(ITransactionArgument[] objects, SuiStructTag type = null)
         {
-            return this;
+            MakeMoveVec make_move_vec_tx = new MakeMoveVec(objects, type);
+            return this.AddTransaction(new Types.SuiTransaction(make_move_vec_tx));
         }
 
         private void GetConfig()

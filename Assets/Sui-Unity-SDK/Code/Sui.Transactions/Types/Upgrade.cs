@@ -33,10 +33,10 @@ namespace Sui.Transactions.Types
         public void Serialize(Serialization serializer)
         {
             serializer.SerializeU64((ulong)Modules.Length);
+
             foreach (byte[] module in Modules)
-            {
                 serializer.Serialize(module);
-            }
+
             serializer.Serialize(Dependencies);
             serializer.Serialize(PackagID);
             serializer.Serialize(Ticket);
