@@ -95,19 +95,111 @@ namespace Sui.Transactions
         }
     }
 
+    public enum LimitKey
+    {
+        MaxTxGas,
+        MaxGasObjects,
+        MaxTxSizeBytes,
+        MaxPureArgumentSize
+    }
+
+    public class BuildOptions
+    {
+        public SuiClient Provider;
+        public bool OnlyTransactionKind;
+        public Dictionary<string, int?> Limits;
+        public ProtocolConfig ProtocolConfig;
+
+        public static Dictionary<LimitKey, string> TransactionLimits = new Dictionary<LimitKey, string>() {
+            { LimitKey.MaxTxGas, "max_tx_gas" },
+            { LimitKey.MaxGasObjects, "max_gas_payment_objects" },
+            { LimitKey.MaxTxSizeBytes, "max_tx_size_bytes" },
+            { LimitKey.MaxPureArgumentSize, "max_pure_argument_size" }
+        };
+
+        public BuildOptions
+        (
+            SuiClient Provider,
+            bool OnlyTransactionKind,
+            Dictionary<string, int?> Limits,
+            ProtocolConfig ProtocolConfig = null
+        )
+        {
+            this.Provider = Provider;
+            this.OnlyTransactionKind = OnlyTransactionKind;
+            this.Limits = Limits;
+            this.ProtocolConfig = ProtocolConfig;
+        }
+    }
+
+    public class ProtocolConfig
+    {
+        public Dictionary<LimitKey, ProtocolConfigValue> Attributes;
+        public Dictionary<string, bool> FeatureFlags;
+        public string MaxSupportedProtocolVersion;
+        public string MinSupportedProtocolVersion;
+        public string ProtocolVersion;
+
+        public ProtocolConfig
+        (
+            Dictionary<LimitKey, ProtocolConfigValue> Attributes,
+            Dictionary<string, bool> FeatureFlags,
+            string MaxSupportedProtocolVersion,
+            string MinSupportedProtocolVersion,
+            string ProtocolVersion
+        )
+        {
+            this.Attributes = Attributes;
+            this.FeatureFlags = FeatureFlags;
+            this.MaxSupportedProtocolVersion = MaxSupportedProtocolVersion;
+            this.MinSupportedProtocolVersion = MinSupportedProtocolVersion;
+            this.ProtocolVersion = ProtocolVersion;
+        }
+    }
+
+    public abstract class ProtocolConfigValue
+    {
+        private ProtocolConfigValue() { }
+
+        public sealed class U64 : ProtocolConfigValue
+        {
+            public ulong Value { get; }
+            public U64(ulong value) => Value = value;
+        }
+
+        public sealed class U32 : ProtocolConfigValue
+        {
+            public uint Value { get; }
+            public U32(uint value) => Value = value;
+        }
+
+        public sealed class F64 : ProtocolConfigValue
+        {
+            public double Value { get; }
+            public F64(double value) => Value = value;
+        }
+
+        public sealed class U16 : ProtocolConfigValue
+        {
+            public ushort Value { get; }
+            public U16(ushort value) => Value = value;
+        }
+    }
+
     /// <summary>
     /// A transaction block builder.
     /// </summary>
     public class TransactionBlock : ISerializable
     {
+
         /// <summary>
         /// A dictionary containing default offline limits with string keys and integer values.
         /// </summary> ✅
-        public Dictionary<string, long> DefaultOfflineLimits = new Dictionary<string, long> {
-            { "maxPureArgumentSize", (16 * 1024) },
-            { "maxTxGas", 50_000_000_000 },
-            { "maxGasObjects", 256 },
-            { "maxTxSizeBytes", (128 * 1024) }
+        public Dictionary<LimitKey, long> DefaultOfflineLimits = new Dictionary<LimitKey, long> {
+            { LimitKey.MaxPureArgumentSize, (16 * 1024) },
+            { LimitKey.MaxTxGas, 50_000_000_000 },
+            { LimitKey.MaxGasObjects, 256 },
+            { LimitKey.MaxTxSizeBytes, (128 * 1024) }
         };
 
         /// ✅
@@ -487,15 +579,39 @@ namespace Sui.Transactions
             return this.AddTransaction(new Types.SuiTransaction(transfer_tx));
         }
 
+        /// <summary>
+        /// Makes a Move Vector with the specified type and objects.
+        /// </summary> ✅
+        /// <param name="objects">An array of `ITransactionArgument` representing the objects of the Move Vector.</param>
+        /// <param name="type">An optional `SuiStructTag` representing the type of the Move Vector.</param>
+        /// <returns>An array of `ITransactionArgument` representing the result of the make Move Vector operation.</returns>
         public List<ITransactionArgument> AddMakeMoveVecTx(ITransactionArgument[] objects, SuiStructTag type = null)
         {
             MakeMoveVec make_move_vec_tx = new MakeMoveVec(objects, type);
             return this.AddTransaction(new Types.SuiTransaction(make_move_vec_tx));
         }
 
-        private void GetConfig()
+        /// <summary>
+        /// Retrieves a configuration value for a specified key.
+        /// </summary> ✅
+        /// <param name="key">A `LimitKey` representing the key for which the configuration value needs to be retrieved.</param>
+        /// <param name="build_options">A `BuildOptions` object containing the build options including limits and protocolConfig.</param>
+        /// <returns>An `int` representing the configuration value for the specified key.</returns>
+        private int GetConfig(LimitKey key, BuildOptions build_options)
         {
-            throw new NotImplementedException();
+            if (build_options.Limits[BuildOptions.TransactionLimits[key]].HasValue)
+                return (int)build_options.Limits[BuildOptions.TransactionLimits[key]];
+
+            if (build_options.ProtocolConfig == null)
+                return (int)DefaultOfflineLimits[key];
+
+            return build_options.ProtocolConfig.Attributes[key] switch
+            {
+                ProtocolConfigValue.F64 f64 => (int)f64.Value,
+                ProtocolConfigValue.U32 u32 => (int)u32.Value,
+                ProtocolConfigValue.U64 u64 => (int)u64.Value,
+                _ => throw new Exception("Cannot Find Attribute"),
+            };
         }
 
         private void Validate()
