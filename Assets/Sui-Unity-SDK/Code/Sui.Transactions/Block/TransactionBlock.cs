@@ -203,11 +203,12 @@ namespace Sui.Transactions
         };
 
         /// ✅
-        public Dictionary<string, long> TransactionConstants = new Dictionary<string, long> {
-            { "MAX_GAS_OBJECTS", 256 },
-            { "MAX_GAS", 50_000_000_000 },
-            { "GAS_SAFE_OVERHEAD", 1_000 },
-            { "MAX_OBJECTS_PER_FETCH", 50 }
+        public enum TransactionConstants : long
+        {
+            maxGasObjects = 256,
+            maxGas = 50_000_000_000,
+            gasSafeOverhead = 1_000,
+            maxObjectsPerFetch = 50
         };
 
         /// <summary>
@@ -318,7 +319,7 @@ namespace Sui.Transactions
         /// <returns></returns>
         public TransactionBlock SetGasPayment(Sui.Types.SuiObjectRef[] payments)
         {
-            if (payments.Count() >= TransactionConstants["MAX_GAS_OBJECTS"])
+            if (payments.Count() >= (int)TransactionConstants.maxGasObjects)
                 throw new Exception("Gas Payment is too high.");
 
             this.BlockDataBuilder.GasConfig.Payment = payments;
@@ -614,7 +615,8 @@ namespace Sui.Transactions
             };
         }
 
-        private void Validate()
+        // TODO: Implement function once prepare() is finished.
+        private void Build()
         {
             throw new NotImplementedException();
         }
@@ -631,21 +633,83 @@ namespace Sui.Transactions
         //    return this.BlockDataBuilder.Build(maxSizeBytes, onlyTransactionKind);
         //}
 
+        // TODO: Implement function once prepare() is finished.
+        private void GetDigest()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Determines whether the sender is missing considering the specified transaction kind.
+        /// </summary> ✅
+        /// <param name="only_transaction_kind">An optional `bool` representing whether only transaction kind should be considered.</param>
+        /// <returns>A `bool` indicating whether the sender is missing.</returns>
+        private bool IsMissingSender(bool? only_transaction_kind = null)
+        {
+            return only_transaction_kind.HasValue && only_transaction_kind == false && BlockDataBuilder.Sender == null;
+        }
+
         /// <summary>
         /// Queries RPC for reference gas price, then sets the price to the
         /// transaction builder.
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        public async Task PrepareGasPriceAsync(Block.BuilidOptions options)
+        public async Task PrepareGasPaymentAsync(BuildOptions options)
         {
-            if(options.OnlyTransactionKind || this.BlockDataBuilder.GasConfig.Price != null) {
+            if (IsMissingSender(options.OnlyTransactionKind))
+                throw new Exception("Sender Is Missing");
+
+            if (options.OnlyTransactionKind || this.BlockDataBuilder.GasConfig.Price != null) {
                 return;
             }
 
-            RpcResult<BigInteger> referenceGasPrice = await options.Client.GetReferenceGasPriceAsync();
-            BigInteger gasPrice = referenceGasPrice.Result;
-            this.SetGasPrice(gasPrice);
+            if (BlockDataBuilder.GasConfig.Owner == null && BlockDataBuilder.Sender == null)
+                throw new Exception("Gas Owner Cannot Be Found");
+
+            string gas_owner =
+                BlockDataBuilder.GasConfig.Owner != null ?
+                BlockDataBuilder.GasConfig.Owner.ToHex() :
+                BlockDataBuilder.Sender.ToHex();
+
+            RpcResult<CoinPage> coins = await options.Provider.GetCoins(gas_owner, "0x2::sui::SUI", 10);
+
+            IEnumerable<CoinDetails> filtered_coins = coins.Result.Data.Where((coin) => {
+                return BlockDataBuilder.Inputs.Any((input) => {
+                    if (input.Value.GetType() == typeof(ICallArg))
+                    {
+                        ICallArg call_arg = (ICallArg)input.Value;
+                        if (call_arg.Type == Sui.Types.Type.Object)
+                        {
+                            ObjectArg object_arg = ((ObjectCallArg)call_arg).ObjectArg;
+                            if (object_arg.Type == ObjectRefType.ImmOrOwned)
+                            {
+                                return
+                                    coin.CoinObjectId ==
+                                    ((Sui.Types.SuiObjectRef)object_arg.ObjectRef).ObjectId.ToHex();
+                            }
+                        }
+                    }
+                    return false;
+                });
+            });
+
+            int coin_range_max = Math.Min(filtered_coins.Count(), (int)TransactionConstants.maxGasObjects);
+            var range = Enumerable.Range(0, coin_range_max);
+
+            IEnumerable<Sui.Types.SuiObjectRef> payment_coins = range.Select((idx) => {
+                CoinDetails coin = filtered_coins.ElementAt(idx);
+                return new Sui.Types.SuiObjectRef(
+                    AccountAddress.FromHex(coin.CoinObjectId),
+                    int.Parse(coin.Version),
+                    coin.Digest
+                );
+            });
+
+            if (payment_coins.Count() == 0)
+                throw new Exception("Owner Does Not Have Payment Coins");
+
+            SetGasPayment(payment_coins.ToArray());
         }
 
         /// <summary>
@@ -654,7 +718,7 @@ namespace Sui.Transactions
         /// <param name="options"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task PrepareTransactions(Block.BuilidOptions options)
+        public async Task PrepareTransactions(BuildOptions options)
         {
             // The inputs in the `TransactionBlock`
             List<TransactionBlockInput> inputs              = this.BlockDataBuilder.Inputs;
@@ -812,7 +876,7 @@ namespace Sui.Transactions
 
                     #region RPC Call GetNormalizedMoveFunction
                     RpcResult<NormalizedMoveFunctionResponse> result
-                        = await options.Client.GetNormalizedMoveFunction(
+                        = await options.Provider.GetNormalizedMoveFunction(
                             packageId,
                             moduleName,
                             functionName
@@ -940,7 +1004,7 @@ namespace Sui.Transactions
 
                     #region RPC Call MultiGetObjects
                     RpcResult<IEnumerable<ObjectDataResponse>> response
-                        = await options.Client.MultiGetObjects(
+                        = await options.Provider.MultiGetObjects(
                             objectIds.ToArray(),
                             optionsObj
                     );
@@ -1085,7 +1149,7 @@ namespace Sui.Transactions
             }
         }
 
-        private string GetPureSeralizationTYpe(string normalizedType, ISerializable argVal)
+        private string GetPureSeralizationType(string normalizedType, ISerializable argVal)
         {
             bool isPure = Enum.IsDefined(typeof(AllowedTypes), normalizedType);
 
@@ -1133,24 +1197,25 @@ namespace Sui.Transactions
             return @struct.address.ToHex().Equals("0x2") && @struct.module.Equals("tx_context") && @struct.name.Equals("TxContext");
         }
 
-        public IEnumerator PrepareCor(Block.BuilidOptions options)
+        public IEnumerator PrepareCor(BuildOptions options)
         {
-            if(!options.OnlyTransactionKind && this.BlockDataBuilder.Sender != null)
-            {
-                throw new ArgumentException("Missing transaction sender.");
-            }
+            throw new NotImplementedException();
+            //if(!options.OnlyTransactionKind && this.BlockDataBuilder.Sender != null)
+            //{
+            //    throw new ArgumentException("Missing transaction sender.");
+            //}
 
-            //const client = options.client || options.provider;
-            bool client = true;
+            ////const client = options.client || options.provider;
+            //bool client = true;
 
-            // TODO: Fix the limits arg
-            if(options.ProtocolConfigArg == null && options.LimitsArg == null && client)
-            {
-                // TODO: RPC Call to get protocol config
-                //options.ProtocolConfigArg = await client.getProtocolConfig()
-            }
+            //// TODO: Fix the limits arg
+            //if(options.ProtocolConfigArg == null && options.LimitsArg == null && client)
+            //{
+            //    // TODO: RPC Call to get protocol config
+            //    //options.ProtocolConfigArg = await client.getProtocolConfig()
+            //}
 
-            yield return true;
+            //yield return true;
         }
 
         public void Serialize(Serialization serializer)

@@ -61,11 +61,11 @@ namespace Sui.Rpc
         }
 
         public async Task<RpcResult<CoinPage>> GetCoins(
-            string owner, string coinType, string objectId, int limit)
+            string owner, string coinType, int limit)
         {
             return await SendRpcRequestAsync<CoinPage>(
                 Methods.suix_getCoins.ToString(),
-                ArgumentBuilder.BuildArguments(owner, coinType, objectId, limit)
+                ArgumentBuilder.BuildArguments(owner, coinType, limit)
             );
         }
 
