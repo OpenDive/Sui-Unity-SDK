@@ -784,28 +784,26 @@ namespace Sui.Transactions
             };
         }
 
-        // TODO: Implement function once prepare() is finished.
-        private void Build()
+        /// <summary>
+        /// Builds a block with the specified provider and optional transaction kind.
+        /// </summary> ✅
+        /// <param name="build_options">An instance of `BuildOptions` that contains the options passed for preparing the transaction block.</param>
+        /// <returns>A `byte[]` object representing the built block.</returns>
+        public async Task<byte[]> Build(BuildOptions build_options)
         {
-            throw new NotImplementedException();
+            await Prepare(build_options);
+            return BlockDataBuilder.Build(null, build_options.OnlyTransactionKind);
         }
 
-        //public byte[] Build(Block.BuilidOptions options)
-        //{
-        //    Coroutine _prepare = new Coroutine(PrepareCor(options));
-        //    await _prepare;
-
-        //    int maxSizeBytes = this.getConfig("maxTxSizeBytes, options);
-
-        //    bool onlyTransactionKind = options.OnlyTransactionKin
-
-        //    return this.BlockDataBuilder.Build(maxSizeBytes, onlyTransactionKind);
-        //}
-
-        // TODO: Implement function once prepare() is finished.
-        private void GetDigest()
+        /// <summary>
+        /// Computes the digest of the block with the specified provider.
+        /// </summary> ✅
+        /// <param name="build_options">An instance of `BuildOptions` that contains the options passed for preparing the transaction block.</param>
+        /// <returns>A `string` representing the digest of the block.</returns>
+        public async Task<string> GetDigest(BuildOptions build_options)
         {
-            throw new NotImplementedException();
+            await Prepare(build_options);
+            return BlockDataBuilder.GetDigest();
         }
 
         /// <summary>
