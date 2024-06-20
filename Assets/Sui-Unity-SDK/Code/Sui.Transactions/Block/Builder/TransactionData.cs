@@ -25,14 +25,14 @@ namespace Sui.Transactions.Builder
         /// This can be a ProgrammableTransaction,
         /// or ChangeEpoch, Genesis, or ConsensusCommitPrologue
         /// </summary>
-        public ITransactionKind Transaction { get; set; }
+        public Sui.Transactions.Kinds.ITransactionKind Transaction { get; set; }
 
         public TransactionDataV1
         (
             AccountAddress sender,
             ITransactionExpiration transactionExpiration,
             GasConfig gasdata,
-            ITransactionKind transaction
+            Sui.Transactions.Kinds.ITransactionKind transaction
         )
         {
             this.Sender = sender;
@@ -50,14 +50,14 @@ namespace Sui.Transactions.Builder
             Expiration.Serialize(serializer);
         }
 
-        public static ISerializable Deserialize(Deserialization deserializer)
+        public static TransactionDataV1 Deserialize(Deserialization deserializer)
         {
             deserializer.DeserializeUleb128();
             return new TransactionDataV1(
                 AccountAddress.Deserialize(deserializer),
                 (ITransactionExpiration)ISerializable.Deserialize(deserializer),
                 (GasConfig)GasConfig.Deserialize(deserializer),
-                (ITransactionKind)ISerializable.Deserialize(deserializer)
+                (Sui.Transactions.Kinds.ITransactionKind)ISerializable.Deserialize(deserializer)
             );
         }
     }

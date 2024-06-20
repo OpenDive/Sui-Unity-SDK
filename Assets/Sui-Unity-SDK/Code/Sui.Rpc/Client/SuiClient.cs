@@ -352,5 +352,10 @@ namespace Sui.Rpc
                 )
             );
         }
+
+        public Task<RpcResult<CoinPage>> GetCoins(string owner, string coinType, string objectId, int limit)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

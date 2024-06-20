@@ -22,6 +22,8 @@ namespace Sui.Transactions.Kinds
         /// </summary>
         public List<SuiTransaction> Transactions { get; private set; }
 
+        public SuiTransactionKindType Type => SuiTransactionKindType.ProgrammableTransaction;
+
         public ProgrammableTransaction(ICallArg[] inputs, List<SuiTransaction> transactions)
         {
             Inputs = inputs;

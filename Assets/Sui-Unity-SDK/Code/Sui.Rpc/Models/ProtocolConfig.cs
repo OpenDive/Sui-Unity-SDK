@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 namespace Sui.Rpc.Models
 {
     /// <summary>
-    /// Represents  protocol config table for the given version number.
+    /// Represents protocol config table for the given version number.
     /// If the version number is not specified, If none is specified,
     /// the node uses the version of the latest epoch it has processed.
     /// <code>
@@ -21,7 +21,7 @@ namespace Sui.Rpc.Models
         [JsonProperty("protocolVersion")]
         public string ProtocolVersion { get; set; }
         [JsonProperty("featureFlags")]
-        public FeatureFlags FeatureFlags { get; set; }
+        public Dictionary<string, bool> FeatureFlags { get; set; }
         [JsonProperty("attributes")]
         public Dictionary<string, AttributeValue> Attributes { get; set; }
     }
@@ -87,6 +87,12 @@ namespace Sui.Rpc.Models
 
         [JsonProperty("u32")]
         public string U32 { get; set; }
+
+        [JsonProperty("f64")]
+        public string F64 { get; set; }
+
+        [JsonProperty("u16")]
+        public string U16 { get; set; }
 
         [JsonProperty("null")]
         public string Null { get; set; }

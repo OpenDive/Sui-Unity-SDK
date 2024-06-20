@@ -3,13 +3,18 @@ using System.Collections.Generic;
 using OpenDive.BCS;
 using UnityEngine;
 
-public interface ITransactionKind : ISerializable
+namespace Sui.Transactions.Kinds
 {
-    public enum Kind
+    public enum SuiTransactionKindType
     {
         ProgrammableTransaction,
         ChangeEpoch,
         Genesis,
         ConsensusCommitPrologue
+    }
+
+    public interface ITransactionKind : ISerializable
+    {
+        public SuiTransactionKindType Type { get; }
     }
 }
