@@ -30,12 +30,12 @@ public class TransferObjects : ITransaction
         /// <summary>
         /// 
         /// </summary>
-        public ITransactionArgument[] Objects { get; set; }
+        public SuiTransactionArgument[] Objects { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public ITransactionArgument Address { get; set; }
+        public SuiTransactionArgument Address { get; set; }
 
         /// <summary>
         /// Creates TransferObjects transaction.
@@ -45,7 +45,7 @@ public class TransferObjects : ITransaction
         /// This will be what Sui refers to as "Pure".
         /// </param>
         //public TransferObjects(ITransaction[] objects, TransactionBlockInput address)
-        public TransferObjects(ITransactionArgument[] objects, ITransactionArgument address)
+        public TransferObjects(SuiTransactionArgument[] objects, SuiTransactionArgument address)
         {
             this.Objects = objects;
             this.Address = address;
@@ -60,8 +60,8 @@ public class TransferObjects : ITransaction
         public static ISerializable Deserialize(Deserialization deserializer)
         {
             return new TransferObjects(
-                deserializer.DeserializeSequence(typeof(ITransactionArgument)).Cast<ITransactionArgument>().ToArray(),
-                (ITransactionArgument)ISerializable.Deserialize(deserializer)
+                deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Cast<SuiTransactionArgument>().ToArray(),
+                (SuiTransactionArgument)ISerializable.Deserialize(deserializer)
             );
         }
     }

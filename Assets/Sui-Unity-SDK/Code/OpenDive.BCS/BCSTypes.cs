@@ -1222,10 +1222,9 @@ namespace OpenDive.BCS
             this.StructTag.address.Serialize(serializer);
             serializer.Serialize(this.StructTag.module);
             serializer.Serialize(this.StructTag.name);
+
             if (StructTag.typeArgs.Length != 0)
-            {
                 serializer.Serialize(this.StructTag.typeArgs);
-            }
         }
 
         public static SuiMoveNormalizedStructType Deserialize(Deserialization deserializer)

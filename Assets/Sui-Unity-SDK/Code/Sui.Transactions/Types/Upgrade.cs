@@ -15,13 +15,13 @@ namespace Sui.Transactions.Types
         public byte[][] Modules;
         public AccountAddress[] Dependencies;
         public string PackagID;
-        public ITransactionArgument Ticket;
+        public SuiTransactionArgument Ticket;
 
         public Upgrade(
             byte[][] modules,
             AccountAddress[] dependencies,
             string packageId,
-            ITransactionArgument ticket
+            SuiTransactionArgument ticket
         )
         {
             this.Modules = modules;
@@ -54,7 +54,7 @@ namespace Sui.Transactions.Types
                 modules.ToArray(),
                 deserializer.DeserializeSequence(typeof(AccountAddress)).Cast<AccountAddress>().ToArray(),
                 deserializer.DeserializeString(),
-                (ITransactionArgument)ITransactionArgument.Deserialize(deserializer)
+                (SuiTransactionArgument)SuiTransactionArgument.Deserialize(deserializer)
             );
         }
     }

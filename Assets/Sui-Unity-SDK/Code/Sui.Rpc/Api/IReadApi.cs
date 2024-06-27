@@ -36,7 +36,7 @@ namespace Sui.Rpc.Api
         /// </code>
         /// </summary>
         /// <returns></returns>
-        Task<RpcResult<BigInteger>> GetReferenceGasPriceAsync();
+        Task<RpcResult<ulong>> GetReferenceGasPriceAsync();
 
         /// <summary>
         /// Return a structured representation of Move function

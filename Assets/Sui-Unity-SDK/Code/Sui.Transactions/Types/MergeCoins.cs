@@ -9,10 +9,10 @@ namespace Sui.Transactions.Types
     {
         public Kind Kind => Kind.MergeCoins;
 
-        ITransactionArgument Destination;
-        ITransactionArgument[] Sources;
+        SuiTransactionArgument Destination;
+        SuiTransactionArgument[] Sources;
 
-        public MergeCoins(ITransactionArgument destination, ITransactionArgument[] sources)
+        public MergeCoins(SuiTransactionArgument destination, SuiTransactionArgument[] sources)
         {
             this.Destination = destination;
             this.Sources = sources;
@@ -27,8 +27,8 @@ namespace Sui.Transactions.Types
         public static MergeCoins Deserialize(Deserialization deserializer)
         {
             return new MergeCoins(
-                (ITransactionArgument)ITransactionArgument.Deserialize(deserializer),
-                deserializer.DeserializeSequence(typeof(ITransactionArgument)).Cast<ITransactionArgument>().ToArray()
+                (SuiTransactionArgument)SuiTransactionArgument.Deserialize(deserializer),
+                deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Cast<SuiTransactionArgument>().ToArray()
             );
         }
     }

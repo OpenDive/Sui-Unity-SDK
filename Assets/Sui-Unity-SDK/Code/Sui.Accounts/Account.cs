@@ -26,7 +26,7 @@ namespace Sui.Accounts
         /// <summary>
         /// Represents an AccoutAddress object.
         /// </summary>
-        public AccountAddress AccountAddress { get; set; }
+        public AccountAddress AccountAddress { get { return AccountAddress.FromHex(PublicKey.ToSuiAddress()); } set => AccountAddress = value; }
 
         /// <summary>
         /// Private key as 32-byte array
@@ -129,7 +129,7 @@ namespace Sui.Accounts
         /// Derives a Sui address from the account's public key.
         /// </summary>
         /// <returns></returns>
-        public AccountAddress SuiAddress() => PublicKey.ToSuiAddress();
+        public string SuiAddress() => PublicKey.ToSuiAddress();
 
         /// <summary>
         /// Sign messages with a specific intent. By combining

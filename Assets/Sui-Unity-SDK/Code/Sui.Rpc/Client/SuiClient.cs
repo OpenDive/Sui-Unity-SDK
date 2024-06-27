@@ -12,9 +12,12 @@ namespace Sui.Rpc
     public class SuiClient : IReadApi, ICoinQueryApi, IGovernanceReadApi, IExtendedApi
     {
         private UnityRpcClient _rpcClient;
-        public SuiClient(UnityRpcClient rpcClient)
+        public Connection Connection;
+
+        public SuiClient(Connection connection)
         {
-            _rpcClient = rpcClient;
+            this.Connection = connection;
+            this._rpcClient = new UnityRpcClient(connection.FULL_NODE);
         }
 
         private async Task<RpcResult<T>> SendRpcRequestAsync<T>(string method)
@@ -44,9 +47,9 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<BigInteger>> GetReferenceGasPriceAsync()
+        public async Task<RpcResult<ulong>> GetReferenceGasPriceAsync()
         {
-            return await SendRpcRequestAsync<BigInteger>(
+            return await SendRpcRequestAsync<ulong>(
                 Methods.suix_getReferenceGasPrice.ToString()
             );
         }
@@ -66,6 +69,18 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<CoinPage>(
                 Methods.suix_getCoins.ToString(),
                 ArgumentBuilder.BuildArguments(owner, coinType, limit)
+            );
+        }
+
+        public async Task<RpcResult<CoinPage>> GetAllCoins
+        (
+            string account,
+            int limit
+        )
+        {
+            return await SendRpcRequestAsync<CoinPage>(
+                Methods.suix_getAllCoins.ToString(),
+                ArgumentBuilder.BuildArguments(account, limit)
             );
         }
 

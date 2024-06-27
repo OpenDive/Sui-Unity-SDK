@@ -8,7 +8,7 @@ namespace Sui.Transactions.Types
     {
         public Kind Kind => Kind.MakeMoveVec;
 
-        public ITransactionArgument[] Objects;
+        public SuiTransactionArgument[] Objects;
         public SuiStructTag Type;
 
         /// <summary>
@@ -16,7 +16,7 @@ namespace Sui.Transactions.Types
         /// </summary>
         /// <param name="objects"></param>
         /// <param name="type"></param>
-        public MakeMoveVec(ITransactionArgument[] objects, SuiStructTag type = null)
+        public MakeMoveVec(SuiTransactionArgument[] objects, SuiStructTag type = null)
         {
             this.Objects = objects;
             this.Type = type;
@@ -31,7 +31,7 @@ namespace Sui.Transactions.Types
         public static ISerializable Deserialize(Deserialization deserializer)
         {
             return new MakeMoveVec(
-                deserializer.DeserializeSequence(typeof(ITransactionArgument)).Cast<ITransactionArgument>().ToArray(),
+                deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Cast<SuiTransactionArgument>().ToArray(),
                 SuiStructTag.Deserialize(deserializer)
             );
         }

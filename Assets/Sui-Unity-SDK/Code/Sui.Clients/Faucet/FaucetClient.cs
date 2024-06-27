@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Sui.Clients.Faucet.Request;
+using Sui.Rpc;
 using UnityEngine;
 
 namespace Sui.Clients
@@ -20,6 +21,13 @@ namespace Sui.Clients
     /// </summary>
     public class FaucetClient
     {
+        public Connection Connection;
+
+        public FaucetClient(Connection connection)
+        {
+            this.Connection = connection;
+        }
+
         public async Task<bool> AirdropGasAsync(string recipient)
         {
             HttpClient client = new HttpClient();
@@ -28,12 +36,7 @@ namespace Sui.Clients
             string reqJson = JsonConvert.SerializeObject(req);
             StringContent content = new StringContent(reqJson, Encoding.UTF8, "application/json");
 
-            Debug.Log(reqJson);
-            Debug.Log(content);
-
-            // https://faucet.devnet.sui.io/gas
-            var response = await client.PostAsync("https://faucet.devnet.sui.io/gas", content);
-            Debug.Log(" ::: " + response.StatusCode + " ::: " + response.Content.ToString());
+            var response = await client.PostAsync(Connection.FAUCET, content);
             return response.IsSuccessStatusCode;
         }
     }

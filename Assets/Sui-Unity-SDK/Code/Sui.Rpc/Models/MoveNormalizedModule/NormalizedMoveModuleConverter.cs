@@ -98,10 +98,10 @@ namespace Sui.Rpc.Models
 
     public class NormalizedTypeConverter : JsonConverter
     {
-        public static string NormalizeSuiAddress(string address)
+        public static string NormalizeSuiAddress(string address, bool forceAdd0x = false)
         {
             // If the address starts with "0x", remove it
-            if (address.StartsWith("0x"))
+            if (address.StartsWith("0x") && !forceAdd0x)
             {
                 address = address.Substring(2);
             }

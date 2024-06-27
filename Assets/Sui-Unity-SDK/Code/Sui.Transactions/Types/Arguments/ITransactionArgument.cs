@@ -40,13 +40,13 @@ namespace Sui.Transactions.Types.Arguments
                 case Kind.GasCoin:
                     break;
                 case Kind.Input:
-                    serializer.SerializeU8(1);
+                    serializer.SerializeU32AsUleb128(1);
                     break;
                 case Kind.Result:
-                    serializer.SerializeU8(2);
+                    serializer.SerializeU32AsUleb128(2);
                     break;
                 case Kind.NestedResult:
-                    serializer.SerializeU8(3);
+                    serializer.SerializeU32AsUleb128(3);
                     break;
             }
             serializer.Serialize(TransactionArgument);

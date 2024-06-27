@@ -110,7 +110,6 @@ namespace Sui.Transactions.Types
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            deserializer.DeserializeUleb128();
             BString target = BString.Deserialize(deserializer);
             TagSequence typeArguments = TagSequence.Deserialize(deserializer);
             Sequence arguments = Sequence.Deserialize(deserializer);

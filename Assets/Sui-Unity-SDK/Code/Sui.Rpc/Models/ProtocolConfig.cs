@@ -93,9 +93,5 @@ namespace Sui.Rpc.Models
 
         [JsonProperty("u16")]
         public string U16 { get; set; }
-
-        [JsonProperty("null")]
-        public string Null { get; set; }
     }
-
 }

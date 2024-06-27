@@ -24,7 +24,7 @@ namespace Sui.Transactions.Types
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU64((ulong)Modules.Length);
+            serializer.SerializeU32AsUleb128((uint)Modules.Length);
 
             foreach(byte[] module in Modules)
                 serializer.Serialize(module);
@@ -35,9 +35,9 @@ namespace Sui.Transactions.Types
         public static Publish Deserialize(Deserialization deserializer)
         {
             List<byte[]> modules = new List<byte[]>();
-            ulong length = deserializer.DeserializeU64();
+            int length = deserializer.DeserializeUleb128();
 
-            for(ulong i = 0; i < length; ++i)
+            for(int i = 0; i < length; ++i)
                 modules.Add(deserializer.ToBytes());
 
             return new Publish(

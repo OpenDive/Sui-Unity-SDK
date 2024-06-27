@@ -64,7 +64,7 @@ namespace Sui.Transactions.Builder
         {
             this.Version = version;
             this.Sender = sender;
-            this.Expiration = expiration;
+            this.Expiration = expiration != null ? expiration : new TransactionExpirationNone();
             this.GasConfig = gasConfig != null ? gasConfig : new GasConfig();
             this.Inputs = inputs != null ? inputs : new List<TransactionBlockInput>();
             this.Transactions = transactions != null ? transactions : new List<SuiTransaction>();

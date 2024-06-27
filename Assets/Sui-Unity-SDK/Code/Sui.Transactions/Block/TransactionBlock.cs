@@ -16,7 +16,9 @@ using UnityEngine;
 using Kind = Sui.Transactions.Types.Kind;
 using Org.BouncyCastle.Crypto.Digests;
 using NBitcoin.DataEncoders;
+using Chaos.NaCl;
 using Sui.Transactions.Kinds;
+using Newtonsoft.Json;
 
 namespace Sui.Transactions
 {
@@ -76,11 +78,14 @@ namespace Sui.Transactions
         {
             // Resolve inputs down to values:
             List<ICallArg> inputs = this.Builder.Inputs
-                .Select((input) => {
-                    return input.Value.GetType() == typeof(ICallArg) ? (ICallArg)input.Value : null;
+                .Select<TransactionBlockInput, ICallArg>((input) => {
+                    return input.Value.GetType() == typeof(PureCallArg) ?
+                        (PureCallArg)input.Value :
+                        input.Value.GetType() == typeof(ObjectCallArg) ?
+                            (ObjectCallArg)input.Value :
+                            null;
                 })
                 .Where(value => value != null)
-                .Select(value => value)
                 .ToList();
 
             ProgrammableTransaction programmableTx
@@ -93,9 +98,22 @@ namespace Sui.Transactions
                 return ser.GetBytes();
             }
 
-            ITransactionExpiration Expiration = overrides.Builder.Expiration != null ? overrides.Builder.Expiration : Builder.Expiration;
-            AccountAddress Sender = overrides.Builder.Sender != null ? overrides.Builder.Sender : Builder.Sender;
-            GasConfig GasConfig = overrides.Builder.GasConfig != null ? overrides.Builder.GasConfig : Builder.GasConfig;
+            ITransactionExpiration Expiration;
+            AccountAddress Sender;
+            GasConfig GasConfig;
+
+            if (overrides == null)
+            {
+                Expiration = Builder.Expiration;
+                Sender = Builder.Sender;
+                GasConfig = Builder.GasConfig;
+            }
+            else
+            {
+                Expiration = overrides.Builder.Expiration != null ? overrides.Builder.Expiration : Builder.Expiration;
+                Sender = overrides.Builder.Sender != null ? overrides.Builder.Sender : Builder.Sender;
+                GasConfig = overrides.Builder.GasConfig != null ? overrides.Builder.GasConfig : Builder.GasConfig;
+            }
 
             if (Sender == null)
             {
@@ -117,12 +135,19 @@ namespace Sui.Transactions
                 throw new Exception("Missing gas price");
             }
 
+            if (Builder.GasConfig.Owner != null)
+                GasConfig.Owner = Builder.GasConfig.Owner;
+            else
+                GasConfig.Owner = Sender;
+
             Sui.Transactions.Builder.TransactionDataV1 transactionData = new Sui.Transactions.Builder.TransactionDataV1(
                 Sender,
                 Expiration,
                 GasConfig,
                 programmableTx
             );
+
+            Debug.Log($"MARCUS::: TRANSACTION DATA {JsonConvert.SerializeObject(transactionData)}");
 
             Serialization serializer = new Serialization();
             serializer.Serialize(transactionData);
@@ -256,7 +281,7 @@ namespace Sui.Transactions
         public BuildOptions
         (
             SuiClient Provider,
-            Dictionary<string, int?> Limits,
+            Dictionary<string, int?> Limits = null,
             bool? OnlyTransactionKind = null,
             ProtocolConfig ProtocolConfig = null
         )
@@ -297,10 +322,13 @@ namespace Sui.Transactions
             Dictionary<string, ProtocolConfigValue> attribute_dict = new Dictionary<string, ProtocolConfigValue>();
             foreach (var (attribute, details) in config.Attributes)
             {
+                if (details == null)
+                    continue;
+
                 ProtocolConfigValue detail_type;
 
                 if (details.F64 != null)
-                    detail_type = new ProtocolConfigValue.F64(double.Parse(details.U64));
+                    detail_type = new ProtocolConfigValue.F64(double.Parse(details.F64));
                 else if (details.U64 != null)
                     detail_type = new ProtocolConfigValue.U64(ulong.Parse(details.U64));
                 else if (details.U32 != null)
@@ -414,10 +442,9 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="sender"></param>
         /// <returns></returns>
-        public TransactionBlock SetSender(AccountAddress sender)
+        public void SetSender(AccountAddress sender)
         {
             this.BlockDataBuilder.Builder.Sender = sender;
-            return this;
         }
 
         /// <summary> ✅
@@ -425,11 +452,10 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="sender"></param>
         /// <returns></returns>
-        public TransactionBlock SetSenderIfNotSet(AccountAddress sender)
+        public void SetSenderIfNotSet(AccountAddress sender)
         {
             if (this.BlockDataBuilder.Builder.Sender == null)
-                return this.SetSender(sender);
-            return this;
+                this.SetSender(sender);
         }
 
         /// <summary> ✅
@@ -667,7 +693,7 @@ namespace Sui.Transactions
         /// <param name="coin">GasCoin is a type of `TransactionArgument`.</param>
         /// <param name="amounts">A list of respective amounts for each coin we are splitting.</param>
         /// <returns>A list of `TransactionResult`s.</returns>
-        public List<ITransactionArgument> AddSplitCoinsTx(ITransactionArgument coin, params TransactionBlockInput[] amounts)
+        public List<ITransactionArgument> AddSplitCoinsTx(SuiTransactionArgument coin, params TransactionBlockInput[] amounts)
         {
             SplitCoins splitCoinsTx = new SplitCoins(coin, amounts);
             return this.AddTransaction(new Types.SuiTransaction(splitCoinsTx));
@@ -679,7 +705,7 @@ namespace Sui.Transactions
         /// <param name="destination">An `ITransactionArgument` representing the destination coin.</param>
         /// <param name="sources">An array of `ITransactionArgument` representing the source coins.</param>
         /// <returns>An `ITransactionArgument` array representing the result of the merge coin operation.</returns>
-        public List<ITransactionArgument> AddMergeCoinsTx(ITransactionArgument destination, ITransactionArgument[] sources)
+        public List<ITransactionArgument> AddMergeCoinsTx(SuiTransactionArgument destination, SuiTransactionArgument[] sources)
         {
             MergeCoins merge_coins_tx = new MergeCoins(destination, sources);
             return this.AddTransaction(new Types.SuiTransaction(merge_coins_tx));
@@ -698,6 +724,24 @@ namespace Sui.Transactions
         }
 
         /// <summary>
+        /// Publishes modules with given dependencies.
+        /// </summary> ✅
+        /// <param name="modules">An array of `string` representing the modules to be published.</param>
+        /// <param name="dependencies">An array of `string` representing the dependencies.</param>
+        /// <returns>An `ITransactionArgument` array representing the result of the publish operation.</returns>
+        public List<ITransactionArgument> AddPublishTx(string[] modules, string[] dependencies)
+        {
+            Publish publish_tx = new Publish
+            (
+                modules.Select((module) => {
+                    return CryptoBytes.FromBase64String(module);
+                }).ToArray(),
+                dependencies.Select((dependency) => AccountAddress.FromHex(dependency)).ToArray()
+            );
+            return this.AddTransaction(new Types.SuiTransaction(publish_tx));
+        }
+
+        /// <summary>
         /// Upgrades modules with given dependencies, packageId, and ticket.
         /// </summary> ✅
         /// <param name="modules">An array of `byte[]` representing the modules to be upgraded.</param>
@@ -710,7 +754,7 @@ namespace Sui.Transactions
             byte[][] modules,
             AccountAddress[] dependencies,
             string packageId,
-            ITransactionArgument ticket
+            SuiTransactionArgument ticket
         )
         {
             Upgrade upgrade_tx = new Upgrade(modules, dependencies, packageId, ticket);
@@ -743,9 +787,21 @@ namespace Sui.Transactions
         /// <param name="objects">An array of `ITransactionArgument` representing the objects to be transferred.</param>
         /// <param name="address">An `ITransactionArgument` representing the address to transfer objects to.</param>
         /// <returns>An array of `ITransactionArgument` representing the result of the transfer object operation.</returns>
-        public List<ITransactionArgument> AddTransferObjectsTx(ITransactionArgument[] objects, ITransactionArgument address)
+        public List<ITransactionArgument> AddTransferObjectsTx(SuiTransactionArgument[] objects, SuiTransactionArgument address)
         {
             TransferObjects transfer_tx = new TransferObjects(objects, address);
+            return this.AddTransaction(new Types.SuiTransaction(transfer_tx));
+        }
+
+        /// <summary>
+        /// Transfers objects to a specified address.
+        /// </summary> ✅
+        /// <param name="objects">An array of `ITransactionArgument` representing the objects to be transferred.</param>
+        /// <param name="address">A `string` representing the address to transfer objects to.</param>
+        /// <returns>An array of `ITransactionArgument` representing the result of the transfer object operation.</returns>
+        public List<ITransactionArgument> AddTransferObjectsTx(SuiTransactionArgument[] objects, string address)
+        {
+            TransferObjects transfer_tx = new TransferObjects(objects, new SuiTransactionArgument(AddPure(AccountAddress.FromHex(address))));
             return this.AddTransaction(new Types.SuiTransaction(transfer_tx));
         }
 
@@ -755,7 +811,7 @@ namespace Sui.Transactions
         /// <param name="objects">An array of `ITransactionArgument` representing the objects of the Move Vector.</param>
         /// <param name="type">An optional `SuiStructTag` representing the type of the Move Vector.</param>
         /// <returns>An array of `ITransactionArgument` representing the result of the make Move Vector operation.</returns>
-        public List<ITransactionArgument> AddMakeMoveVecTx(ITransactionArgument[] objects, SuiStructTag type = null)
+        public List<ITransactionArgument> AddMakeMoveVecTx(SuiTransactionArgument[] objects, SuiStructTag type = null)
         {
             MakeMoveVec make_move_vec_tx = new MakeMoveVec(objects, type);
             return this.AddTransaction(new Types.SuiTransaction(make_move_vec_tx));
@@ -767,19 +823,22 @@ namespace Sui.Transactions
         /// <param name="key">A `LimitKey` representing the key for which the configuration value needs to be retrieved.</param>
         /// <param name="build_options">A `BuildOptions` object containing the build options including limits and protocolConfig.</param>
         /// <returns>An `int` representing the configuration value for the specified key.</returns>
-        private int GetConfig(LimitKey key, BuildOptions build_options)
+        private BigInteger GetConfig(LimitKey key, BuildOptions build_options)
         {
-            if (build_options.Limits[BuildOptions.TransactionLimits[key]].HasValue)
-                return (int)build_options.Limits[BuildOptions.TransactionLimits[key]];
+            if (build_options.Limits != null && build_options.Limits[BuildOptions.TransactionLimits[key]].HasValue)
+            {
+                int? result = build_options.Limits[BuildOptions.TransactionLimits[key]];
+                return BigInteger.Parse(result.ToString());
+            }
 
             if (build_options.ProtocolConfig == null)
-                return (int)DefaultOfflineLimits[key];
+                return BigInteger.Parse(DefaultOfflineLimits[key].ToString());
 
             return build_options.ProtocolConfig.Attributes[BuildOptions.TransactionLimits[key]] switch
             {
-                ProtocolConfigValue.F64 f64 => (int)f64.Value,
-                ProtocolConfigValue.U32 u32 => (int)u32.Value,
-                ProtocolConfigValue.U64 u64 => (int)u64.Value,
+                ProtocolConfigValue.F64 f64 => BigInteger.Parse(f64.Value.ToString()),
+                ProtocolConfigValue.U32 u32 => BigInteger.Parse(u32.Value.ToString()),
+                ProtocolConfigValue.U64 u64 => BigInteger.Parse(u64.Value.ToString()),
                 _ => throw new Exception("Cannot Find Attribute"),
             };
         }
@@ -888,7 +947,7 @@ namespace Sui.Transactions
             if (IsMissingSender(options.OnlyTransactionKind))
                 throw new Exception("Sender Is Missing");
 
-            RpcResult<BigInteger> gas_price = await options.Provider.GetReferenceGasPriceAsync();
+            RpcResult<ulong> gas_price = await options.Provider.GetReferenceGasPriceAsync();
 
             SetGasPrice(gas_price.Result);
         }
@@ -913,10 +972,10 @@ namespace Sui.Transactions
             foreach (TransactionBlockInput input in inputs)
             {
                 // The value is an ObjectID (AccountAddress) add it to the objects to resolve
-                if (input.Value.GetType() == typeof(AccountAddress))
+                if (input.Value.GetType() == typeof(string))
                 {
                     ObjectToResolve objectToResolve = new ObjectToResolve(
-                        (AccountAddress)input.Value,
+                        ((BString)input.Value).value,
                         input,
                         null
                     );
@@ -925,16 +984,16 @@ namespace Sui.Transactions
             }
 
             #region Process all transactions
-            foreach (ITransaction transaction in transactions)
+            foreach (Sui.Transactions.Types.SuiTransaction transaction in transactions)
             {
                 #region Process MoveCall Transaction
                 // Special case move call:
-                if (transaction.Kind == Kind.MoveCall)
+                if (transaction.Transaction.Kind == Kind.MoveCall)
                 {
                     // Determine if any of the arguments require encoding.
                     // - If they don't, then this is good to go.
                     // - If they do, then we need to fetch the normalized move module.
-                    MoveCall moveTx = (MoveCall)transaction;
+                    MoveCall moveTx = (MoveCall)transaction.Transaction;
                     SuiTransactionArgument[] arguments = moveTx.Arguments;
 
                     bool needsResolution = arguments.Any(arg => {
@@ -996,23 +1055,25 @@ namespace Sui.Transactions
                 #endregion END - Process MoveCall Transaction
 
                 #region Process TransferObjects Transaction
-                else if (transaction.Kind == Kind.TransferObjects)
+                else if (transaction.Transaction.Kind == Kind.TransferObjects)
                 {
-                    TransferObjects transferObjectsTx = (TransferObjects)transaction;
-                    ITransactionArgument address = transferObjectsTx.Address;
+                    TransferObjects transferObjectsTx = (TransferObjects)transaction.Transaction;
+                    SuiTransactionArgument address = transferObjectsTx.Address;
 
-                    if (address.GetType() == typeof(TransactionBlockInput))
+                    if (address.TransactionArgument.Kind == Sui.Transactions.Types.Arguments.Kind.Input)
                     {
                         // Cast the address as a `TransactionBlockInput` to get index property
-                        TransactionBlockInput addressInput = (TransactionBlockInput)address;
+                        TransactionBlockInput addressInput = (TransactionBlockInput)address.TransactionArgument;
                         // Get the TXBInput object at the index provided by the addressInput argument
                         TransactionBlockInput input = inputs[addressInput.Index];
 
                         // If the value of the input is not an object type then it must be a Pure
                         if (input.Value.GetType() != typeof(IObjectRef))
                         {
+                            Serialization ser = new Serialization();
+                            input.Value.Serialize(ser);
                             // TODO: IRVIN update this to use a clone of the input list
-                            this.BlockDataBuilder.Builder.Inputs[addressInput.Index].Value = new PureCallArg(input.Value);
+                            this.BlockDataBuilder.Builder.Inputs[addressInput.Index].Value = new PureCallArg(ser.GetBytes());
                         }
                     }
                 }
@@ -1021,9 +1082,9 @@ namespace Sui.Transactions
                 #region Process SplitCoins Transaction
                 // Special handling for values that where previously encoded using the wellKnownEncoding pattern.
                 // This should only happen when transaction block data was hydrated from an old version of the SDK
-                else if (transaction.Kind == Kind.SplitCoins)
+                else if (transaction.Transaction.Kind == Kind.SplitCoins)
                 {
-                    SplitCoins splitCoinsTx = (SplitCoins)transaction;
+                    SplitCoins splitCoinsTx = (SplitCoins)transaction.Transaction;
                     ITransactionArgument[] amounts = splitCoinsTx.Amounts;
                     foreach(ITransactionArgument amount in amounts)
                     {
@@ -1036,9 +1097,11 @@ namespace Sui.Transactions
                             // If the value of the input is not an object type then it must be a Pure
                             if(input.Value.GetType() != typeof(IObjectRef))
                             {
+                                Serialization ser = new Serialization();
+                                input.Value.Serialize(ser);
                                 // TODO: IRVIN update this to use a clone of the input list
                                 this.BlockDataBuilder.Builder.Inputs[amountTxbInput.Index].Value
-                                    = new PureCallArg(input.Value); ;
+                                    = new PureCallArg(ser.GetBytes()); ;
                             }
                         }
                     }
@@ -1119,7 +1182,9 @@ namespace Sui.Transactions
                         if (serType != null)
                         {
                             // TODO: IRVIN update this to use a clone of the input list
-                            inputs[inputArg.Index].Value = new PureCallArg(inputValue);
+                            Serialization ser = new Serialization();
+                            inputValue.Serialize(ser);
+                            inputs[inputArg.Index].Value = new PureCallArg(ser.GetBytes());
                             continue;
                         }
 
@@ -1149,7 +1214,7 @@ namespace Sui.Transactions
                                 throw new Exception($"Expect the argument to be an object id string, got {inputValue.GetType()}");
 
                             ObjectToResolve objectToResolve = new ObjectToResolve(
-                                (AccountAddress)inputValue,
+                                ((BString)inputValue).value,
                                 input,
                                 param_enumerated.param
                             );
@@ -1164,22 +1229,22 @@ namespace Sui.Transactions
             #endregion END - Resolve MoveModules
             #region Resolve objects
             Debug.Log($"MARCUS: OBJECTS TO RESOLVE COUNT - {objectsToResolve.Count}");
-            throw new Exception($"Not Implemented");
+            //throw new Exception("Not Implemented");
             if (objectsToResolve.Count != 0)
             {
-                List<AccountAddress> mappedIds = (List<AccountAddress>)objectsToResolve.Select(x => x.Id);
+                List<string> mappedIds = (List<string>)objectsToResolve.Select(x => x.Id);
                 // NOTE: Insertion order in HashSet will be maintained until removing or re-adding
-                List<AccountAddress> dedupedIds = new HashSet<AccountAddress>(mappedIds).ToList();
+                List<string> dedupedIds = new HashSet<string>(mappedIds).ToList();
 
                 // TODO: In the TypeScript SDK they use `Set` which is a set that maintains insertion order
                 // TODO: Find data structure that does this in C#
                 // https://gist.github.com/gmamaladze/3d60c127025c991a087e
 
                 // Chunk list of IDs into smaller lists to use in RPC Call `MultiGetObjects`
-                List<List<AccountAddress>> objectChunks = Chunk(dedupedIds, 50);
+                List<List<string>> objectChunks = Chunk(dedupedIds, 50);
 
                 List<List<ObjectDataResponse>> objectsResponse = new List<List<ObjectDataResponse>>();
-                foreach(List<AccountAddress> objectIds in objectChunks)
+                foreach(List<string> objectIds in objectChunks)
                 {
                     ObjectDataOptions optionsObj = new ObjectDataOptions();
                     optionsObj.ShowOwner = true;
@@ -1187,7 +1252,7 @@ namespace Sui.Transactions
                     #region RPC Call MultiGetObjects
                     RpcResult<IEnumerable<ObjectDataResponse>> response
                         = await options.Provider.MultiGetObjects(
-                            objectIds.ToArray(),
+                            objectIds.Select((id) => AccountAddress.FromHex(id)).ToArray(),
                             optionsObj
                     );
                     #endregion END - Call MultiGetObjects
@@ -1201,13 +1266,13 @@ namespace Sui.Transactions
                     = objectsResponse.SelectMany(x => x).ToList();
 
                 // Create a map of IDs to ObjectDataResponse
-                Dictionary<AccountAddress, ObjectDataResponse> objectsById
-                    = new Dictionary<AccountAddress, ObjectDataResponse>();
+                Dictionary<string, ObjectDataResponse> objectsById
+                    = new Dictionary<string, ObjectDataResponse>();
 
                 // Populate map(Dictionary) `objectsById`
                 for(int i = 0; i < dedupedIds.Count; i++)
                 {
-                    AccountAddress id = dedupedIds[i];
+                    string id = dedupedIds[i];
                     ObjectDataResponse obj = objectsFlatten[i];
                     objectsById.Add(id, obj);
                 }
@@ -1238,7 +1303,7 @@ namespace Sui.Transactions
 
                         inputs[objectToResolve.Input.Index].Value
                             = new SharedObjectRef(
-                                objectToResolve.Id,
+                                AccountAddress.FromHex(objectToResolve.Id),
                                 (int)initialSharedVersion,
                                 mutable
                         );
@@ -1271,15 +1336,15 @@ namespace Sui.Transactions
         /// <param name="dedupedIds"></param>
         /// <param name="size"></param>
         /// <returns></returns>
-        private List<List<AccountAddress>> Chunk(List<AccountAddress> dedupedIds, int size)
+        private List<List<string>> Chunk(List<string> dedupedIds, int size)
         {
             int length = (int)Math.Ceiling((double)(dedupedIds.Count / size));
-            List<List<AccountAddress>> ret = new List<List<AccountAddress>>();
+            List<List<string>> ret = new List<List<string>>();
             int i = 0;
             while(i < length)
             {
                 // TODO: Check if this might break because of index out of bounds
-                List<AccountAddress> chunk = dedupedIds.GetRange(i * size, i * size + size);
+                List<string> chunk = dedupedIds.GetRange(i * size, i * size + size);
                 ret.Add(chunk);
                 i++;
             }
@@ -1319,11 +1384,11 @@ namespace Sui.Transactions
 
         public class ObjectToResolve
         {
-            public AccountAddress Id { get; set; }
+            public string Id { get; set; }
             public TransactionBlockInput Input { get; set; }
             public ISuiMoveNormalizedType NormalizedType;
 
-            public ObjectToResolve(AccountAddress id, TransactionBlockInput input, ISuiMoveNormalizedType normalizedType) 
+            public ObjectToResolve(string id, TransactionBlockInput input, ISuiMoveNormalizedType normalizedType) 
             {
                 this.Id = id;
                 this.Input = input;
@@ -1404,19 +1469,20 @@ namespace Sui.Transactions
             {
                 GasConfig gas_config = BlockDataBuilder.Builder.GasConfig;
 
-                gas_config.Budget = new BigInteger(GetConfig(LimitKey.MaxTxGas, options));
+                gas_config.Budget = GetConfig(LimitKey.MaxTxGas, options);
                 gas_config.Payment = new Sui.Types.SuiObjectRef[] { };
 
-                TransactionBlockDataBuilderSerializer tx_block_data_builder = new TransactionBlockDataBuilderSerializer(
-                    new TransactionBlockDataBuilder()
-                );
+                TransactionBlockDataBuilderSerializer tx_block_data_builder = this.BlockDataBuilder;
                 tx_block_data_builder.Builder.GasConfig = gas_config;
 
+                var build_result = tx_block_data_builder.Build();
+                Debug.Log($"MARCUS::: SENDER BYTES - [{String.Join(", ", BlockDataBuilder.Builder.Sender.AddressBytes)}]");
+                Debug.Log($"MARCUS::: BUILD RESULT - [{String.Join(", ", build_result)}]");
                 RpcResult<TransactionBlockResponse> dry_run_result = await options.Provider.DryRunTransactionBlock(
-                    Convert.ToBase64String(tx_block_data_builder.Build())
+                    Convert.ToBase64String(build_result)
                 );
 
-                if (dry_run_result.Result.Effects.Status.Status == ExecutionStatus.Failure)
+                if (dry_run_result != null && dry_run_result.Result.Effects.Status.Status == ExecutionStatus.Failure)
                     throw new Exception("Dry Run Failed");
 
                 int safe_overhead =

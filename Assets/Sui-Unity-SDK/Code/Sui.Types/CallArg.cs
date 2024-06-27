@@ -1,3 +1,4 @@
+using System.Linq;
 using OpenDive.BCS;
 
 namespace Sui.Types
@@ -35,7 +36,7 @@ namespace Sui.Types
     /// </summary>
     public class PureCallArg : ICallArg
     {
-        public ISerializable Value { get; set; }
+        public byte[] Value { get; set; }
         public Type Type
         {
             get => Type.Pure;
@@ -45,7 +46,7 @@ namespace Sui.Types
         /// 
         /// </summary>
         /// <param name="value"></param>
-        public PureCallArg(ISerializable value)
+        public PureCallArg(byte[] value)
         {
             Value = value;
         }
@@ -60,7 +61,7 @@ namespace Sui.Types
         {
             deserializer.DeserializeUleb128();
             return new PureCallArg(
-                ISerializable.Deserialize(deserializer)
+                deserializer.DeserializeSequence(typeof(byte)).Cast<byte>().ToArray()
             );
         }
     }
@@ -105,8 +106,8 @@ namespace Sui.Types
         public static ISerializable Deserialize(Deserialization deserializer)
         {
             deserializer.DeserializeUleb128();
-            return new PureCallArg(
-                ISerializable.Deserialize(deserializer)
+            return new ObjectCallArg(
+                (ObjectArg)ISerializable.Deserialize(deserializer)
             );
         }
     }

@@ -31,11 +31,20 @@ namespace Sui.Transactions.Builder
 
         public void Serialize(Serialization serializer)
         {
-            Sequence paymentSeq = new(Payment);
-            serializer.Serialize(paymentSeq);
-            serializer.Serialize(Owner);
-            serializer.SerializeU64((ulong)Price);
-            serializer.SerializeU64((ulong)Budget);
+            if (Payment != null)
+            {
+                Sequence paymentSeq = new(Payment);
+                serializer.Serialize(paymentSeq);
+            }
+
+            if (Owner != null)
+                serializer.Serialize(Owner);
+
+            if (Price != null)
+                serializer.SerializeU64((ulong)Price);
+
+            if (Budget != null)
+                serializer.SerializeU64((ulong)Budget);
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)

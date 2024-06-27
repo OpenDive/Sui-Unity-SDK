@@ -208,7 +208,7 @@ namespace Sui.Accounts
         /// <returns></returns>
         public override string ToString()
         {
-            return ToBase64();
+            return ToHex();
         }
 
         public void Serialize(Serialization serializer)

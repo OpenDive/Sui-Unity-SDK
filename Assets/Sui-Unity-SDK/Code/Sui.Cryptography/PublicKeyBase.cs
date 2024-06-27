@@ -3,7 +3,9 @@ using System.Data.SqlTypes;
 using Chaos.NaCl;
 using Org.BouncyCastle.Crypto.Digests;
 using Sui.Accounts;
+using Sui.Rpc.Models;
 using Sui.Utilities;
+using UnityEngine;
 using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Cryptography
@@ -327,10 +329,35 @@ namespace Sui.Cryptography
         //    return "0x" + addressHex.Substring(0, 64);
         //}
 
-        public AccountAddress ToSuiAddress()
+        public string ToSuiAddress()
         {
-            return new AccountAddress(KeyBytes, SignatureScheme);
+            byte[] hashed_address = new byte[32];
+            Blake2bDigest blake2b = new Blake2bDigest(256);
+            blake2b.BlockUpdate(_keyBytes, 0, _keyBytes.Length);
+            blake2b.DoFinal(hashed_address, 0);
+            string addressHex = CryptoBytes.ToHexStringLower(hashed_address);
+            return NormalizedTypeConverter.NormalizeSuiAddress(addressHex);
         }
+
+        //public static string GetDigestFromBytes(byte[] bytes)
+        //{
+        //    string type_tag = "TransactionData";
+        //    byte[] type_tag_bytes = Encoding.UTF8.GetBytes((type_tag + "::"));
+
+        //    List<byte> data_with_tag = new List<byte>();
+
+        //    data_with_tag.AddRange(type_tag_bytes);
+        //    data_with_tag.AddRange(bytes);
+
+        //    byte[] hashed_data = new byte[32];
+        //    Blake2bDigest blake2b = new Blake2bDigest(256);
+        //    blake2b.BlockUpdate(data_with_tag.ToArray(), 0, data_with_tag.Count());
+        //    blake2b.DoFinal(hashed_data, 0);
+
+        //    Base58Encoder base58Encoder = new Base58Encoder();
+        //    return base58Encoder.EncodeData(hashed_data);
+        //}
+
 
         /// <summary>
         /// Return signature scheme flag of the public key
