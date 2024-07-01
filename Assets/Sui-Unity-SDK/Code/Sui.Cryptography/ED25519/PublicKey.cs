@@ -1,4 +1,5 @@
 using System;
+using Org.BouncyCastle.Crypto.Digests;
 using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Cryptography.Ed25519
@@ -45,6 +46,24 @@ namespace Sui.Cryptography.Ed25519
         public override bool Verify(byte[] message, SignatureBase signature)
         {
             throw new System.NotImplementedException();
+        }
+
+        public bool VerifyWithIntent(byte[] bytes, SignatureBase signature, IntentScope intent)
+        {
+            byte[] intentMessage = CreateMessageWithIntent(intent, bytes);
+
+            // BLAKE2b hash
+            byte[] digest = new byte[32];
+            Blake2bDigest blake2b = new(256);
+            blake2b.BlockUpdate(intentMessage, 0, intentMessage.Length);
+            blake2b.DoFinal(digest, 0);
+
+            return VerifyRaw(digest, signature.Data());
+        }
+
+        public override bool VerifyTransactionBlock(byte[] transaction_block, SignatureBase signature)
+        {
+            return VerifyWithIntent(transaction_block, signature, IntentScope.TransactionData);
         }
 
         /// <summary>

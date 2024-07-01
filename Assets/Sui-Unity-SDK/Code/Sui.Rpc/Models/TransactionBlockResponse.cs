@@ -1,5 +1,6 @@
 
 using System.Collections.Generic;
+using System.Numerics;
 using Newtonsoft.Json;
 
 namespace Sui.Rpc.Models
@@ -144,10 +145,13 @@ namespace Sui.Rpc.Models
         [JsonProperty("balanceChange")]
         public List<BalanceChange> BalanceChanges { get; set; }
 
-        // TODO: Complete deserialization
+        [JsonProperty("timestampMs", NullValueHandling = NullValueHandling.Include)]
+        public BigInteger? TimestampMs { get; set; }
 
-        //[JsonProperty("digest")]
-        //public string Digest;
+        [JsonProperty("digest")]
+        public string Digest { get; set; }
+
+        // TODO: Complete deserialization
 
         //[JsonProperty("transaction")]
         //public TransactionBlock Transaction { get; set; }

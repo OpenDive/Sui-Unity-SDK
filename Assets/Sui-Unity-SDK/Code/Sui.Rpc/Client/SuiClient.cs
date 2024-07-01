@@ -6,6 +6,12 @@ using Sui.Rpc.Api;
 using Sui.Rpc.Models;
 using Sui.Accounts;
 using OpenDive.BCS;
+using Sui.Transactions;
+using Sui.Cryptography;
+using UnityEngine;
+using Sui.Clients;
+using System;
+using Newtonsoft.Json;
 
 namespace Sui.Rpc
 {
@@ -33,6 +39,72 @@ namespace Sui.Rpc
             return await _rpcClient.SendAsync<T>(request);
         }
 
+        public async Task<RpcResult<TransactionBlockResponse>> SignAndExecuteTransactionBlock
+        (
+            Transactions.TransactionBlock transaction_block,
+            Account account,
+            TransactionBlockResponseOptions options = null
+        )
+        {
+            TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
+            transaction_block.SetSenderIfNotSet(AccountAddress.FromHex(account.SuiAddress()));
+            byte[] tx_bytes = await transaction_block.Build(new BuildOptions(this));
+            SignatureBase signature = account.SignTransactionBlock(tx_bytes);
+            return await this.ExecuteTransactionBlock(tx_bytes, account.ToSerializedSignature(signature), opts);
+        }
+
+        public async Task<RpcResult<TransactionBlockResponse>> ExecuteTransactionBlock
+        (
+            byte[] transaction_block,
+            string signature,
+            TransactionBlockResponseOptions options = null
+        )
+        {
+            TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
+            Debug.Log($"MARCUS::: EXECUTE TRANSACTION BLOCK - {JsonConvert.SerializeObject(ArgumentBuilder.BuildArguments(transaction_block, new string[] { signature }, opts))}");
+            return await SendRpcRequestAsync<TransactionBlockResponse>(
+                Methods.sui_executeTransactionBlock.ToString(),
+                ArgumentBuilder.BuildArguments(transaction_block, new string[] { signature }, opts)
+            );
+        }
+
+        public async Task<RpcResult<TransactionBlockResponse>> WaitForTransaction(string transaction, TransactionBlockResponseOptions options = null)
+        {
+            TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
+            int count = 0;
+            do
+            {
+                if (count >= 60)
+                    throw new System.Exception("Transaction Timed Out");
+                await new WaitForSeconds(1).Await();
+                count += 1;
+            }
+            while ((await this.IsValidTransactionBlock(transaction)) == false);
+            return await this.GetTransactionBlock(transaction, opts);
+        }
+
+        public async Task<bool> IsValidTransactionBlock(string transaction)
+        {
+            try
+            {
+                RpcResult<TransactionBlockResponse> result = await this.GetTransactionBlock(transaction);
+                return result.Result.TimestampMs != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<RpcResult<TransactionBlockResponse>> GetTransactionBlock(string digest, TransactionBlockResponseOptions options = null)
+        {
+            TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
+            return await SendRpcRequestAsync<TransactionBlockResponse>(
+                Methods.sui_executeTransactionBlock.ToString(),
+                ArgumentBuilder.BuildArguments(digest, opts)
+            );
+        }
+
         public async Task<RpcResult<BigInteger>> GetTotalTransactionBlocksAsync()
         {
             return await SendRpcRequestAsync<BigInteger>(
@@ -40,9 +112,9 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<ProtocolConfig>> GetProtocolConfigAsync()
+        public async Task<RpcResult<Models.ProtocolConfig>> GetProtocolConfigAsync()
         {
-            return await SendRpcRequestAsync<ProtocolConfig>(
+            return await SendRpcRequestAsync<Models.ProtocolConfig>(
                 Methods.sui_getProtocolConfig.ToString()
             );
         }
@@ -68,7 +140,7 @@ namespace Sui.Rpc
         {
             return await SendRpcRequestAsync<CoinPage>(
                 Methods.suix_getCoins.ToString(),
-                ArgumentBuilder.BuildArguments(owner, coinType, limit)
+                ArgumentBuilder.BuildArguments(owner, coinType, null, limit)
             );
         }
 

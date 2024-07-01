@@ -8,6 +8,127 @@ using Sui.Cryptography.Ed25519;
 
 namespace Sui.Rpc.Models
 {
+    [JsonObject]
+    public class Validator
+    {
+        [JsonProperty("nextEpochWorkerPubkeyBytes")]
+        public string NextEpochWorkerPubkeyBytes { get; set; }
+
+        [JsonProperty("nextEpochStake")]
+        public BigInteger NextEpochStake { get; set; }
+
+        [JsonProperty("commissionRate")]
+        public int CommissionRate { get; set; }
+
+        [JsonProperty("operationCapId")]
+        public string OperationCapId { get; set; }
+
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("pendingTotalSuiWithdraw")]
+        public BigInteger PendingTotalSuiWithdraw { get; set; }
+
+        [JsonProperty("stakingPoolSuiBalance")]
+        public BigInteger StakingPoolSuiBalance { get; set; }
+
+        [JsonProperty("nextEpochCommissionRate")]
+        public int NextEpochCommissionRate { get; set; }
+
+        [JsonProperty("nextEpochPrimaryAddress")]
+        public string NextEpochPrimaryAddress { get; set; }
+
+        [JsonProperty("stakingPoolDeactivationEpoch")]
+        public string StakingPoolDeactivationEpoch { get; set; }
+
+        [JsonProperty("p2pAddress")]
+        public string P2pAddress { get; set; }
+
+        [JsonProperty("pendingPoolTokenWithdraw")]
+        public BigInteger PendingPoolTokenWithdraw { get; set; }
+
+        [JsonProperty("nextEpochWorkerAddress")]
+        public string NextEpochWorkerAddress { get; set; }
+
+        [JsonProperty("nextEpochProtocolPubkeyBytes")]
+        public string NextEpochProtocolPubkeyBytes { get; set; }
+
+        [JsonProperty("netAddress")]
+        public string NetAddress { get; set; }
+
+        [JsonProperty("votingPower")]
+        public int VotingPower { get; set; }
+
+        [JsonProperty("suiAddress")]
+        public string SuiAddress { get; set; }
+
+        [JsonProperty("protocolPubkeyBytes")]
+        public string ProtocolPubkeyBytes { get; set; }
+
+        [JsonProperty("stakingPoolActivationEpoch")]
+        public int StakingPoolActivationEpoch { get; set; }
+
+        [JsonProperty("stakingPoolId")]
+        public string StakingPoolId { get; set; }
+
+        [JsonProperty("pendingStake")]
+        public BigInteger PendingStake { get; set; }
+
+        [JsonProperty("primaryAddress")]
+        public string PrimaryAddress { get; set; }
+
+        [JsonProperty("nextEpochP2pAddress")]
+        public string NextEpochP2pAddress { get; set; }
+
+        [JsonProperty("workerPubkeyBytes")]
+        public string WorkerPubkeyBytes { get; set; }
+
+        [JsonProperty("workerAddress")]
+        public string WorkerAddress { get; set; }
+
+        [JsonProperty("proofOfPossessionBytes")]
+        public string ProofOfPossessionBytes { get; set; }
+
+        [JsonProperty("nextEpochProofOfPossession")]
+        public string NextEpochProofOfPossession { get; set; }
+
+        [JsonProperty("projectUrl")]
+        public string ProjectUrl { get; set; }
+
+        [JsonProperty("imageUrl")]
+        public string ImageUrl { get; set; }
+
+        [JsonProperty("poolTokenBalance")]
+        public BigInteger PoolTokenBalance { get; set; }
+
+        [JsonProperty("nextEpochNetAddress")]
+        public string NextEpochNetAddress { get; set; }
+
+        [JsonProperty("gasPrice")]
+        public BigInteger GasPrice { get; set; }
+
+        [JsonProperty("nextEpochNetworkPubkeyBytes")]
+        public string NextEpochNetworkPubkeyBytes { get; set; }
+
+        [JsonProperty("exchangeRatesId")]
+        public string ExchangeRatesId { get; set; }
+
+        [JsonProperty("description")]
+        public string Description { get; set; }
+
+        [JsonProperty("nextEpochGasPrice")]
+        public BigInteger NextEpochGasPrice { get; set; }
+
+        [JsonProperty("exchangeRatesSize")]
+        public int ExchangeRatesSize { get; set; }
+
+        [JsonProperty("rewardsPool")]
+        public BigInteger RewardsPool { get; set; }
+
+        [JsonProperty("networkPubkeyBytes")]
+        public string NetworkPubkeyBytes { get; set; }
+    }
+
     /// <summary>
     ///
     /// <code>
@@ -44,6 +165,9 @@ namespace Sui.Rpc.Models
         /// </summary>
         [JsonProperty("epoch")]
         public BigInteger Epoch;
+
+        [JsonProperty("activeValidators")]
+        public List<Validator> ActiveValidators;
 
         /// <summary>
         /// The duration of an epoch, in milliseconds.

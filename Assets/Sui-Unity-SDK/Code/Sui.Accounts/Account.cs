@@ -6,6 +6,7 @@ using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Accounts
 {
+    // TODO: Implement toSerializedSignature for Public Keys
     public class Account
     {
         /// <summary>
@@ -140,28 +141,31 @@ namespace Sui.Accounts
         /// <param name="bytes"></param>
         /// <param name="intent"></param>
         /// <returns></returns>
-        public SignatureWithBytes SignWithIntent(byte[] bytes, IntentScope intent)
+        public SignatureBase SignWithIntent(byte[] bytes, IntentScope intent)
         {
             byte[] intentMessage = CreateMessageWithIntent(intent, bytes);
+
             // BLAKE2b hash
             byte[] digest = new byte[32];
             Blake2bDigest blake2b = new(256);
             blake2b.BlockUpdate(intentMessage, 0, intentMessage.Length);
             blake2b.DoFinal(digest, 0);
+            return this.Sign(digest);
+        }
 
-            byte[] privateKeySig = Sign(digest).Data();
-
+        public string ToSerializedSignature(SignatureBase signature)
+        {
             SerializeSignatureInput serializedSigInput = new SerializeSignatureInput();
-            serializedSigInput.Signature = privateKeySig;
+            serializedSigInput.Signature = signature.Data();
             serializedSigInput.SignatureScheme = SignatureScheme;
             serializedSigInput.PublicKey = PublicKey;
 
-            string signature = SignatureBase.ToSerializedSignature(serializedSigInput);
+            return SignatureBase.ToSerializedSignature(serializedSigInput);
+        }
 
-            SignatureWithBytes sigWithBytes = new SignatureWithBytes();
-            sigWithBytes.Signature = signature;
-            sigWithBytes.Bytes = CryptoBytes.ToBase64String(bytes);
-            return sigWithBytes;
+        public bool VerifyTransactionBlock(byte[] transaction_block, SignatureBase signature)
+        {
+            return PublicKey.VerifyTransactionBlock(transaction_block, signature);
         }
 
         /// <summary>
@@ -170,7 +174,7 @@ namespace Sui.Accounts
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        public SignatureWithBytes SignTransactionBlock(byte[] bytes)
+        public SignatureBase SignTransactionBlock(byte[] bytes)
         {
             return SignWithIntent(bytes, IntentScope.TransactionData);
         }

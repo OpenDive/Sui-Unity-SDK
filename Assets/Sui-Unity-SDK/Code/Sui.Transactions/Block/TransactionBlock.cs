@@ -463,10 +463,9 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="expiration"></param>
         /// <returns></returns>
-        public TransactionBlock SetExpiration(ITransactionExpiration expiration)
+        public void SetExpiration(ITransactionExpiration expiration)
         {
             this.BlockDataBuilder.Builder.Expiration = expiration;
-            return this;
         }
 
         /// <summary> ✅
@@ -474,10 +473,9 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="price"></param>
         /// <returns></returns>
-        public TransactionBlock SetGasPrice(BigInteger price)
+        public void SetGasPrice(BigInteger price)
         {
             this.BlockDataBuilder.Builder.GasConfig.Price = price;
-            return this;
         }
 
         /// <summary> ✅
@@ -485,10 +483,9 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="budget"></param>
         /// <returns></returns>
-        public TransactionBlock SetGasBudget(int budget)
+        public void SetGasBudget(int budget)
         {
             this.BlockDataBuilder.Builder.GasConfig.Budget = budget;
-            return this;
         }
 
         /// <summary> ✅
@@ -496,10 +493,9 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="owner"></param>
         /// <returns></returns>
-        public TransactionBlock SetGasOwner(AccountAddress owner)
+        public void SetGasOwner(AccountAddress owner)
         {
             this.BlockDataBuilder.Builder.GasConfig.Owner = owner;
-            return this;
         }
 
         /// <summary>
@@ -512,13 +508,12 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="payments"></param>
         /// <returns></returns>
-        public TransactionBlock SetGasPayment(Sui.Types.SuiObjectRef[] payments)
+        public void SetGasPayment(Sui.Types.SuiObjectRef[] payments)
         {
             if (payments.Count() >= (int)TransactionConstants.maxGasObjects)
                 throw new Exception("Gas Payment is too high.");
 
             this.BlockDataBuilder.Builder.GasConfig.Payment = payments;
-            return this;
         }
     
         /// <summary>
@@ -644,8 +639,8 @@ namespace Sui.Transactions
         /// If using a `MoveCall` transaction, this is the amount
         /// of return values (if greater than 1) that will be returned by the move call.
         /// </param> ✅
-        /// <returns>An `ITransactionArgument` object representing the result of the addition.</returns>
-        public List<ITransactionArgument> AddTransaction(Types.SuiTransaction transaction, int? return_value_count = null)
+        /// <returns>A `SuiTransactionArgument` object representing the result of the addition.</returns>
+        public List<SuiTransactionArgument> AddTransaction(Types.SuiTransaction transaction, int? return_value_count = null)
         {
             BlockDataBuilder.Builder.Transactions.Add(transaction);
 
@@ -653,14 +648,14 @@ namespace Sui.Transactions
 
             TransactionResult transaction_result = new TransactionResult((ushort)(index - 1), (ushort?)return_value_count);
 
-            List<ITransactionArgument> results = new List<ITransactionArgument>();
+            List<SuiTransactionArgument> results = new List<SuiTransactionArgument>();
 
             if (return_value_count == null)
-                results.Add(transaction_result.TransactionArgument);
+                results.Add(new SuiTransactionArgument(transaction_result.TransactionArgument));
             else
             {
                 foreach(ITransactionArgument nested_result in transaction_result)
-                    results.Add(nested_result);
+                    results.Add(new SuiTransactionArgument(nested_result));
 
                 results.Reverse();
             }
@@ -693,7 +688,7 @@ namespace Sui.Transactions
         /// <param name="coin">GasCoin is a type of `TransactionArgument`.</param>
         /// <param name="amounts">A list of respective amounts for each coin we are splitting.</param>
         /// <returns>A list of `TransactionResult`s.</returns>
-        public List<ITransactionArgument> AddSplitCoinsTx(SuiTransactionArgument coin, params TransactionBlockInput[] amounts)
+        public List<SuiTransactionArgument> AddSplitCoinsTx(SuiTransactionArgument coin, params TransactionBlockInput[] amounts)
         {
             SplitCoins splitCoinsTx = new SplitCoins(coin, amounts);
             return this.AddTransaction(new Types.SuiTransaction(splitCoinsTx));
@@ -704,8 +699,8 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="destination">An `ITransactionArgument` representing the destination coin.</param>
         /// <param name="sources">An array of `ITransactionArgument` representing the source coins.</param>
-        /// <returns>An `ITransactionArgument` array representing the result of the merge coin operation.</returns>
-        public List<ITransactionArgument> AddMergeCoinsTx(SuiTransactionArgument destination, SuiTransactionArgument[] sources)
+        /// <returns>A `SuiTransactionArgument` array representing the result of the merge coin operation.</returns>
+        public List<SuiTransactionArgument> AddMergeCoinsTx(SuiTransactionArgument destination, SuiTransactionArgument[] sources)
         {
             MergeCoins merge_coins_tx = new MergeCoins(destination, sources);
             return this.AddTransaction(new Types.SuiTransaction(merge_coins_tx));
@@ -716,8 +711,8 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="modules">An array of `byte[]` representing the modules to be published.</param>
         /// <param name="dependencies">An array of `AccountAddress` representing the dependencies.</param>
-        /// <returns>An `ITransactionArgument` array representing the result of the publish operation.</returns>
-        public List<ITransactionArgument> AddPublishTx(byte[][] modules, AccountAddress[] dependencies)
+        /// <returns>A `SuiTransactionArgument` array representing the result of the publish operation.</returns>
+        public List<SuiTransactionArgument> AddPublishTx(byte[][] modules, AccountAddress[] dependencies)
         {
             Publish publish_tx = new Publish(modules, dependencies);
             return this.AddTransaction(new Types.SuiTransaction(publish_tx));
@@ -728,8 +723,8 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="modules">An array of `string` representing the modules to be published.</param>
         /// <param name="dependencies">An array of `string` representing the dependencies.</param>
-        /// <returns>An `ITransactionArgument` array representing the result of the publish operation.</returns>
-        public List<ITransactionArgument> AddPublishTx(string[] modules, string[] dependencies)
+        /// <returns>A `SuiTransactionArgument` array representing the result of the publish operation.</returns>
+        public List<SuiTransactionArgument> AddPublishTx(string[] modules, string[] dependencies)
         {
             Publish publish_tx = new Publish
             (
@@ -748,8 +743,8 @@ namespace Sui.Transactions
         /// <param name="dependencies">An array of `AccountAddress` representing the dependencies.</param>
         /// <param name="packageId">A `string` representing the package ID.</param>
         /// <param name="ticket">An `ITransactionArgument` representing the ticket.</param>
-        /// <returns>An `ITransactionArgument` representing the result of the upgrade operation.</returns>
-        public List<ITransactionArgument> AddUpgradeTx
+        /// <returns>A `SuiTransactionArgument` array representing the result of the upgrade operation.</returns>
+        public List<SuiTransactionArgument> AddUpgradeTx
         (
             byte[][] modules,
             AccountAddress[] dependencies,
@@ -768,8 +763,8 @@ namespace Sui.Transactions
         /// <param name="typeArguments">An optional array of `ISerializableTag` representing the arguments of the move call.</param>
         /// <param name="arguments">An optional array of `SuiTransactionArgument` representing the type arguments of the move call.</param>
         /// <param name="return_value_count">The number of return values, greater than 1, that are returned by the move call.</param>
-        /// <returns>An array of `ITransactionArgument` representing the result of the move call.</returns>
-        public List<ITransactionArgument> AddMoveCallTx
+        /// <returns>A `SuiTransactionArgument` array representing the result of the move call.</returns>
+        public List<SuiTransactionArgument> AddMoveCallTx
         (
             SuiMoveNormalizedStructType target,
             ISerializableTag[] typeArguments = null,
@@ -786,8 +781,8 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="objects">An array of `ITransactionArgument` representing the objects to be transferred.</param>
         /// <param name="address">An `ITransactionArgument` representing the address to transfer objects to.</param>
-        /// <returns>An array of `ITransactionArgument` representing the result of the transfer object operation.</returns>
-        public List<ITransactionArgument> AddTransferObjectsTx(SuiTransactionArgument[] objects, SuiTransactionArgument address)
+        /// <returns>A `SuiTransactionArgument` array representing the result of the transfer object operation.</returns>
+        public List<SuiTransactionArgument> AddTransferObjectsTx(SuiTransactionArgument[] objects, SuiTransactionArgument address)
         {
             TransferObjects transfer_tx = new TransferObjects(objects, address);
             return this.AddTransaction(new Types.SuiTransaction(transfer_tx));
@@ -798,8 +793,8 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="objects">An array of `ITransactionArgument` representing the objects to be transferred.</param>
         /// <param name="address">A `string` representing the address to transfer objects to.</param>
-        /// <returns>An array of `ITransactionArgument` representing the result of the transfer object operation.</returns>
-        public List<ITransactionArgument> AddTransferObjectsTx(SuiTransactionArgument[] objects, string address)
+        /// <returns>A `SuiTransactionArgument` array representing the result of the transfer object operation.</returns>
+        public List<SuiTransactionArgument> AddTransferObjectsTx(SuiTransactionArgument[] objects, string address)
         {
             TransferObjects transfer_tx = new TransferObjects(objects, new SuiTransactionArgument(AddPure(AccountAddress.FromHex(address))));
             return this.AddTransaction(new Types.SuiTransaction(transfer_tx));
@@ -810,8 +805,8 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="objects">An array of `ITransactionArgument` representing the objects of the Move Vector.</param>
         /// <param name="type">An optional `SuiStructTag` representing the type of the Move Vector.</param>
-        /// <returns>An array of `ITransactionArgument` representing the result of the make Move Vector operation.</returns>
-        public List<ITransactionArgument> AddMakeMoveVecTx(SuiTransactionArgument[] objects, SuiStructTag type = null)
+        /// <returns>A `SuiTransactionArgument` array representing the result of the make Move Vector operation.</returns>
+        public List<SuiTransactionArgument> AddMakeMoveVecTx(SuiTransactionArgument[] objects, SuiStructTag type = null)
         {
             MakeMoveVec make_move_vec_tx = new MakeMoveVec(objects, type);
             return this.AddTransaction(new Types.SuiTransaction(make_move_vec_tx));
@@ -885,7 +880,7 @@ namespace Sui.Transactions
             if (IsMissingSender(options.OnlyTransactionKind))
                 throw new Exception("Sender Is Missing");
 
-            if ((options.OnlyTransactionKind.HasValue && options.OnlyTransactionKind == true) || this.BlockDataBuilder.Builder.GasConfig.Price != null) {
+            if ((options.OnlyTransactionKind.HasValue && options.OnlyTransactionKind == true) || this.BlockDataBuilder.Builder.GasConfig.Payment != null) {
                 return;
             }
 
@@ -916,7 +911,7 @@ namespace Sui.Transactions
                         }
                     }
                     return false;
-                });
+                }) == false;
             });
 
             int coin_range_max = Math.Min(filtered_coins.Count(), (int)TransactionConstants.maxGasObjects);
@@ -933,6 +928,8 @@ namespace Sui.Transactions
 
             if (payment_coins.Count() == 0)
                 throw new Exception("Owner Does Not Have Payment Coins");
+
+            Debug.Log($"MARCUS::: GAS PAYMENT - {JsonConvert.SerializeObject(payment_coins)}");
 
             SetGasPayment(payment_coins.ToArray());
         }
@@ -1467,63 +1464,70 @@ namespace Sui.Transactions
 
             if (options.OnlyTransactionKind == null || (options.OnlyTransactionKind.HasValue && options.OnlyTransactionKind == false))
             {
-                GasConfig gas_config = BlockDataBuilder.Builder.GasConfig;
+                await this.PrepareGasPaymentAsync(options);
 
-                gas_config.Budget = GetConfig(LimitKey.MaxTxGas, options);
-                gas_config.Payment = new Sui.Types.SuiObjectRef[] { };
+                if (this.BlockDataBuilder.Builder.GasConfig.Budget == null)
+                {
+                    GasConfig gas_config = new GasConfig();
 
-                TransactionBlockDataBuilderSerializer tx_block_data_builder = this.BlockDataBuilder;
-                tx_block_data_builder.Builder.GasConfig = gas_config;
+                    gas_config.Budget = GetConfig(LimitKey.MaxTxGas, options);
+                    gas_config.Payment = new Sui.Types.SuiObjectRef[] { };
+                    gas_config.Price = BlockDataBuilder.Builder.GasConfig.Price;
+                    gas_config.Owner = BlockDataBuilder.Builder.GasConfig.Owner;
 
-                var build_result = tx_block_data_builder.Build();
-                Debug.Log($"MARCUS::: SENDER BYTES - [{String.Join(", ", BlockDataBuilder.Builder.Sender.AddressBytes)}]");
-                Debug.Log($"MARCUS::: BUILD RESULT - [{String.Join(", ", build_result)}]");
-                RpcResult<TransactionBlockResponse> dry_run_result = await options.Provider.DryRunTransactionBlock(
-                    Convert.ToBase64String(build_result)
-                );
+                    TransactionBlockDataBuilderSerializer tx_block_data_builder = this.BlockDataBuilder;
 
-                if (dry_run_result != null && dry_run_result.Result.Effects.Status.Status == ExecutionStatus.Failure)
-                    throw new Exception("Dry Run Failed");
+                    var build_result = tx_block_data_builder.Build(new TransactionBlockDataBuilderSerializer(new TransactionBlockDataBuilder(gasConfig: gas_config)));
 
-                int safe_overhead =
-                    (int)TransactionConstants.gasSafeOverhead *
-                    int.Parse
-                    (
-                        BlockDataBuilder.Builder.GasConfig.Price != null ?
-                            BlockDataBuilder.Builder.GasConfig.Price.ToString() :
-                            "1"
+                    Debug.Log($"MARCUS::: SENDER BYTES - [{String.Join(", ", BlockDataBuilder.Builder.Sender.AddressBytes)}]");
+                    Debug.Log($"MARCUS::: BUILD RESULT - [{String.Join(", ", build_result)}]");
+                    RpcResult<TransactionBlockResponse> dry_run_result = await options.Provider.DryRunTransactionBlock(
+                        Convert.ToBase64String(build_result)
                     );
 
-                int base_computation_cost_with_overhead =
-                    int.Parse
-                    (
-                        dry_run_result.Result.Effects.GasUsed.ComputationCost != null ?
-                            dry_run_result.Result.Effects.GasUsed.ComputationCost.ToString() :
-                            "0"
-                    ) +
-                    safe_overhead;
+                    if (dry_run_result != null && dry_run_result.Result.Effects.Status.Status == ExecutionStatus.Failure)
+                        throw new Exception("Dry Run Failed");
 
-                var gas_budget =
-                    base_computation_cost_with_overhead +
-                    int.Parse
+                    int safe_overhead =
+                        (int)TransactionConstants.gasSafeOverhead *
+                        int.Parse
+                        (
+                            BlockDataBuilder.Builder.GasConfig.Price != null ?
+                                BlockDataBuilder.Builder.GasConfig.Price.ToString() :
+                                "1"
+                        );
+
+                    int base_computation_cost_with_overhead =
+                        int.Parse
+                        (
+                            dry_run_result.Result.Effects.GasUsed.ComputationCost != null ?
+                                dry_run_result.Result.Effects.GasUsed.ComputationCost.ToString() :
+                                "0"
+                        ) +
+                        safe_overhead;
+
+                    var gas_budget =
+                        base_computation_cost_with_overhead +
+                        int.Parse
+                        (
+                            dry_run_result.Result.Effects.GasUsed.StorageCost != null ?
+                                dry_run_result.Result.Effects.GasUsed.StorageCost.ToString() :
+                                "0"
+                        ) +
+                        int.Parse
+                        (
+                            dry_run_result.Result.Effects.GasUsed.StorageRebate != null ?
+                                dry_run_result.Result.Effects.GasUsed.StorageRebate.ToString() :
+                                "0"
+                        );
+
+                    SetGasBudget
                     (
-                        dry_run_result.Result.Effects.GasUsed.StorageCost != null ?
-                            dry_run_result.Result.Effects.GasUsed.StorageCost.ToString() :
-                            "0"
-                    ) +
-                    int.Parse
-                    (
-                        dry_run_result.Result.Effects.GasUsed.StorageRebate != null ?
-                            dry_run_result.Result.Effects.GasUsed.StorageRebate.ToString() :
-                            "0"
+                        gas_budget > base_computation_cost_with_overhead ?
+                            gas_budget :
+                            base_computation_cost_with_overhead
                     );
-
-                SetGasBudget
-                (
-                    gas_budget > base_computation_cost_with_overhead ?
-                        gas_budget :
-                        base_computation_cost_with_overhead
-                );
+                }
             }
 
             IsPrepared = true;

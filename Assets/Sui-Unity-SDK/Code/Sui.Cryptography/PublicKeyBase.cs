@@ -138,10 +138,12 @@ namespace Sui.Cryptography
             if (Utils.IsValidEd25519HexKey(publicKey))
             {
                 KeyHex = publicKey ?? throw new ArgumentNullException(nameof(publicKey));
+                _keyBytes = CryptoBytes.FromHexString(publicKey);
             }
             else if(Utils.IsBase64String(publicKey))
             {
                 KeyBase64 = publicKey ?? throw new ArgumentNullException(nameof(publicKey));
+                _keyBytes = CryptoBytes.FromBase64String(publicKey);
             }
             else
             {
@@ -244,6 +246,8 @@ namespace Sui.Cryptography
         /// <returns></returns>
         abstract public bool Verify(byte[] message, SignatureBase signature);
 
+        abstract public bool VerifyTransactionBlock(byte[] transaction_block, SignatureBase signature);
+
         /// <summary>
         /// Signature is committed to the intent message of the transaction data,
         /// as base-64 encoded string.
@@ -332,8 +336,11 @@ namespace Sui.Cryptography
         public string ToSuiAddress()
         {
             byte[] hashed_address = new byte[32];
+            byte[] prehash_address = new byte[this.KeyLength + 1];
+            prehash_address[0] = SignatureSchemeToFlag.GetFlag(SignatureScheme.ED25519);
+            Array.Copy(_keyBytes, 0, prehash_address, 1, _keyBytes.Length);
             Blake2bDigest blake2b = new Blake2bDigest(256);
-            blake2b.BlockUpdate(_keyBytes, 0, _keyBytes.Length);
+            blake2b.BlockUpdate(prehash_address, 0, prehash_address.Length);
             blake2b.DoFinal(hashed_address, 0);
             string addressHex = CryptoBytes.ToHexStringLower(hashed_address);
             return NormalizedTypeConverter.NormalizeSuiAddress(addressHex);
@@ -357,7 +364,6 @@ namespace Sui.Cryptography
         //    Base58Encoder base58Encoder = new Base58Encoder();
         //    return base58Encoder.EncodeData(hashed_data);
         //}
-
 
         /// <summary>
         /// Return signature scheme flag of the public key

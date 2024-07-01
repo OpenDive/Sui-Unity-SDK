@@ -7,7 +7,8 @@
         "Sui"
     ],
     "includePlatforms": [
-        "Editor"
+        "Editor",
+        "macOSStandalone"
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

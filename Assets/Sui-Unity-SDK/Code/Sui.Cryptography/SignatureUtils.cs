@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using UnityEngine;
 using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Cryptography
@@ -75,8 +77,10 @@ namespace Sui.Cryptography
             return intentMessage;
         }
 
-        public static string ToSerializedSignature(SignatureBase signature)
+        public static string ToSerializedSignature(SignatureBase signature, PublicKeyBase pub_key)
         {
+            //List<byte> serialized_signature = new List<byte>(signature.Data().Length + pub_key.KeyLength);
+            //serialized_signature.Add(SignatureSchemeToFlag.GetFlag(signature.));
             throw new NotImplementedException();
         }
 

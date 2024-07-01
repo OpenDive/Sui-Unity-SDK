@@ -14,8 +14,11 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Sui.Clients;
+using UnityEngine.TestTools;
 
 namespace Sui.Tests
 {
@@ -80,38 +83,48 @@ namespace Sui.Tests
             //var result = await provider
         }
 
-        [Test]
-        public async Task SimplePublishBuildTest()
+        [UnityTest]
+        public IEnumerator SimplePublishBuildTest()
         {
-            JObject file_data = GetModule("serializer");
-            TransactionBlock tx = new TransactionBlock();
+            TestToolbox toolbox = new TestToolbox();
+            yield return toolbox.Setup();
 
-            JArray modules_jarray = (JArray)file_data["modules"];
-            JArray dependencies_jarray = (JArray)file_data["dependencies"];
+            yield return new WaitForSeconds(20f);
 
-            List<string> modules = new List<string>();
-            List<string> dependencies = new List<string>();
-            var account = new Account();
+            Task task = toolbox.PublishPackage("serializer");
+            yield return new WaitUntil(() => task.IsCompleted);
 
-            foreach (JToken jtoken in modules_jarray.Values())
-                modules.Add((string)jtoken);
+            // await toolbox.PublishPackage("serializer");
 
-            foreach (JToken jtoken in dependencies_jarray.Values())
-                dependencies.Add((string)jtoken);
+            //JObject file_data = GetModule("serializer");
+            //TransactionBlock tx = new TransactionBlock();
 
-            var cap = tx.AddPublishTx
-            (
-                modules.ToArray(),
-                dependencies.ToArray()
-            );
+            //JArray modules_jarray = (JArray)file_data["modules"];
+            //JArray dependencies_jarray = (JArray)file_data["dependencies"];
 
-            tx.AddTransferObjectsTx(cap.Select((cap_value) => new SuiTransactionArgument(cap_value)).ToArray(), account.SuiAddress());
+            //List<string> modules = new List<string>();
+            //List<string> dependencies = new List<string>();
+            //var account = new Account();
 
-            tx.SetSenderIfNotSet(account.AccountAddress);
+            //foreach (JToken jtoken in modules_jarray.Values())
+            //    modules.Add((string)jtoken);
 
-            var provider = new SuiClient(Constants.MainnetConnection);
-            var build_options = new BuildOptions(provider);
-            var digest = await tx.GetDigest(build_options);
+            //foreach (JToken jtoken in dependencies_jarray.Values())
+            //    dependencies.Add((string)jtoken);
+
+            //var cap = tx.AddPublishTx
+            //(
+            //    modules.ToArray(),
+            //    dependencies.ToArray()
+            //);
+
+            //tx.AddTransferObjectsTx(cap.Select((cap_value) => new SuiTransactionArgument(cap_value)).ToArray(), account.SuiAddress());
+
+            //tx.SetSenderIfNotSet(account.AccountAddress);
+
+            //var provider = new SuiClient(Constants.MainnetConnection);
+            //var build_options = new BuildOptions(provider);
+            //var digest = await tx.GetDigest(build_options);
         }
     }
 }

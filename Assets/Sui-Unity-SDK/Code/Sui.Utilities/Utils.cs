@@ -1,8 +1,10 @@
 using System;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Org.BouncyCastle.Crypto.Digests;
+using UnityEngine;
 
 namespace Sui.Utilities
 {
@@ -93,6 +95,11 @@ namespace Sui.Utilities
         /// <param name="input"></param>
         /// <returns></returns>
         public static string ToReadableString(this byte[] input) => string.Join(", ", input);
+
+        public static IEnumerator WaitForSecondsCoroutine(int seconds)
+        {
+            yield return new WaitForSeconds(seconds);
+        }
 
         /// <summary>
         /// Generates a Blake2b hash of typed data as a base64 string.

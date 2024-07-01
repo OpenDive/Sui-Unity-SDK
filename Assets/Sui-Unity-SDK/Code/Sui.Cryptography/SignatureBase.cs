@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Chaos.NaCl;
+using UnityEngine;
 using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Cryptography
@@ -130,7 +131,7 @@ namespace Sui.Cryptography
     {
         public string Bytes { get; set; }
 	    public string Signature { get; set; } // SerializedSignature in the TypeScript SDK
-}
+    }
 
     /// <summary>
     /// Represents a Sui signature

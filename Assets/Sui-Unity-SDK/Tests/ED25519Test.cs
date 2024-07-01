@@ -3,6 +3,11 @@ using System;
 using Sui.Utilities;
 using Sui.Cryptography.Ed25519;
 using UnityEngine;
+using Sui.Accounts;
+using Sui.Transactions;
+using Sui.Rpc;
+using Sui.Cryptography;
+using System.Threading.Tasks;
 
 namespace Sui.Tests.Cryptography
 {
@@ -133,9 +138,26 @@ namespace Sui.Tests.Cryptography
         }
 
         [Test]
-        public void PrivateKeySignature()
+        public async Task TransactionSigningSuccess()
         {
-            Assert.AreEqual(1, 0);
+            Account account = new Account();
+            TransactionBlock tx_block = new TransactionBlock();
+            SuiClient client = new SuiClient(Constants.LocalnetConnection);
+
+            tx_block.SetSender(AccountAddress.FromHex(account.SuiAddress()));
+            tx_block.SetGasPrice(5);
+            tx_block.SetGasBudget(100);
+            byte[] digest = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            Base58Encoder base58Encoder = new Base58Encoder();
+            tx_block.SetGasPayment(new Types.SuiObjectRef[] { new Types.SuiObjectRef
+            (
+                AccountAddress.FromHex(string.Format("{0:0}", new System.Random().NextDouble() * 100000).PadLeft(64, '0')),
+                new System.Random().Next() * 10000,
+                base58Encoder.EncodeData(digest)
+            ) });
+            byte[] bytes = await tx_block.Build(new BuildOptions(client));
+            SignatureBase serialized_signature = account.SignTransactionBlock(bytes);
+            Assert.IsTrue(account.VerifyTransactionBlock(bytes, serialized_signature));
         }
 
         /// <summary>
