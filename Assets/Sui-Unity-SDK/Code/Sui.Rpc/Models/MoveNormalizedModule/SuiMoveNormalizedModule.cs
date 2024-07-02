@@ -97,6 +97,37 @@ namespace Sui.Rpc.Models
 
     public interface ISuiMoveNormalizedType { }
 
+    public enum SuiMoveNormalizedTypeSerializationType
+    {
+        String,
+        TypeParameter,
+        Struct,
+        Vector,
+        Reference,
+        MutableReference
+    }
+
+    public class SuiMoveNormalizedType
+    {
+        public ISuiMoveNormalizedType NormalizedType;
+        public SuiMoveNormalizedTypeSerializationType Type;
+
+        public SuiMoveNormalizedType
+        (
+            ISuiMoveNormalizedType normalized_type,
+            SuiMoveNormalizedTypeSerializationType type
+        )
+        {
+            this.NormalizedType = normalized_type;
+            this.Type = type;
+        }
+
+        public ISuiMoveNormalizedType ExtractStructTag()
+        {
+            return null;
+        }
+    }
+
     public class SuiMoveNormalizedTypeString: ISuiMoveNormalizedType
     {
         public string Value { get; set; }
@@ -119,9 +150,9 @@ namespace Sui.Rpc.Models
 
     public class SuiMoveNormalziedTypeStruct: ISuiMoveNormalizedType
     {
-        public SuiStructTag Struct { get; set; }
+        public SuiMoveNormalizedStructType Struct { get; set; }
 
-        public SuiMoveNormalziedTypeStruct(SuiStructTag Struct)
+        public SuiMoveNormalziedTypeStruct(SuiMoveNormalizedStructType Struct)
         {
             this.Struct = Struct;
         }

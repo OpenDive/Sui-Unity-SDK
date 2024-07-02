@@ -929,8 +929,6 @@ namespace Sui.Transactions
             if (payment_coins.Count() == 0)
                 throw new Exception("Owner Does Not Have Payment Coins");
 
-            Debug.Log($"MARCUS::: GAS PAYMENT - {JsonConvert.SerializeObject(payment_coins)}");
-
             SetGasPayment(payment_coins.ToArray());
         }
 

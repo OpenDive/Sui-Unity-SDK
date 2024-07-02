@@ -1206,15 +1206,30 @@ namespace OpenDive.BCS
     public class SuiMoveNormalizedStructType: ISerializable
     {
         public SuiStructTag StructTag;
+        public SuiMoveNormalizedType[] TypeArguments;
 
-        public SuiMoveNormalizedStructType(SuiStructTag structTag)
+        public SuiMoveNormalizedStructType(SuiStructTag structTag, SuiMoveNormalizedType[] type_arguments)
         {
             this.StructTag = structTag;
+            this.TypeArguments = type_arguments;
         }
 
-        public SuiMoveNormalizedStructType(string structTag)
+        public SuiMoveNormalizedStructType(string structTag, SuiMoveNormalizedType[] type_arguments)
         {
             this.StructTag = SuiStructTag.FromStr(structTag);
+            this.TypeArguments = type_arguments;
+        }
+
+        public SuiMoveNormalizedStructType(string address, string module, string name, SuiMoveNormalizedType[] type_arguments)
+        {
+            this.StructTag = new SuiStructTag(AccountAddress.FromHex(address), module, name, new ISerializableTag[] { });
+            this.TypeArguments = type_arguments;
+        }
+
+        public SuiMoveNormalizedStructType(AccountAddress address, string module, string name, SuiMoveNormalizedType[] type_arguments)
+        {
+            this.StructTag = new SuiStructTag(address, module, name, new ISerializableTag[] { });
+            this.TypeArguments = type_arguments;
         }
 
         public void Serialize(Serialization serializer)
@@ -1223,15 +1238,15 @@ namespace OpenDive.BCS
             serializer.Serialize(this.StructTag.module);
             serializer.Serialize(this.StructTag.name);
 
-            if (StructTag.typeArgs.Length != 0)
+            if (this.TypeArguments.Length != 0)
                 serializer.Serialize(this.StructTag.typeArgs);
         }
 
-        public static SuiMoveNormalizedStructType Deserialize(Deserialization deserializer)
-        {
-            return new SuiMoveNormalizedStructType(
-                SuiStructTag.Deserialize(deserializer)
-            );
-        }
+        //public static SuiMoveNormalizedStructType Deserialize(Deserialization deserializer)
+        //{
+        //    return new SuiMoveNormalizedStructType(
+        //        SuiStructTag.Deserialize(deserializer)
+        //    );
+        //}
     }
 }

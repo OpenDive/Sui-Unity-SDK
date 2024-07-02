@@ -12,6 +12,7 @@ using UnityEngine;
 using Sui.Clients;
 using System;
 using Newtonsoft.Json;
+using System.Collections;
 
 namespace Sui.Rpc
 {
@@ -68,22 +69,21 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<TransactionBlockResponse>> WaitForTransaction(string transaction, TransactionBlockResponseOptions options = null)
+        public async Task WaitForTransaction(string transaction)
         {
-            TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
             int count = 0;
-            do
+            bool is_done = false;
+            while (count == 0 && is_done == false)
             {
                 if (count >= 60)
                     throw new System.Exception("Transaction Timed Out");
-                await new WaitForSeconds(1).Await();
+                await Task.Delay(TimeSpan.FromSeconds(1f));
                 count += 1;
+                is_done = await this.IsValidTransactionBlock(transaction);
             }
-            while ((await this.IsValidTransactionBlock(transaction)) == false);
-            return await this.GetTransactionBlock(transaction, opts);
         }
 
-        public async Task<bool> IsValidTransactionBlock(string transaction)
+        private async Task<bool> IsValidTransactionBlock(string transaction)
         {
             try
             {
@@ -100,7 +100,7 @@ namespace Sui.Rpc
         {
             TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
             return await SendRpcRequestAsync<TransactionBlockResponse>(
-                Methods.sui_executeTransactionBlock.ToString(),
+                Methods.sui_getTransactionBlock.ToString(),
                 ArgumentBuilder.BuildArguments(digest, opts)
             );
         }

@@ -31,13 +31,13 @@ namespace Sui.Tests
 
     public class TestToolbox: MonoBehaviour
     {
-        int DefaultGasBudget = 10_000_000;
-        int DefaultSendAmount = 1_000;
+        public int DefaultGasBudget = 10_000_000;
+        public int DefaultSendAmount = 1_000;
         string DefaultRecipient = "0x0c567ffdf8162cb6d51af74be0199443b92e823d4ba6ced24de5c6c463797d46";
         private readonly string customResourcePath = Path.Combine(Application.dataPath, "Sui-Unity-SDK/Tests/Resources");
 
-        Account Account;
-        SuiClient Client;
+        public Account Account;
+        public SuiClient Client;
 
         public TestToolbox
         (
@@ -101,16 +101,14 @@ namespace Sui.Tests
 
             tx.AddTransferObjectsTx(cap.ToArray(), this.Account.SuiAddress());
 
-            TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: false, showObjectChanges: true);
+            TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true, showObjectChanges: true);
 
             RpcResult<TransactionBlockResponse> published_tx_block = await this.Client.SignAndExecuteTransactionBlock(tx, this.Account, options);
-
-            Debug.Log($"MARCUS::: PUBLISHED TX BLOCK - {JsonConvert.SerializeObject(published_tx_block)}");
 
             if(published_tx_block.IsSuccess == false || published_tx_block.Result.Effects.Status.Status == ExecutionStatus.Failure)
                 throw new Exception("Transaction Failed");
 
-            published_tx_block = await this.Client.WaitForTransaction(published_tx_block.Result.Digest, options);
+            await this.Client.WaitForTransaction(published_tx_block.Result.Digest);
 
             if (published_tx_block.Result.ObjectChanges == null) 
                 throw new Exception("Objects Change was not Queried");
