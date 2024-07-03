@@ -107,7 +107,7 @@ namespace Sui.Rpc.Models
         MutableReference
     }
 
-    public class SuiMoveNormalizedType
+    public class SuiMoveNormalizedType: ISerializable
     {
         public ISuiMoveNormalizedType NormalizedType;
         public SuiMoveNormalizedTypeSerializationType Type;
@@ -122,9 +122,70 @@ namespace Sui.Rpc.Models
             this.Type = type;
         }
 
-        public ISuiMoveNormalizedType ExtractStructTag()
+        public void Serialize(Serialization serializer)
         {
-            return null;
+            switch(this.Type)
+            {
+                case SuiMoveNormalizedTypeSerializationType.String:
+                    switch(((SuiMoveNormalizedTypeString)this.NormalizedType).Value)
+                    {
+                        case "Bool":
+                            serializer.SerializeU8(0);
+                            break;
+                        case "U8":
+                            serializer.SerializeU8(1);
+                            break;
+                        case "U16":
+                            serializer.SerializeU8(2);
+                            break;
+                        case "U32":
+                            serializer.SerializeU8(3);
+                            break;
+                        case "U64":
+                            serializer.SerializeU8(4);
+                            break;
+                        case "U128":
+                            serializer.SerializeU8(5);
+                            break;
+                        case "U256":
+                            serializer.SerializeU8(6);
+                            break;
+                        case "Address":
+                            serializer.SerializeU8(7);
+                            break;
+                        case "Signer":
+                            serializer.SerializeU8(8);
+                            break;
+                        default:
+                            throw new Exception($"Unable to serialize type - {((SuiMoveNormalizedTypeString)this.NormalizedType).Value}");
+                    }
+                    break;
+                case SuiMoveNormalizedTypeSerializationType.TypeParameter:
+                    SuiMoveNormalziedTypeParameterType type_parameter = (SuiMoveNormalziedTypeParameterType)this.NormalizedType;
+                    serializer.SerializeU8(9);
+                    serializer.SerializeU16((ushort)type_parameter.TypeParameter.value);
+                    break;
+                case SuiMoveNormalizedTypeSerializationType.Reference:
+                    SuiMoveNormalizedTypeReference reference = (SuiMoveNormalizedTypeReference)this.NormalizedType;
+                    serializer.SerializeU8(10);
+                    serializer.Serialize(reference.Reference);
+                    break;
+                case SuiMoveNormalizedTypeSerializationType.MutableReference:
+                    SuiMoveNormalizedTypeMutableReference mutable_reference = (SuiMoveNormalizedTypeMutableReference)this.NormalizedType;
+                    serializer.SerializeU8(11);
+                    serializer.Serialize(mutable_reference.MutableReference);
+                    break;
+                case SuiMoveNormalizedTypeSerializationType.Vector:
+                    SuiMoveNormalizedTypeVector vector = (SuiMoveNormalizedTypeVector)this.NormalizedType;
+                    serializer.SerializeU8(12);
+                    serializer.Serialize(vector.Vector);
+                    break;
+                case SuiMoveNormalizedTypeSerializationType.Struct:
+                    SuiMoveNormalziedTypeStruct type_struct = (SuiMoveNormalziedTypeStruct)this.NormalizedType;
+                    serializer.SerializeU8(13);
+                    serializer.Serialize(type_struct.Struct);
+                    break;
+            }
         }
     }
 
@@ -160,9 +221,9 @@ namespace Sui.Rpc.Models
 
     public class SuiMoveNormalizedTypeVector: ISuiMoveNormalizedType
     {
-        public ISuiMoveNormalizedType Vector { get; set; }
+        public SuiMoveNormalizedType Vector { get; set; }
 
-        public SuiMoveNormalizedTypeVector(ISuiMoveNormalizedType Vector)
+        public SuiMoveNormalizedTypeVector(SuiMoveNormalizedType Vector)
         {
             this.Vector = Vector;
         }
@@ -170,9 +231,9 @@ namespace Sui.Rpc.Models
 
     public class SuiMoveNormalizedTypeReference : ISuiMoveNormalizedType
     {
-        public ISuiMoveNormalizedType Reference { get; set; }
+        public SuiMoveNormalizedType Reference { get; set; }
 
-        public SuiMoveNormalizedTypeReference(ISuiMoveNormalizedType Reference)
+        public SuiMoveNormalizedTypeReference(SuiMoveNormalizedType Reference)
         {
             this.Reference = Reference;
         }
@@ -180,9 +241,9 @@ namespace Sui.Rpc.Models
 
     public class SuiMoveNormalizedTypeMutableReference: ISuiMoveNormalizedType
     {
-        public ISuiMoveNormalizedType MutableReference { get; set; }
+        public SuiMoveNormalizedType MutableReference { get; set; }
 
-        public SuiMoveNormalizedTypeMutableReference(ISuiMoveNormalizedType MutableReference)
+        public SuiMoveNormalizedTypeMutableReference(SuiMoveNormalizedType MutableReference)
         {
             this.MutableReference = MutableReference;
         }

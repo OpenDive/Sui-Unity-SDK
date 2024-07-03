@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.Rpc.Models;
+using UnityEngine;
 
 namespace Sui.Transactions
 {
@@ -32,69 +33,81 @@ namespace Sui.Transactions
         static private string stdOptionModuleName = "option";
         static private string stdOptionStructName = "Option";
 
-        static private StandardStruct resolvedSuiId = new StandardStruct("0x2", "object", "ID");
-        static private StandardStruct resolvedAsciiStr = new StandardStruct("0x1", stdAsciiModuleName, stdAsciiStructName);
-        static private StandardStruct resolvedUtf8Str = new StandardStruct("0x1", stdUtf8ModuleName, stdUtf8StructName);
-        static private StandardStruct resolvedStdOption = new StandardStruct("0x1", stdOptionModuleName, stdOptionStructName);
+        static private StandardStruct resolvedSuiId => new StandardStruct("0x2", "object", "ID");
+        static private StandardStruct resolvedAsciiStr => new StandardStruct("0x1", stdAsciiModuleName, stdAsciiStructName);
+        static private StandardStruct resolvedUtf8Str => new StandardStruct("0x1", stdUtf8ModuleName, stdUtf8StructName);
+        static private StandardStruct resolvedStdOption => new StandardStruct("0x1", stdOptionModuleName, stdOptionStructName);
 
-        static public ISuiMoveNormalizedType ExtractStructType(ISuiMoveNormalizedType normalizedType)
+        static public SuiMoveNormalziedTypeStruct ExtractStructType(SuiMoveNormalizedType normalizedType)
         {
-            if (normalizedType as SuiMoveNormalizedTypeReference != null)
+            Debug.Log($"MARCUS::: START - {normalizedType.Type}");
+            switch (normalizedType.Type)
             {
-                SuiMoveNormalizedTypeReference reference = (SuiMoveNormalizedTypeReference)normalizedType;
-                return reference.Reference;
+                case SuiMoveNormalizedTypeSerializationType.Reference:
+                    Debug.Log($"MARCUS::: REFERENCE - {normalizedType.NormalizedType}");
+                    SuiMoveNormalizedTypeReference reference = (SuiMoveNormalizedTypeReference)normalizedType.NormalizedType;
+                    switch(reference.Reference.Type)
+                    {
+                        case SuiMoveNormalizedTypeSerializationType.Struct:
+                            Debug.Log($"MARCUS::: STRUCT REFERENCE - {reference.Reference.NormalizedType}");
+                            return (SuiMoveNormalziedTypeStruct)reference.Reference.NormalizedType;
+                        default:
+                            return null;
+                    }
+                case SuiMoveNormalizedTypeSerializationType.MutableReference:
+                    Debug.Log($"MARCUS::: MUTABLE REFERENCE - {normalizedType.NormalizedType}");
+                    SuiMoveNormalizedTypeMutableReference mutableReference = (SuiMoveNormalizedTypeMutableReference)normalizedType.NormalizedType;
+                    switch (mutableReference.MutableReference.Type)
+                    {
+                        case SuiMoveNormalizedTypeSerializationType.Struct:
+                            Debug.Log($"MARCUS::: STRUCT MUTABLE REFERENCE - {mutableReference.MutableReference.NormalizedType}");
+                            return (SuiMoveNormalziedTypeStruct)mutableReference.MutableReference.NormalizedType;
+                        default:
+                            return null;
+                    }
+                default:
+                    return null;
             }
-
-            if (normalizedType as SuiMoveNormalizedTypeMutableReference != null)
-            {
-                SuiMoveNormalizedTypeMutableReference mutableReference = (SuiMoveNormalizedTypeMutableReference)normalizedType;
-                return mutableReference.MutableReference;
-            }
-
-            return null;
         }
 
-        static public Type GetPureNormalizedTypeType(ISuiMoveNormalizedType normalizedType, ISerializable argVal)
+        static public Type GetPureNormalizedTypeType(SuiMoveNormalizedType normalizedType, ISerializable argVal)
         {
             List<string> allowedTypes = new List<string>() { "Address", "Bool", "U8", "U16", "U32", "U64", "U128", "U256" };
 
-            if (normalizedType as SuiMoveNormalizedTypeString != null)
+            switch(normalizedType.Type)
             {
-                SuiMoveNormalizedTypeString stringType = (SuiMoveNormalizedTypeString)normalizedType;
+                case SuiMoveNormalizedTypeSerializationType.String:
+                    SuiMoveNormalizedTypeString stringType = (SuiMoveNormalizedTypeString)normalizedType.NormalizedType;
 
-                if (allowedTypes.Contains(stringType.Value))
-                {
-                    List<string> allowedNumTypes = new List<string>() { "U8", "U16", "U32", "U64", "U128", "U256" };
-                    if (allowedNumTypes.Contains(stringType.Value)) {
-                        return Type.GetType(stringType.Value);
-                    }
-                    else if(stringType.Value == "Bool")
+                    if (allowedTypes.Contains(stringType.Value))
                     {
-                        return typeof(Bool);
+                        List<string> allowedNumTypes = new List<string>() { "U8", "U16", "U32", "U64", "U128", "U256" };
+                        if (allowedNumTypes.Contains(stringType.Value))
+                        {
+                            return Type.GetType(stringType.Value);
+                        }
+                        else if (stringType.Value == "Bool")
+                        {
+                            return typeof(Bool);
+                        }
+                        else if (stringType.Value == "Address")
+                        {
+                            return typeof(AccountAddress);
+                        }
+                        else
+                        {
+                            throw new NotSupportedException();
+                        }
                     }
-                    else if (stringType.Value == "Address")
-                    {
-                        return typeof(AccountAddress);
-                    }
-                    else
-                    {
-                        throw new NotSupportedException();
-                    }
-                }
 
-                throw new Exception($"Unknown pure normalized type {stringType.Value}");
-            }
-
-            if (normalizedType as SuiMoveNormalizedTypeVector != null)
-            {
-                do
-                {
-                    SuiMoveNormalizedTypeVector vectorType = (SuiMoveNormalizedTypeVector)normalizedType;
+                    throw new Exception($"Unknown pure normalized type {stringType.Value}");
+                case SuiMoveNormalizedTypeSerializationType.Vector:
+                    SuiMoveNormalizedTypeVector vectorType = (SuiMoveNormalizedTypeVector)normalizedType.NormalizedType;
 
                     if (argVal == null || argVal.GetType() == typeof(string))
                     {
                         Type type = GetPureNormalizedTypeType(vectorType.Vector, argVal);
-                        if ( type == typeof(U8))
+                        if (type == typeof(U8))
                         {
                             return typeof(BString);
                         }
@@ -110,121 +123,119 @@ namespace Sui.Transactions
                     if (innerType == null)
                         break;
 
-                    //return $"vector<{innerType}>";
-                    // TODO: Look into the logic for handling this in TransactionBlock
                     Type listType = typeof(List<>).MakeGenericType(innerType);
                     return listType;
-                }
-                while (false);
-            }
+                case SuiMoveNormalizedTypeSerializationType.Struct:
+                    SuiMoveNormalziedTypeStruct structType = (SuiMoveNormalziedTypeStruct)normalizedType.NormalizedType;
 
-            if (normalizedType as SuiMoveNormalziedTypeStruct != null)
-            {
-                do
-                {
-                    SuiMoveNormalziedTypeStruct structType = (SuiMoveNormalziedTypeStruct)normalizedType;
-
-                    if (IsSameStruct(structType.Struct, resolvedAsciiStr) || IsSameStruct(structType.Struct, resolvedUtf8Str))
+                    if (IsSameStruct(structType, resolvedAsciiStr) || IsSameStruct(structType, resolvedUtf8Str))
                     {
                         return typeof(BString);
                     }
-                    else if (IsSameStruct(structType.Struct, resolvedSuiId))
+                    else if (IsSameStruct(structType, resolvedSuiId))
                     {
                         return typeof(AccountAddress);
                     }
-                    else if (IsSameStruct(structType.Struct, resolvedStdOption))
+                    else if (IsSameStruct(structType, resolvedStdOption))
                     {
-                        //SuiMoveNormalizedTypeVector vectorType = new SuiMoveNormalizedTypeVector(structType.Struct.typeArgs[0]); TODO: Marcus: Implement case for option struct
+                        if (structType.Struct.TypeArguments.Length == 0)
+                            throw new Exception("Unable to unwrap Struct");
+                        SuiMoveNormalizedTypeVector option_to_vec = new SuiMoveNormalizedTypeVector(structType.Struct.TypeArguments[0]);
+                        return GetPureNormalizedTypeType(new SuiMoveNormalizedType(option_to_vec, SuiMoveNormalizedTypeSerializationType.Vector), argVal);
                     }
-                }
-                while (false);
+                    else
+                    {
+                        throw new Exception("Unable to unwrap Struct");
+                    }
+                default:
+                    return null;
             }
 
-            return null;
+            throw new Exception("Unable to unwrap Struct");
         }
 
 
-        static public string GetPureNormalizedType(ISuiMoveNormalizedType normalizedType, ISerializable argVal)
+        static public string GetPureNormalizedType(SuiMoveNormalizedType normalizedType, ISerializable argVal)
         {
             List<string> allowedTypes = new List<string>() { "Address", "Bool", "U8", "U16", "U32", "U64", "U128", "U256" };
+            List<string> allowedNumTypes = new List<string>() { "U8", "U16", "U32", "U64", "U128", "U256" };
 
-            if (normalizedType as SuiMoveNormalizedTypeString != null)
+            switch (normalizedType.Type)
             {
-                SuiMoveNormalizedTypeString stringType = (SuiMoveNormalizedTypeString)normalizedType;
+                case SuiMoveNormalizedTypeSerializationType.String:
+                    SuiMoveNormalizedTypeString stringType = (SuiMoveNormalizedTypeString)normalizedType.NormalizedType;
 
-                if (allowedTypes.Contains(stringType.Value))
-                {
-                    if (stringType.Value == "Address")
+                    if (allowedTypes.Contains(stringType.Value))
                     {
-                        return "AccountAddress";
-                    }
-
-                    return stringType.Value;
-                }
-
-                throw new Exception($"Unknown pure normalized type {stringType.Value}");
-            }
-
-            if (normalizedType as SuiMoveNormalizedTypeVector != null)
-            {
-                do
-                {
-                    SuiMoveNormalizedTypeVector vectorType = (SuiMoveNormalizedTypeVector)normalizedType;
-
-                    if (argVal == null || argVal.GetType() == typeof(string))
-                    {
-                        if (GetPureNormalizedType(vectorType.Vector, argVal) == "U8")
+                        if (allowedNumTypes.Contains(stringType.Value))
                         {
-                            return "string";
+                            return stringType.Value;
+                        }
+                        else if (stringType.Value == "Bool")
+                        {
+                            return "bool";
+                        }
+                        else if (stringType.Value == "Address")
+                        {
+                            return "address";
+                        }
+                        else
+                        {
+                            throw new NotSupportedException();
                         }
                     }
 
-                    if (argVal != null && !(argVal.GetType().IsArray))
+                    throw new Exception($"Unknown pure normalized type {stringType.Value}");
+                case SuiMoveNormalizedTypeSerializationType.Vector:
+                    SuiMoveNormalizedTypeVector vectorType = (SuiMoveNormalizedTypeVector)normalizedType.NormalizedType;
+
+                    if(vectorType.Vector.Type == SuiMoveNormalizedTypeSerializationType.String)
                     {
-                        throw new Exception($"Expect {argVal} to be an array, received {argVal.GetType()}");
+                        if (argVal.GetType() == typeof(BString) && ((SuiMoveNormalizedTypeString)vectorType.Vector.NormalizedType).Value == "U8")
+                            return "string";
                     }
 
                     string innerType = GetPureNormalizedType(vectorType.Vector, argVal);
 
                     if (innerType == null)
-                        break;
+                        return null;
 
                     return $"vector<{innerType}>";
-                }
-                while (false);
-            }
+                case SuiMoveNormalizedTypeSerializationType.Struct:
+                    SuiMoveNormalziedTypeStruct structType = (SuiMoveNormalziedTypeStruct)normalizedType.NormalizedType;
 
-            if (normalizedType as SuiMoveNormalziedTypeStruct != null)
-            {
-                do
-                {
-                    SuiMoveNormalziedTypeStruct structType = (SuiMoveNormalziedTypeStruct)normalizedType;
-
-                    if (IsSameStruct(structType.Struct, resolvedAsciiStr) || IsSameStruct(structType.Struct, resolvedUtf8Str))
-                    {
+                    if (IsSameStruct(structType, resolvedAsciiStr))
                         return "string";
-                    }
-                    else if (IsSameStruct(structType.Struct, resolvedSuiId))
+
+                    if (IsSameStruct(structType, resolvedUtf8Str))
+                        return "utf8string";
+
+                    if (IsSameStruct(structType, resolvedSuiId))
+                        return "address";
+
+                    if (IsSameStruct(structType, resolvedStdOption))
                     {
-                        return "AccountAddress";
+                        if (structType.Struct.TypeArguments.Length == 0)
+                            throw new Exception("Type argument is empty");
+
+                        SuiMoveNormalizedTypeVector option_to_vec = new SuiMoveNormalizedTypeVector(structType.Struct.TypeArguments[0]);
+                        return GetPureNormalizedType(new SuiMoveNormalizedType(option_to_vec, SuiMoveNormalizedTypeSerializationType.Vector), argVal);
                     }
-                    else if (IsSameStruct(structType.Struct, resolvedStdOption))
-                    {
-                        //SuiMoveNormalizedTypeVector vectorType = new SuiMoveNormalizedTypeVector(structType.Struct.typeArgs[0]); TODO: Marcus: Implement case for option struct
-                    }
-                }
-                while (false);
+
+                    break;
+                default:
+                    return null;
             }
 
             return null;
         }
 
-        private static bool IsSameStruct(SuiStructTag lhs, StandardStruct rhs)
+        private static bool IsSameStruct(SuiMoveNormalziedTypeStruct lhs, StandardStruct rhs)
         {
             return
-                lhs.address == rhs.Address &&
-                lhs.module == rhs.Module &&
-                lhs.name == rhs.Name;
+                lhs.Struct.StructTag.address == rhs.Address &&
+                lhs.Struct.StructTag.module == rhs.Module &&
+                lhs.Struct.StructTag.name == rhs.Name;
         }
     }
 }

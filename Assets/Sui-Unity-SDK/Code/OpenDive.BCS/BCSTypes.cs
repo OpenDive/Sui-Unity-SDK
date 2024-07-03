@@ -1234,12 +1234,12 @@ namespace OpenDive.BCS
 
         public void Serialize(Serialization serializer)
         {
-            this.StructTag.address.Serialize(serializer);
+            serializer.Serialize(this.StructTag.address);
             serializer.Serialize(this.StructTag.module);
             serializer.Serialize(this.StructTag.name);
 
             if (this.TypeArguments.Length != 0)
-                serializer.Serialize(this.StructTag.typeArgs);
+                serializer.Serialize(this.TypeArguments);
         }
 
         //public static SuiMoveNormalizedStructType Deserialize(Deserialization deserializer)

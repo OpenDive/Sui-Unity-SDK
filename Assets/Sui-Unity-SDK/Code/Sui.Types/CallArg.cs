@@ -51,6 +51,13 @@ namespace Sui.Types
             Value = value;
         }
 
+        public PureCallArg(ISerializable value)
+        {
+            Serialization ser = new Serialization();
+            ser.Serialize(value);
+            this.Value = ser.GetBytes();
+        }
+
         public void Serialize(Serialization serializer)
         {
             serializer.SerializeU32AsUleb128((uint)Type.Pure);

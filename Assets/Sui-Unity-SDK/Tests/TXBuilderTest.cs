@@ -52,19 +52,20 @@ namespace Sui.Tests
                 var tx = new Sui.Transactions.TransactionBlock();
 
                 tx.AddMoveCallTx(
-                    new SuiMoveNormalizedStructType(new SuiStructTag(sui_address, "pay", "split", new ISerializableTag[0])), // TODO: THIS IS A NORMALIZED STRUCT
+                    new SuiMoveNormalizedStructType(new SuiStructTag(sui_address, "pay", "split", new ISerializableTag[0]), new SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
                     new ISerializableTag[] { new StructTag(sui_address, "sui", "SUI", new ISerializableTag[0]) },
                     new SuiTransactionArgument[]
                     {
-                    new SuiTransactionArgument(tx.AddObjectInput(coin_0.CoinObjectId)),
-                    new SuiTransactionArgument(tx.AddInput(Types.Type.Pure, new U64((ulong)(toolbox.DefaultGasBudget * 2))))
+                        new SuiTransactionArgument(tx.AddObjectInput(coin_0.CoinObjectId)),
+                        new SuiTransactionArgument(tx.AddInput(Types.Type.Pure, new U64((ulong)(toolbox.DefaultGasBudget * 2))))
                     }
                 );
 
                 tx.SetSenderIfNotSet(toolbox.Account.AccountAddress);
                 Task<string> digest_task = tx.GetDigest(new BuildOptions(toolbox.Client));
                 //yield return new WaitUntil(() => digest_task.IsCompleted);
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 Debug.Log($"MARCUS::: ERROR - {JsonConvert.SerializeObject(e)}");
             }

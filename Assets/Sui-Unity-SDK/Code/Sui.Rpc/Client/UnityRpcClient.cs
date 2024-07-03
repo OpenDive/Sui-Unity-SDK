@@ -56,7 +56,7 @@ namespace Sui.Rpc
 
                     RpcResult<T> result = HandleResult<T>(request.downloadHandler);
                     result.RawRpcRequest = requestJson;
-                    Debug.Log("AFTER HANDLE RESULT");
+                    Debug.Log($"AFTER HANDLE RESULT - {result}");
                     return result;
                 }
             }
@@ -67,7 +67,7 @@ namespace Sui.Rpc
                     ErrorMessage = e.Message,
                     RawRpcRequest = requestJson
                 };
-                var errorMessage = $"SendAsync Caught exception: {e.Message}";
+                var errorMessage = $"SendAsync Caught exception: {e}";
                 Debug.LogError(errorMessage);
 
                 return result;

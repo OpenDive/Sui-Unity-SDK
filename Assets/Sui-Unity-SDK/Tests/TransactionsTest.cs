@@ -31,7 +31,7 @@ namespace Sui.Tests
             ICallArg[] inputs = new ICallArg[] { new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef)) };
 
             MoveCall moveCallTransaction = new MoveCall(
-                new SuiMoveNormalizedStructType(new SuiStructTag(suiAddress, "display", "new", new ISerializableTag[0])), // TODO: THIS IS A NORMALIZED STRUCT
+                new SuiMoveNormalizedStructType(new SuiStructTag(suiAddress, "display", "new", new ISerializableTag[0]), new Rpc.Models.SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
                 new ISerializableTag[] { new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[0]) },
                 new SuiTransactionArgument[] { new SuiTransactionArgument(new TransactionBlockInput(0)) } // TODO: We should not use this abstract, this should be a "pure" or an "object.
             );
@@ -94,7 +94,7 @@ namespace Sui.Tests
             ICallArg[] inputs = new ICallArg[] { new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef)) };
 
             MoveCall moveCallTransaction = new MoveCall(
-                new SuiMoveNormalizedStructType(new SuiStructTag(suiAddress, "display", "new", new ISerializableTag[0])), // TODO: THIS IS A NORMALIZED STRUCT
+                new SuiMoveNormalizedStructType(new SuiStructTag(suiAddress, "display", "new", new ISerializableTag[0]), new Rpc.Models.SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
                 new ISerializableTag[] { new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[0]) },
                 new SuiTransactionArgument[]
                 {

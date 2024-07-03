@@ -967,7 +967,7 @@ namespace Sui.Transactions
             foreach (TransactionBlockInput input in inputs)
             {
                 // The value is an ObjectID (AccountAddress) add it to the objects to resolve
-                if (input.Value.GetType() == typeof(string))
+                if (input.Value.GetType() == typeof(BString))
                 {
                     ObjectToResolve objectToResolve = new ObjectToResolve(
                         ((BString)input.Value).value,
@@ -1120,33 +1120,29 @@ namespace Sui.Transactions
                             packageId,
                             moduleName,
                             functionName
-                    );
+                        );
+
                     NormalizedMoveFunctionResponse normalized = result.Result;
                     #endregion END - RPC Call
 
-                    // Entry functions can have a mutable reference to an instance of the TxContext
-                    // struct defined in the TxContext module as the last parameter. The caller of
-                    // the function does not need to pass it in as an argument.
-                    bool hasTxContext
-                        = normalized.Parameters.Count > 0
-                        && normalized.Parameters.Last() as SuiMoveNormalizedTypeString != null
-                        && IsTxContext(new SuiStructTag(((SuiMoveNormalizedTypeString)normalized.Parameters.Last()).Value));
+                    //// Entry functions can have a mutable reference to an instance of the TxContext
+                    //// struct defined in the TxContext module as the last parameter. The caller of
+                    //// the function does not need to pass it in as an argument.
+                    bool hasTxContext = normalized.HasTxContext();
 
-                    // The list of parameters returned by the RPC call
-                    List<ISuiMoveNormalizedType> paramsList
-                        = (List<ISuiMoveNormalizedType>)(hasTxContext
-                        ? normalized.Parameters.Take(normalized.Parameters.Count - 1)
-                        : normalized.Parameters);
+                    //// The list of parameters returned by the RPC call
+                    List<SuiMoveNormalizedType> paramsList
+                        = hasTxContext
+                        ? normalized.Parameters.Take(normalized.Parameters.Count - 1).ToList()
+                        : normalized.Parameters;
 
-                    if(paramsList.Count != moveCall.Arguments.Length)
-                    {
+                    if (paramsList.Count != moveCall.Arguments.Length)
                         // TODO: Irvin fix this -- we cannot throw an exception
                         // MARCUS: Maybe we can look into error enums for handling
                         // different exception issues.
                         throw new ArgumentException("Incorrect number of arguments.");
-                    }
 
-                    foreach(var param_enumerated in paramsList.Select((param, i) => new { i, param }))
+                    foreach (var param_enumerated in paramsList.Select((param, i) => new { i, param }))
                     {
                         SuiTransactionArgument arg = moveCall.Arguments[param_enumerated.i];
 
@@ -1155,79 +1151,41 @@ namespace Sui.Transactions
 
                         TransactionBlockInput inputArg = (TransactionBlockInput)arg.TransactionArgument;
                         TransactionBlockInput input = inputs[inputArg.Index];
-                        // Skip if the input is already resolved, aka if the input is a BuilderArg
+
+                        //// Skip if the input is already resolved, aka if the input is a BuilderArg
                         if (input.Value.GetType() == typeof(ICallArg)) continue;
 
-                        // When we reach here, this means that the value could be a BString, a U8, etc.
-                        // We need to compare agains the RPC response params to know how to cast to a concrete type
-                        // Once we know how to cast, then we will be able to serialize it later on
+                        //// When we reach here, this means that the value could be a BString, a U8, etc.
+                        //// We need to compare agains the RPC response params to know how to cast to a concrete type
+                        //// Once we know how to cast, then we will be able to serialize it later on
                         ISerializable inputValue = input.Value;
+                        string ser_type = Serializer.GetPureNormalizedType(param_enumerated.param, inputValue);
 
-                        //Type t = Type.GetType(param); // for reference
-                        //Convert.ChangeType(value1, intType); // for reference
-
-                        //ICallArg inputValue = input.Value;
-                        //// Check if param received from RPC is Pure serializable
-                        //Serialization ser = new Serialization();
-                        //input.Value.Serialize(ser);
-                        ////input.Value = new Bytes(ser.GetBytes());
-                        ///
-
-                        string serType = Serializer.GetPureNormalizedType(param_enumerated.param, inputValue);
-                        if (serType != null)
+                        if (ser_type != null)
                         {
-                            // TODO: IRVIN update this to use a clone of the input list
-                            Serialization ser = new Serialization();
-                            inputValue.Serialize(ser);
-                            inputs[inputArg.Index].Value = new PureCallArg(ser.GetBytes());
+                            this.BlockDataBuilder.Builder.Inputs[inputArg.Index].Value = new PureCallArg(inputValue);
                             continue;
                         }
 
-                        //Type serType = Serializer.GetPureNormalizedTypeType(param, inputValue);
+                        if (Serializer.ExtractStructType(param_enumerated.param) == null && param_enumerated.param.Type != SuiMoveNormalizedTypeSerializationType.TypeParameter)
+                            throw new Exception("Unknown Call Arg Type");
 
-                        // TODO: NOTE IRVIN -- All this `GetPureNormalizedTypeType` function does is "verify"
-                        // TODO:    that the input value matches the type that the MoveCall expects.
-                        // TODO: NOTE: HENCE we don't really need to return anything, all we have to do is just check that the type of the input value
-                        // TODO:    matches what is expected, if doesn't match then we return false, and break / end the program.
-                        // TODO: NOTE: We don't need a "serType" because we are already passing concrete types such as:
-                        // TODO:    `AccountAddress` or `U8` or `Bytes` for byte arrays, of Sequence for vectors
-
-                        // TODO: NOW NOTE THAT -- for structs it's trickier because the MoveCall is expecting an object, and in the C# side
-                        // TODO:    We can only work with class / objects, hence we just have to do a comparison of the properties of the expected object
-
-
-                        //bool iSPureNormalizedType = Serializer.MatchesPureNormalizedType(param, inputValue);
-                        // if(iSPureNormalizedType) { 
-                        //this.BlockDataBuilder.Inputs[inputArg.Index].Value = new PureCallArg(inputValue);
-                        // }
-
-                        ISuiMoveNormalizedType structVal = Serializer.ExtractStructType(param_enumerated.param);
-
-                        if (structVal != null || param_enumerated.param as SuiMoveNormalziedTypeParameterType != null)
+                        if (inputValue.GetType() == typeof(BString))
                         {
-                            if (inputValue.GetType() != typeof(AccountAddress))
-                                throw new Exception($"Expect the argument to be an object id string, got {inputValue.GetType()}");
-
-                            ObjectToResolve objectToResolve = new ObjectToResolve(
-                                ((BString)inputValue).value,
-                                input,
-                                param_enumerated.param
-                            );
-                            objectsToResolve.Add(objectToResolve);
+                            objectsToResolve.Add(new ObjectToResolve(((BString)inputValue).value, input, param_enumerated.param));
                             continue;
                         }
 
-                        throw new Exception($"Unknown call arg type {param_enumerated.param} for value {inputValue.GetType()}");
+                        throw new Exception("Input Value Is Not Object ID");
                     }
                 }
             }
             #endregion END - Resolve MoveModules
             #region Resolve objects
             Debug.Log($"MARCUS: OBJECTS TO RESOLVE COUNT - {objectsToResolve.Count}");
-            //throw new Exception("Not Implemented");
-            if (objectsToResolve.Count != 0)
+            if (objectsToResolve.Count > 0)
             {
-                List<string> mappedIds = (List<string>)objectsToResolve.Select(x => x.Id);
+                List<string> mappedIds = objectsToResolve.Select(x => x.Id).ToList();
                 // NOTE: Insertion order in HashSet will be maintained until removing or re-adding
                 List<string> dedupedIds = new HashSet<string>(mappedIds).ToList();
 
@@ -1236,12 +1194,12 @@ namespace Sui.Transactions
                 // https://gist.github.com/gmamaladze/3d60c127025c991a087e
 
                 // Chunk list of IDs into smaller lists to use in RPC Call `MultiGetObjects`
-                List<List<string>> objectChunks = Chunk(dedupedIds, 50);
+                List<List<string>> objectChunks = dedupedIds.Chunked((int)TransactionConstants.maxObjectsPerFetch);
 
-                List<List<ObjectDataResponse>> objectsResponse = new List<List<ObjectDataResponse>>();
+                List<ObjectDataResponse> objectsResponse = new List<ObjectDataResponse>();
                 foreach(List<string> objectIds in objectChunks)
                 {
-                    ObjectDataOptions optionsObj = new ObjectDataOptions();
+                    ObjectDataOptions optionsObj = ObjectDataOptions.ShowNone();
                     optionsObj.ShowOwner = true;
 
                     #region RPC Call MultiGetObjects
@@ -1252,35 +1210,30 @@ namespace Sui.Transactions
                     );
                     #endregion END - Call MultiGetObjects
 
-                    List<ObjectDataResponse> objects
-                        = (List<ObjectDataResponse>)response.Result;
-                    objectsResponse.Add(objects);
+                    List<ObjectDataResponse> objects = response.Result.ToList();
+                    objectsResponse.AddRange(objects);
                 }
-                // Flatten responses from MultiGetObjects
-                List<ObjectDataResponse> objectsFlatten
-                    = objectsResponse.SelectMany(x => x).ToList();
 
                 // Create a map of IDs to ObjectDataResponse
                 Dictionary<string, ObjectDataResponse> objectsById
                     = new Dictionary<string, ObjectDataResponse>();
 
                 // Populate map(Dictionary) `objectsById`
-                for(int i = 0; i < dedupedIds.Count; i++)
+                for (int i = 0; i < dedupedIds.Count; i++)
                 {
                     string id = dedupedIds[i];
-                    ObjectDataResponse obj = objectsFlatten[i];
+                    ObjectDataResponse obj = objectsResponse[i];
                     objectsById.Add(id, obj);
                 }
 
                 // Filter objects that returned an error
-                List<ObjectDataResponse> invalidObjects
-                    = (List<ObjectDataResponse>)objectsById.Values.ToList().Where(
-                        obj => obj.Error != null
-                    );
+                List<string> invalidObjects
+                    = objectsById.Where(
+                        obj => obj.Value.Error != null
+                    ).Select(obj => obj.Key).ToList();
 
                 if (invalidObjects.Count > 0)
-                    throw new Exception("The following input objects are invalid: {}");
-
+                    throw new Exception($"The following objects are invalid: {JsonConvert.SerializeObject(invalidObjects)}");
 
                 foreach (ObjectToResolve objectToResolve in objectsToResolve)
                 {
@@ -1381,9 +1334,9 @@ namespace Sui.Transactions
         {
             public string Id { get; set; }
             public TransactionBlockInput Input { get; set; }
-            public ISuiMoveNormalizedType NormalizedType;
+            public SuiMoveNormalizedType NormalizedType;
 
-            public ObjectToResolve(string id, TransactionBlockInput input, ISuiMoveNormalizedType normalizedType) 
+            public ObjectToResolve(string id, TransactionBlockInput input, SuiMoveNormalizedType normalizedType) 
             {
                 this.Id = id;
                 this.Input = input;
@@ -1529,6 +1482,16 @@ namespace Sui.Transactions
             }
 
             IsPrepared = true;
+        }
+    }
+
+    public static class ListExtensions
+    {
+        public static List<List<T>> Chunked<T>(this List<T> source, int size)
+        {
+            return Enumerable.Range(0, (source.Count + size - 1) / size)
+                             .Select(i => source.Skip(i * size).Take(size).ToList())
+                             .ToList();
         }
     }
 }
