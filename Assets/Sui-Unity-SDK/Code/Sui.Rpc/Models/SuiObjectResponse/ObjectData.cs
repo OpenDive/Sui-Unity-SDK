@@ -1,5 +1,7 @@
 using System.Numerics;
 using Newtonsoft.Json;
+using Sui.Accounts;
+using Sui.Types;
 
 namespace Sui.Rpc.Models
 {
@@ -24,6 +26,32 @@ namespace Sui.Rpc.Models
 
         [JsonProperty("error", Required = Required.Default)]
         public string Error { get; set; }
+
+        public int? GetSharedObjectInitialVersion()
+        {
+            if (this.Data == null)
+                return null;
+
+            Owner owner = this.Data.Owner;
+
+            if (owner == null || owner.Shared == null)
+                return null;
+
+            return owner.Shared.InitialSharedVersion;
+        }
+
+        public Sui.Types.SuiObjectRef GetObjectReference()
+        {
+            if (this.Data == null)
+                return null;
+
+            return new Sui.Types.SuiObjectRef
+            (
+                AccountAddress.FromHex(this.Data.ObjectId),
+                (int)this.Data.Version,
+                this.Data.Digest
+            );
+        }
     }
 
     [JsonObject]
@@ -44,7 +72,7 @@ namespace Sui.Rpc.Models
         [JsonProperty("objectId")]
         public string ObjectId { get; set; }
 
-        [JsonProperty("owner")]
+        [JsonProperty("owner", Required = Required.Default)]
         public Owner Owner { get; set; }
 
         [JsonProperty("previousTransaction", Required = Required.Default)]
@@ -56,7 +84,7 @@ namespace Sui.Rpc.Models
         [JsonProperty("type", Required = Required.Default)]
         public string Type { get; set; }
 
-        [JsonProperty("version")]
+        [JsonProperty("version", Required = Required.Default)]
         public BigInteger Version { get; set; }
     }
 }

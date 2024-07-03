@@ -147,8 +147,6 @@ namespace Sui.Transactions
                 programmableTx
             );
 
-            Debug.Log($"MARCUS::: TRANSACTION DATA {JsonConvert.SerializeObject(transactionData)}");
-
             Serialization serializer = new Serialization();
             serializer.Serialize(transactionData);
             return serializer.GetBytes();
@@ -896,18 +894,14 @@ namespace Sui.Transactions
 
             IEnumerable<CoinDetails> filtered_coins = coins.Result.Data.Where((coin) => {
                 return BlockDataBuilder.Builder.Inputs.Any((input) => {
-                    if (input.Value.GetType() == typeof(ICallArg))
+                    if (input.Value.GetType() == typeof(ObjectCallArg))
                     {
-                        ICallArg call_arg = (ICallArg)input.Value;
-                        if (call_arg.Type == Sui.Types.Type.Object)
+                        ObjectArg object_arg = ((ObjectCallArg)input.Value).ObjectArg;
+                        if (object_arg.Type == ObjectRefType.ImmOrOwned)
                         {
-                            ObjectArg object_arg = ((ObjectCallArg)call_arg).ObjectArg;
-                            if (object_arg.Type == ObjectRefType.ImmOrOwned)
-                            {
-                                return
-                                    coin.CoinObjectId ==
-                                    ((Sui.Types.SuiObjectRef)object_arg.ObjectRef).ObjectId.ToHex();
-                            }
+                            return
+                                coin.CoinObjectId ==
+                                ((Sui.Types.SuiObjectRef)object_arg.ObjectRef).ObjectId.ToHex();
                         }
                     }
                     return false;
@@ -963,6 +957,7 @@ namespace Sui.Transactions
             // A list of move modules identified as needing to be resolved
             List<MoveCall> moveModulesToResolve     = new List<MoveCall>();
             List<ObjectToResolve> objectsToResolve  = new List<ObjectToResolve>();
+            List<ObjectToResolve> resolved_objects  = new List<ObjectToResolve>();
 
             foreach (TransactionBlockInput input in inputs)
             {
@@ -1138,8 +1133,6 @@ namespace Sui.Transactions
 
                     if (paramsList.Count != moveCall.Arguments.Length)
                         // TODO: Irvin fix this -- we cannot throw an exception
-                        // MARCUS: Maybe we can look into error enums for handling
-                        // different exception issues.
                         throw new ArgumentException("Incorrect number of arguments.");
 
                     foreach (var param_enumerated in paramsList.Select((param, i) => new { i, param }))
@@ -1238,97 +1231,83 @@ namespace Sui.Transactions
                 foreach (ObjectToResolve objectToResolve in objectsToResolve)
                 {
                     ObjectDataResponse obj = objectsById[objectToResolve.Id];
-                    //AccountAddress owner = obj.Data.Owner; // could be an object
-                    Owner owner = obj.Data.Owner;
 
-                    int? initialSharedVersion = owner.Shared.InitialSharedVersion;
+                    int? initialSharedVersion = obj.GetSharedObjectInitialVersion();
 
-                    if (initialSharedVersion != null)
+                    if (initialSharedVersion == null)
                     {
-                        bool mutable = InputsHandler.isMutableSharedObjectInput(
-                            (ICallArg)objectToResolve.Input.Value
-                        );
+                        Sui.Types.SuiObjectRef obj_ref = obj.GetObjectReference();
 
-                        inputs[objectToResolve.Input.Index].Value
-                            = new SharedObjectRef(
+                        if (obj_ref == null)
+                            continue;
+
+                        objectToResolve.Input.Value = new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, obj_ref));
+                        if (resolved_objects.Count > objectToResolve.Input.Index)
+                            resolved_objects[objectToResolve.Input.Index] = objectToResolve;
+                        else
+                            resolved_objects.Add(objectToResolve);
+
+                        continue;
+                    }
+
+                    bool is_by_value =
+                        objectToResolve.NormalizedType != null &&
+                        Serializer.ExtractStructType(objectToResolve.NormalizedType) == null;
+
+                    bool mutable = is_by_value || (
+                        objectToResolve.NormalizedType != null &&
+                        Serializer.ExtractMutableReference(objectToResolve.NormalizedType) != null
+                    );
+
+                    objectToResolve.Input.Value = new ObjectCallArg
+                    (
+                        new ObjectArg
+                        (
+                            ObjectRefType.Shared,
+                            new SharedObjectRef
+                            (
                                 AccountAddress.FromHex(objectToResolve.Id),
                                 (int)initialSharedVersion,
                                 mutable
-                        );
-                    }
-                    else if (objectToResolve.NormalizedType != null)
+                            )
+                        )
+                    );
+
+                    if (resolved_objects.Count > objectToResolve.Input.Index)
                     {
-                        // TODO: Implement Receiving Type casting
+                        if (resolved_objects[objectToResolve.Input.Index].Input.Value.GetType() == typeof(ICallArg))
+                        {
+                            ICallArg call_arg_resolved = (ICallArg)resolved_objects[objectToResolve.Input.Index].Input.Value;
+                            if (objectToResolve.Input.Value.GetType() == typeof(ICallArg))
+                            {
+                                ICallArg call_arg_to_resolve = (ICallArg)objectToResolve.Input.Value;
+                                if
+                                (
+                                    call_arg_to_resolve.Type == Sui.Types.Type.Object &&
+                                    ((ObjectCallArg)call_arg_to_resolve).ObjectArg.Type == ObjectRefType.Shared
+                                )
+                                {
+                                    SharedObjectRef shared = (SharedObjectRef)((ObjectCallArg)call_arg_to_resolve).ObjectArg.ObjectRef;
+                                    shared.mutable =
+                                        (call_arg_resolved.GetType() == typeof(ObjectCallArg) && ((ObjectCallArg)call_arg_resolved).IsMutableSharedObjectInput()) ||
+                                        shared.mutable;
+                                    objectToResolve.Input.Value = new ObjectCallArg(new ObjectArg(ObjectRefType.Shared, shared));
+                                }
+                            }
+                        }
+                        resolved_objects[objectToResolve.Input.Index] = objectToResolve;
                     }
                     else
-                    {
-                        ObjectData data = obj.Data;
-                        if (data != null)
-                        {
-                            inputs[objectToResolve.Input.Index].Value
-                                = new Sui.Types.SuiObjectRef(
-                                    AccountAddress.FromHex(data.ObjectId),
-                                    (int)data.Version,
-                                    data.Digest
-                            );
-                        }
-                    }
+                        resolved_objects.Add(objectToResolve);
                 }
+
+                foreach (ObjectToResolve resolved_object in resolved_objects)
+                    this.BlockDataBuilder.Builder.Inputs[resolved_object.Input.Index] = resolved_object.Input;
+
+                this.BlockDataBuilder.Builder.Inputs.Sort((TransactionBlockInput t1, TransactionBlockInput t2) => t1.Index.CompareTo(t2.Index));
             }
             #endregion END - Resolve objects
         }
-
-        /// <summary>
-        /// Chuck the list of duduped ids so that it can be used in the RPC call for multi objects.
-        /// </summary> ✅
-        /// <param name="dedupedIds"></param>
-        /// <param name="size"></param>
-        /// <returns></returns>
-        private List<List<string>> Chunk(List<string> dedupedIds, int size)
-        {
-            int length = (int)Math.Ceiling((double)(dedupedIds.Count / size));
-            List<List<string>> ret = new List<List<string>>();
-            int i = 0;
-            while(i < length)
-            {
-                // TODO: Check if this might break because of index out of bounds
-                List<string> chunk = dedupedIds.GetRange(i * size, i * size + size);
-                ret.Add(chunk);
-                i++;
-            }
-            return ret;
-        }
-
-        /// <summary>
-        /// Encodes a `TransactionBlockInput` input.
-        /// Meaning that if the `value` inside the `TransactionBlockInput`
-        /// is simply an objectID (`AccountAddress`) then we need to resolve it.
-        /// Otherwise, if it's a "pure", then we create a `TransactionBlockInput`
-        /// with a "pure" value.
-        /// </summary>
-        /// <param name="index"></param>
-        //private void EncodeInput(int index)
-        //{
-        //    TransactionBlockInput input = BlockDataBuilder.Inputs[index];
-
-        //    Type type = input.Value.GetType();
-
-        //    // If the value of the `TransactionBlockInput` input is already a `BuilderCallArg`
-        //    if (type == typeof(ICallArg)) return;
-
-        //    if(type == typeof(AccountAddress))
-        //    {
-        //        // TODO: Figure out porting logic from TypeScript where they pass `input` by reference
-        //        // <code> input.value = Inputs.Pure(input.value, wellKnownEncoding.type); </code>
-        //    } else if(type == typeof(Bytes))// else if (wellKnownEncoding.kind === 'pure') 
-        //    {
-        //        //input.Value = input.Value.Serialize
-        //    }
-        //    else
-        //    {
-
-        //    }
-        //}
 
         public class ObjectToResolve
         {
@@ -1342,54 +1321,6 @@ namespace Sui.Transactions
                 this.Input = input;
                 this.NormalizedType = normalizedType;
             }
-        }
-
-        private string GetPureSeralizationType(string normalizedType, ISerializable argVal)
-        {
-            bool isPure = Enum.IsDefined(typeof(AllowedTypes), normalizedType);
-
-            if (isPure)
-            {
-                //string[] uTypes = new string[] { "U8", "U16", "U32", "U64", "U128", "U256" };
-                //if (uTypes.Contains(normalizedType))
-                //{
-                //    Type argValType = argVal.GetType();
-                //}
-                //else if (normalizedType.Equals("Bool"))
-                //{
-                //    //bool booleanValue;
-                //    //if (bool.TryParse(pureArgVal.Value, out booleanValue))
-                //    //{
-                //    //    Console.WriteLine($"Conversion successful: '{value}' to {booleanValue}.\n");
-                //    //}
-                //    //else
-                //    //{
-                //    //    Console.WriteLine($"Conversion Failed: '{value}' to {booleanValue}.\n");
-                //    //}
-                //}
-                //else if (normalizedType.Equals("Address"))
-                //{
-
-                //}
-                return normalizedType.ToLower();
-
-            }
-            else if(normalizedType.Equals("string"))
-            {
-                throw new Exception("Unknown pure normalized type: " + normalizedType);
-            }
-
-            if (normalizedType.Equals("Vector"))
-            {
-
-            }
-
-            throw new NotImplementedException();
-        }
-
-        private bool IsTxContext(SuiStructTag @struct)
-        {
-            return @struct.address.ToHex().Equals("0x2") && @struct.module.Equals("tx_context") && @struct.name.Equals("TxContext");
         }
 
         /// <summary>

@@ -104,6 +104,15 @@ namespace Sui.Types
             ObjectArg = objectArg;
         }
 
+        public bool IsMutableSharedObjectInput()
+        {
+            if (this.ObjectArg.Type == ObjectRefType.ImmOrOwned)
+                return false;
+
+            return
+                ((SharedObjectRef)this.ObjectArg.ObjectRef).mutable;
+        }
+
         public void Serialize(Serialization serializer)
         {
             serializer.SerializeU32AsUleb128((uint)Type.Object);

@@ -40,31 +40,37 @@ namespace Sui.Transactions
 
         static public SuiMoveNormalziedTypeStruct ExtractStructType(SuiMoveNormalizedType normalizedType)
         {
-            Debug.Log($"MARCUS::: START - {normalizedType.Type}");
             switch (normalizedType.Type)
             {
                 case SuiMoveNormalizedTypeSerializationType.Reference:
-                    Debug.Log($"MARCUS::: REFERENCE - {normalizedType.NormalizedType}");
                     SuiMoveNormalizedTypeReference reference = (SuiMoveNormalizedTypeReference)normalizedType.NormalizedType;
                     switch(reference.Reference.Type)
                     {
                         case SuiMoveNormalizedTypeSerializationType.Struct:
-                            Debug.Log($"MARCUS::: STRUCT REFERENCE - {reference.Reference.NormalizedType}");
                             return (SuiMoveNormalziedTypeStruct)reference.Reference.NormalizedType;
                         default:
                             return null;
                     }
                 case SuiMoveNormalizedTypeSerializationType.MutableReference:
-                    Debug.Log($"MARCUS::: MUTABLE REFERENCE - {normalizedType.NormalizedType}");
                     SuiMoveNormalizedTypeMutableReference mutableReference = (SuiMoveNormalizedTypeMutableReference)normalizedType.NormalizedType;
                     switch (mutableReference.MutableReference.Type)
                     {
                         case SuiMoveNormalizedTypeSerializationType.Struct:
-                            Debug.Log($"MARCUS::: STRUCT MUTABLE REFERENCE - {mutableReference.MutableReference.NormalizedType}");
                             return (SuiMoveNormalziedTypeStruct)mutableReference.MutableReference.NormalizedType;
                         default:
                             return null;
                     }
+                default:
+                    return null;
+            }
+        }
+
+        static public SuiMoveNormalizedType ExtractMutableReference(SuiMoveNormalizedType normalized_type)
+        {
+            switch (normalized_type.Type)
+            {
+                case SuiMoveNormalizedTypeSerializationType.MutableReference:
+                    return ((SuiMoveNormalizedTypeMutableReference)normalized_type.NormalizedType).MutableReference;
                 default:
                     return null;
             }
