@@ -227,8 +227,8 @@ namespace Sui.Rpc
             Debug.Log("IRVIN:::: " + structTag.ToString());
 
             RpcResult<Balance> rpcResult = await client.GetBalanceAsync(
-                address,
-                structTag
+                address.ToHex(),
+                structTag.ToString()
             );
             Balance balance = rpcResult.Result;
             Debug.Log("IRVIN:::: " + balance);
@@ -245,7 +245,7 @@ namespace Sui.Rpc
             //AccountAddress address = AccountAddress.FromHex("0xa2da382c0a40261c675cc73c20f3d94e2ee7d8ebcf21e9dab5012600d745cb0f");
             Debug.Log("IRVIN:::: " + address.ToHex());
             RpcResult<IEnumerable<Balance>> rpcResult = await client.GetAllBalancesAsync(
-                address
+                address.ToHex()
             );
             Debug.Log("IRVIN:::: ~~~");
             List<Balance> balances = (List<Balance>)rpcResult.Result;
@@ -286,7 +286,7 @@ namespace Sui.Rpc
             Debug.Log("IRVIN:::: ~~~~~" + structTag.ToString());
 
             RpcResult<TotalSupply> rpcResult = await client.GetTotalSupply(
-                structTag
+                structTag.ToString()
             );
 
             TotalSupply totalSupply = rpcResult.Result;

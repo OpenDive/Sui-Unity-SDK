@@ -890,7 +890,7 @@ namespace Sui.Transactions
                 BlockDataBuilder.Builder.GasConfig.Owner.ToHex() :
                 BlockDataBuilder.Builder.Sender.ToHex();
 
-            RpcResult<CoinPage> coins = await options.Provider.GetCoins(gas_owner, "0x2::sui::SUI", 10);
+            RpcResult<CoinPage> coins = await options.Provider.GetCoins(gas_owner, "0x2::sui::SUI");
 
             IEnumerable<CoinDetails> filtered_coins = coins.Result.Data.Where((coin) => {
                 return BlockDataBuilder.Builder.Inputs.Any((input) => {

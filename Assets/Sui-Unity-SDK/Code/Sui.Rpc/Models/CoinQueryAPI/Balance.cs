@@ -22,8 +22,9 @@ namespace Sui.Rpc.Models
     [JsonObject]
     public class Balance
     {
-        [JsonProperty("coinType"), JsonConverter(typeof(SuiStructTagConverter))]
-        public SuiStructTag cointType;
+        //[JsonProperty("coinType"), JsonConverter(typeof(SuiStructTagConverter))]  // TODO: Look into proper FromString() method for SuiStructTags
+        [JsonProperty("coinType")]
+        public string cointType;
 
         [JsonProperty("coinObjectCount")]
         public int CoinObjectCount;

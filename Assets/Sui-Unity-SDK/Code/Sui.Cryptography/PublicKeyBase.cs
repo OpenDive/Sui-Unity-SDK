@@ -176,6 +176,12 @@ namespace Sui.Cryptography
         public string ToBase64() => KeyBase64;
 
         /// <summary>
+        /// Return the private key as a hex string.
+        /// </summary>
+        /// <returns>The private key as a hex string.</returns>
+        public string ToHex() => KeyHex;
+
+        /// <summary>
         /// Return the Sui representation of the public key encoded in
         /// base-64. A Sui public key is formed by the concatenation
         /// of the scheme flag with the raw bytes of the public key.

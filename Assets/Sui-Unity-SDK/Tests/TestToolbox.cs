@@ -52,7 +52,7 @@ namespace Sui.Tests
         public TestToolbox()
         {
             this.Account = new Account();
-            this.Client = new SuiClient(Constants.DevnetConnection);
+            this.Client = new SuiClient(Constants.LocalnetConnection);
         }
 
         public string Address()
@@ -67,7 +67,7 @@ namespace Sui.Tests
 
         public async Task<RpcResult<CoinPage>> GetCoins()
         {
-            return await this.Client.GetCoins(this.Account.SuiAddress(), "0x2::sui::SUI", 50);
+            return await this.Client.GetCoins(this.Account.SuiAddress(), "0x2::sui::SUI");
         }
 
         public async Task<List<Validator>> GetActiveValidators()

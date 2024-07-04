@@ -65,7 +65,7 @@ namespace Sui.Rpc.Api
         /// <param name="objectId"></param>
         /// <param name="limit"></param>
         /// <returns></returns>
-        Task<RpcResult<CoinPage>> GetCoins(string owner, string coinType, string objectId, int limit);
+        Task<RpcResult<CoinPage>> GetCoins(string owner, string coinType, string objectId, int? limit);
 
         /// <summary>
         /// Return transaction execution effects including the gas cost summary,

@@ -1141,12 +1141,10 @@ namespace OpenDive.BCS
 
             SuiStructTag otherStructTag = (SuiStructTag)other;
 
-            return (
-                this.address.Equals(otherStructTag.address)
-                && this.module.Equals(otherStructTag.module)
-                && this.name.Equals(otherStructTag.name)
-                && Enumerable.SequenceEqual(this.typeArgs, otherStructTag.typeArgs)
-            ); ;
+            return 
+                this.address.ToHex() == otherStructTag.address.ToHex()
+                && this.module == otherStructTag.module
+                && this.name == otherStructTag.name;
         }
 
         public override string ToString()

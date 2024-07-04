@@ -12,14 +12,14 @@ namespace Sui.Rpc.Api
         /// https://docs.sui.io/sui-jsonrpc#suix_getBalance
         /// </summary>
         /// <returns></returns>
-        Task<RpcResult<Balance>> GetBalanceAsync(AccountAddress owner, SuiStructTag coinType = null);
+        Task<RpcResult<Balance>> GetBalanceAsync(string owner, string coinType = null);
 
         /// <summary>
         /// Return the total coin balance for all coin type, owned by the address owner.
         /// https://docs.sui.io/sui-jsonrpc#suix_getAllBalances
         /// </summary>
         /// <returns></returns>
-        Task<RpcResult<IEnumerable<Balance>>> GetAllBalancesAsync(AccountAddress owner);
+        Task<RpcResult<IEnumerable<Balance>>> GetAllBalancesAsync(string owner);
 
         /// <summary>
         /// https://docs.sui.io/sui-jsonrpc#suix_getCoinMetadata
@@ -33,6 +33,6 @@ namespace Sui.Rpc.Api
         /// </summary>
         /// <param name="coin_type"></param>
         /// <returns></returns>
-        Task<RpcResult<TotalSupply>> GetTotalSupply(SuiStructTag coinType);
+        Task<RpcResult<TotalSupply>> GetTotalSupply(string coinType);
     }
 }

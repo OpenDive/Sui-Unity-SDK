@@ -137,18 +137,18 @@ namespace Sui.Rpc
         }
 
         public async Task<RpcResult<CoinPage>> GetCoins(
-            string owner, string coinType, int limit)
+            string owner, string coinType = null, string cursor = null, int? limit = null)
         {
             return await SendRpcRequestAsync<CoinPage>(
                 Methods.suix_getCoins.ToString(),
-                ArgumentBuilder.BuildArguments(owner, coinType, null, limit)
+                ArgumentBuilder.BuildArguments(owner, coinType, cursor, limit)
             );
         }
 
         public async Task<RpcResult<CoinPage>> GetAllCoins
         (
             string account,
-            int limit
+            int? limit = null
         )
         {
             return await SendRpcRequestAsync<CoinPage>(
@@ -184,20 +184,20 @@ namespace Sui.Rpc
         }
 
         public async Task<RpcResult<Balance>> GetBalanceAsync(
-            AccountAddress owner, SuiStructTag coinType = null)
+            string owner, string coinType = null)
         {
             return await SendRpcRequestAsync<Balance>(
                 Methods.suix_getBalance.ToString(),
-                ArgumentBuilder.BuildArguments(owner.ToHex(), coinType.ToString())
+                ArgumentBuilder.BuildArguments(owner, coinType)
             );
         }
 
         public async Task<RpcResult<IEnumerable<Balance>>> GetAllBalancesAsync(
-            AccountAddress owner)
+            string owner)
         {
             return await SendRpcRequestAsync<IEnumerable<Balance>>(
                 Methods.suix_getAllBalances.ToString(),
-                ArgumentBuilder.BuildArguments(owner.ToHex())
+                ArgumentBuilder.BuildArguments(owner)
             );
         }
 
@@ -295,7 +295,7 @@ namespace Sui.Rpc
         }
 
         public async Task<RpcResult<TotalSupply>> GetTotalSupply(
-            SuiStructTag coinType)
+            string coinType)
         {
             return await SendRpcRequestAsync<TotalSupply>(
                 Methods.suix_getTotalSupply.ToString(),
@@ -448,11 +448,6 @@ namespace Sui.Rpc
                     new ObjectResponseQuery(filter, options)
                 )
             );
-        }
-
-        public Task<RpcResult<CoinPage>> GetCoins(string owner, string coinType, string objectId, int limit)
-        {
-            throw new System.NotImplementedException();
         }
     }
 }
