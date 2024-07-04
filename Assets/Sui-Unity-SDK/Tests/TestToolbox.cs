@@ -19,8 +19,8 @@ namespace Sui.Tests
 {
     public class PublishedPackage
     {
-        string PackageID;
-        TransactionBlockResponse PublishedTX;
+        public string PackageID;
+        public TransactionBlockResponse PublishedTX;
 
         public PublishedPackage(string package_id, TransactionBlockResponse published_tx)
         {
@@ -52,7 +52,7 @@ namespace Sui.Tests
         public TestToolbox()
         {
             this.Account = new Account();
-            this.Client = new SuiClient(Constants.LocalnetConnection);
+            this.Client = new SuiClient(Constants.DevnetConnection);
         }
 
         public string Address()
@@ -78,7 +78,7 @@ namespace Sui.Tests
 
         public async Task<PublishedPackage> PublishPackage(string name)
         {
-            JObject file_data = GetModule("serializer");
+            JObject file_data = GetModule(name);
             Transactions.TransactionBlock tx = new Transactions.TransactionBlock();
 
             JArray modules_jarray = (JArray)file_data["modules"];

@@ -210,6 +210,15 @@ namespace Sui.Rpc
             );
         }
 
+        public async Task<RpcResult<CoinMetadata>> GetCoinMetadata(
+            string coinType)
+        {
+            return await SendRpcRequestAsync<CoinMetadata>(
+                Methods.suix_getCoinMetadata.ToString(),
+                ArgumentBuilder.BuildArguments(coinType)
+            );
+        }
+
         public async Task<RpcResult<Checkpoint>> GetCheckpoint(string id)
         {
             return await SendRpcRequestAsync<Checkpoint>(
@@ -219,11 +228,11 @@ namespace Sui.Rpc
         }
 
         public async Task<RpcResult<Checkpoints>> GetCheckpoints(
-            string cursor, int limit, bool descendingOrder)
+            string cursor, int limit, bool is_descending)
         {
             return await SendRpcRequestAsync<Checkpoints>(
                 Methods.sui_getCheckpoints.ToString(),
-                ArgumentBuilder.BuildArguments(cursor, limit, descendingOrder)
+                ArgumentBuilder.BuildArguments(cursor, limit, is_descending)
             );
         }
 

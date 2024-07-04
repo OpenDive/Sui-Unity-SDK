@@ -42,7 +42,7 @@ namespace Sui.Rpc.Models
         [JsonProperty("description")]
         public string Description;
 
-        [JsonProperty("icon_url", NullValueHandling = NullValueHandling.Include)]
+        [JsonProperty("iconUrl", NullValueHandling = NullValueHandling.Include)]
         public string IconUrl;
 
         public class IdObj
