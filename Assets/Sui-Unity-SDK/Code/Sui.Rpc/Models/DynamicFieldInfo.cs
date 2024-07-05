@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Sui.Rpc.Models
 {
@@ -8,8 +9,8 @@ namespace Sui.Rpc.Models
         [JsonProperty("data")]
         public DynamicFieldInfo[] Data { get; set; }
 
-        [JsonProperty("hasNextCursor", Required = Required.Default)]
-        public string HasNextCursor { get; set; }
+        [JsonProperty("nextCursor", Required = Required.Default)]
+        public string NextCursor { get; set; }
 
         [JsonProperty("hasNextPage")]
         public bool HasNextPage { get; set; }
@@ -47,6 +48,6 @@ namespace Sui.Rpc.Models
         public string Type { get; set; }
 
         [JsonProperty("value")]
-        public string Value { get; set; }
+        public JValue Value { get; set; }
     }
 }

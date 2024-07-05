@@ -141,12 +141,9 @@ namespace Sui.Rpc.Models
                 //      ]
                 //    }
                 // }
-                Debug.Log($"MARCUS::: TYPE OBJ - {JsonConvert.SerializeObject(typeObj)}");
                 foreach (JProperty typeObjectProp in typeObj.Properties())
                 {
                     string objType = typeObjectProp.Name;
-                    Debug.Log($"MARCUS::::: {typeObjectProp}");
-                    Debug.Log($"MARCUS::::: {typeObjectProp.Name}");
                     switch (objType)
                     {
                         // SuiMoveNormalizedTypeParameterType
@@ -196,7 +193,6 @@ namespace Sui.Rpc.Models
                             break;
                         // SuiMoveNormalizedStructType
                         case "Struct":
-                            Debug.Log("MARCUS::: STRUCT");
                             JObject structTypeObj = (JObject)typeObj[objType];
                             AccountAddress address = AccountAddress.FromHex(NormalizeSuiAddress((string)structTypeObj["address"]));
                             string module = (string)structTypeObj["module"];

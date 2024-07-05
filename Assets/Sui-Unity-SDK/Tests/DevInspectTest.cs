@@ -9,7 +9,6 @@ using Sui.Accounts;
 using Sui.Transactions.Types.Arguments;
 using System.Collections.Generic;
 using OpenDive.BCS;
-using Newtonsoft.Json;
 
 namespace Sui.Tests
 {

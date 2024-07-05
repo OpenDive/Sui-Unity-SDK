@@ -25,6 +25,26 @@ namespace Sui.Rpc.Models
         [JsonProperty("showType")]
         public bool ShowType { get; set; } = false;
 
+        public ObjectDataOptions
+        (
+            bool show_bcs = false,
+            bool show_content = false,
+            bool show_display = false,
+            bool show_owner = false,
+            bool show_previous_transaction = false,
+            bool show_storage_rebate = false,
+            bool show_type = false
+        )
+        {
+            this.ShowBcs = show_bcs;
+            this.ShowContent = show_content;
+            this.ShowDisplay = show_display;
+            this.ShowOwner = show_owner;
+            this.ShowPreviousTransaction = show_previous_transaction;
+            this.ShowStorageRebate = show_storage_rebate;
+            this.ShowType = show_type;
+        }
+
         // Factory
         public static ObjectDataOptions ShowAll()
         {

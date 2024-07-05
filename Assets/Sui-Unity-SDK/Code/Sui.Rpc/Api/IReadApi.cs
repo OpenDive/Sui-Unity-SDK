@@ -191,7 +191,7 @@ namespace Sui.Rpc.Api
         /// <param name="cursor">An optional paging cursor. If provided, the query will start from the next item after the specified cursor. Default to start from the first item if not specified.</param>
         /// <param name="limit">Maximum item returned per page, default to [QUERY_MAX_RESULT_LIMIT] if not specified.</param>
         /// <returns></returns>
-        Task<RpcResult<DynamicFieldPage>> GetDynamicFields(string parentObjectId, int limit, string cursor);
+        Task<RpcResult<DynamicFieldPage>> GetDynamicFields(string parentObjectId, IObjectDataFilter filter, ObjectDataOptions options, string cursor, int? limit);
 
         /// <summary>
         /// Note there is no software-level guarantee/SLA that objects with past versions can be retrieved by this API, even if the object and version exists/existed. The result may vary across nodes depending on their pruning policies. Return the object information for a specified version

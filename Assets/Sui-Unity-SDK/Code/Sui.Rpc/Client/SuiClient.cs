@@ -385,11 +385,11 @@ namespace Sui.Rpc
         }
 
         public async Task<RpcResult<DynamicFieldPage>> GetDynamicFields(
-            string parentObjectId, int limit, string cursor = null)
+            string parentObjectId, IObjectDataFilter filter = null, ObjectDataOptions options = null, string cursor = null, int? limit = null)
         {
             return await SendRpcRequestAsync<DynamicFieldPage>(
                 Methods.suix_getDynamicFields.ToString(),
-                ArgumentBuilder.BuildArguments(parentObjectId, cursor, limit)
+                ArgumentBuilder.BuildArguments(parentObjectId, cursor, limit, filter, options)
             );
         }
 
@@ -442,15 +442,15 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<PaginatedObjectsResponse>> GetOwnedObjects(AccountAddress owner, string cursor = null, string limit = null, IObjectDataFilter filter = null, ObjectDataOptions options = null)
+        public async Task<RpcResult<PaginatedObjectsResponse>> GetOwnedObjects(string owner, IObjectDataFilter filter = null, ObjectDataOptions options = null, string cursor = null, int? limit = null)
         {
             return await SendRpcRequestAsync<PaginatedObjectsResponse>(
                 Methods.suix_getOwnedObjects.ToString(),
                 ArgumentBuilder.BuildArguments(
-                    owner.ToHex(),
+                    owner,
+                    new ObjectResponseQuery(filter, options),
                     cursor,
-                    limit,
-                    new ObjectResponseQuery(filter, options)
+                    limit
                 )
             );
         }
