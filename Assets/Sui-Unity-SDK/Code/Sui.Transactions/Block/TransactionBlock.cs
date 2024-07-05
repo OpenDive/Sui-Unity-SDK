@@ -686,7 +686,7 @@ namespace Sui.Transactions
         /// <param name="coin">GasCoin is a type of `TransactionArgument`.</param>
         /// <param name="amounts">A list of respective amounts for each coin we are splitting.</param>
         /// <returns>A list of `TransactionResult`s.</returns>
-        public List<SuiTransactionArgument> AddSplitCoinsTx(SuiTransactionArgument coin, params TransactionBlockInput[] amounts)
+        public List<SuiTransactionArgument> AddSplitCoinsTx(SuiTransactionArgument coin, params SuiTransactionArgument[] amounts)
         {
             SplitCoins splitCoinsTx = new SplitCoins(coin, amounts);
             return this.AddTransaction(new Types.SuiTransaction(splitCoinsTx));
@@ -765,7 +765,7 @@ namespace Sui.Transactions
         public List<SuiTransactionArgument> AddMoveCallTx
         (
             SuiMoveNormalizedStructType target,
-            ISerializableTag[] typeArguments = null,
+            SerializableTypeTag[] typeArguments = null,
             SuiTransactionArgument[] arguments = null,
             int? return_value_count = null
         )
@@ -1058,11 +1058,10 @@ namespace Sui.Transactions
                         TransactionBlockInput input = inputs[addressInput.Index];
 
                         // If the value of the input is not an object type then it must be a Pure
-                        if (input.Value.GetType() != typeof(IObjectRef))
+                        if (input.Value.GetType() != typeof(ObjectCallArg))
                         {
                             Serialization ser = new Serialization();
                             input.Value.Serialize(ser);
-                            // TODO: IRVIN update this to use a clone of the input list
                             this.BlockDataBuilder.Builder.Inputs[addressInput.Index].Value = new PureCallArg(ser.GetBytes());
                         }
                     }
@@ -1075,23 +1074,21 @@ namespace Sui.Transactions
                 else if (transaction.Transaction.Kind == Kind.SplitCoins)
                 {
                     SplitCoins splitCoinsTx = (SplitCoins)transaction.Transaction;
-                    ITransactionArgument[] amounts = splitCoinsTx.Amounts;
-                    foreach(ITransactionArgument amount in amounts)
+                    SuiTransactionArgument[] amounts = splitCoinsTx.Amounts;
+                    foreach(SuiTransactionArgument amount in amounts)
                     {
-                        if(amount.GetType() == typeof(TransactionBlockInput))
+                        if(amount.TransactionArgument.Kind == Types.Arguments.Kind.Input)
                         {   // Cast the amount as a `TransactionBlockInput` to get index property
-                            TransactionBlockInput amountTxbInput = (TransactionBlockInput)amount;
+                            TransactionBlockInput amountTxbInput = (TransactionBlockInput)amount.TransactionArgument;
                             // Get the TXBInput object at the index provided by the amount argument
                             TransactionBlockInput input = inputs[amountTxbInput.Index];
 
                             // If the value of the input is not an object type then it must be a Pure
-                            if(input.Value.GetType() != typeof(IObjectRef))
+                            if(input.Value.GetType() != typeof(ObjectCallArg))
                             {
                                 Serialization ser = new Serialization();
                                 input.Value.Serialize(ser);
-                                // TODO: IRVIN update this to use a clone of the input list
-                                this.BlockDataBuilder.Builder.Inputs[amountTxbInput.Index].Value
-                                    = new PureCallArg(ser.GetBytes()); ;
+                                this.BlockDataBuilder.Builder.Inputs[amountTxbInput.Index].Value = new PureCallArg(ser.GetBytes());
                             }
                         }
                     }

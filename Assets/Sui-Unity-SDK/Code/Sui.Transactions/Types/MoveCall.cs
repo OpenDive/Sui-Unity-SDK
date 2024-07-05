@@ -61,7 +61,7 @@ namespace Sui.Transactions.Types
         ///
         /// new TagSequence(new ISerializableTag[] { new StructTag(AccountAddress.FromHex("0x4"), "token", "Token", new ISerializableTag[0]) })
         /// </summary>
-        public TagSequence TypeArguments { get; private set; }
+        public SerializableTypeTag[] TypeArguments { get; private set; }
 
         /// <summary>
         /// The sequence of arguments
@@ -81,11 +81,11 @@ namespace Sui.Transactions.Types
         /// </param>
         public MoveCall(
             SuiMoveNormalizedStructType target,
-            ISerializableTag[] typeArguments = null,
+            SerializableTypeTag[] typeArguments = null,
             SuiTransactionArgument[] arguments = null)
         {
             Target          = target;
-            TypeArguments   = new TagSequence(typeArguments);
+            TypeArguments   = typeArguments;
             Arguments       = arguments;
         }
 

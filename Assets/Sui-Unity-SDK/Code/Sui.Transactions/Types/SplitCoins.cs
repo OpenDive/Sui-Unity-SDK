@@ -37,14 +37,14 @@ namespace Sui.Transactions.Types
         /// <summary>
         /// Amount of coins to use to split into.
         /// </summary>
-        public TransactionBlockInput[] Amounts;
+        public SuiTransactionArgument[] Amounts;
 
         /// <summary>
         /// Create a SplitCoins transaction.
         /// </summary>
         /// <param name="coin"></param>
         /// <param name="amounts"></param>
-        public SplitCoins(SuiTransactionArgument coin, TransactionBlockInput[] amounts)
+        public SplitCoins(SuiTransactionArgument coin, SuiTransactionArgument[] amounts)
         {
             // Check that it's an actual in or U16, U32, U64 wrapped
             Coin = coin;
@@ -66,7 +66,7 @@ namespace Sui.Transactions.Types
         {
             return new SplitCoins(
                 (SuiTransactionArgument)SuiTransactionArgument.Deserialize(deserializer),
-                deserializer.DeserializeSequence(typeof(TransactionBlockInput)).Cast<TransactionBlockInput>().ToArray()
+                deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Cast<SuiTransactionArgument>().ToArray()
             );
         }
     }

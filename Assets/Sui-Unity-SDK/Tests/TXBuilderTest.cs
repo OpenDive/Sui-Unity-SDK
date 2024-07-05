@@ -52,8 +52,8 @@ namespace Sui.Tests
             var tx = new Sui.Transactions.TransactionBlock();
 
             tx.AddMoveCallTx(
-                new SuiMoveNormalizedStructType(new SuiStructTag(sui_address, "pay", "split", new ISerializableTag[0]), new SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
-                new ISerializableTag[] { new StructTag(sui_address, "sui", "SUI", new ISerializableTag[0]) },
+                new SuiMoveNormalizedStructType(new SuiStructTag(sui_address, "pay", "split", new SerializableTypeTag[0]), new SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
+                new SerializableTypeTag[] { new SerializableTypeTag(new StructTag(sui_address, "sui", "SUI", new ISerializableTag[0])) },
                 new SuiTransactionArgument[]
                 {
                         new SuiTransactionArgument(tx.AddObjectInput(coin_0.CoinObjectId)),

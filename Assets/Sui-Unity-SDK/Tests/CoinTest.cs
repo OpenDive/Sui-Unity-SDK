@@ -35,7 +35,7 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator CoinStructTagTest()
         {
-            SuiStructTag sui_struct_tag = new SuiStructTag(AccountAddress.FromHex("0x2"), "sui", "SUI", Array.Empty<ISerializableTag>());
+            SuiStructTag sui_struct_tag = new SuiStructTag(AccountAddress.FromHex("0x2"), "sui", "SUI", Array.Empty<SerializableTypeTag>());
             Task<RpcResult<CoinPage>> coins_task = this.Toolbox.GetCoins();
             yield return new WaitUntil(() => coins_task.IsCompleted);
             CoinPage coins = coins_task.Result.Result;

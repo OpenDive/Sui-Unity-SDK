@@ -171,7 +171,8 @@ namespace Sui.Rpc.Api
         /// <param name="gasPrice">Gas is not charged, but gas usage is still calculated. Default to use reference gas price</param>
         /// <param name="epoch">The epoch to perform the call. Will be set from the system state object if not provided</param>
         /// <returns></returns>
-        Task<RpcResult<DevInspectResponse>> DevInspectTransactionBlock(AccountAddress senderAddress, string txBytes, string gasPrice, string epoch);
+        Task<RpcResult<DevInspectResponse>> DevInspectTransactionBlock(
+           Account sender, Transactions.TransactionBlock transaction_block, int? gasPrice, string epoch);
 
         /// <summary>
         /// Return the dynamic field object information for a specified object

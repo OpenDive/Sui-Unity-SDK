@@ -13,6 +13,7 @@ using Sui.Clients;
 using System;
 using Newtonsoft.Json;
 using System.Collections;
+using Chaos.NaCl;
 
 namespace Sui.Rpc
 {
@@ -362,11 +363,15 @@ namespace Sui.Rpc
         }
 
         public async Task<RpcResult<DevInspectResponse>> DevInspectTransactionBlock(
-            AccountAddress senderAddress, string txBytes, string gasPrice, string epoch = null)
+            Account sender, Transactions.TransactionBlock transaction_block, int? gasPrice = null, string epoch = null)
         {
+            string sender_address = sender.SuiAddress();
+            transaction_block.SetSenderIfNotSet(AccountAddress.FromHex(sender_address));
+            byte[] result = await transaction_block.Build(new BuildOptions(this, null, true));
+            string dev_inspect_tx_bytes = CryptoBytes.ToBase64String(result);
             return await SendRpcRequestAsync<DevInspectResponse>(
                 Methods.sui_devInspectTransactionBlock.ToString(),
-                ArgumentBuilder.BuildArguments(senderAddress.ToHex(), txBytes, gasPrice, epoch)
+                ArgumentBuilder.BuildArguments(sender_address, dev_inspect_tx_bytes, gasPrice, epoch)
             );
         }
 
