@@ -50,7 +50,7 @@ namespace Sui.Rpc
         {
             TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
             transaction_block.SetSenderIfNotSet(AccountAddress.FromHex(account.SuiAddress()));
-            Debug.Log($"MARCUS::: EXECUTE TRANSACTION BLOCK - {JsonConvert.SerializeObject(transaction_block.BlockDataBuilder.Builder.Inputs)}");
+            //Debug.Log($"MARCUS::: EXECUTE TRANSACTION BLOCK - {JsonConvert.SerializeObject(transaction_block.BlockDataBuilder.Builder.Inputs)}");
             byte[] tx_bytes = await transaction_block.Build(new BuildOptions(this));
             SignatureBase signature = account.SignTransactionBlock(tx_bytes);
             return await this.ExecuteTransactionBlock(tx_bytes, account.ToSerializedSignature(signature), opts);

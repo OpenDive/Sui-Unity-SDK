@@ -19,6 +19,7 @@ using NBitcoin.DataEncoders;
 using Chaos.NaCl;
 using Sui.Transactions.Kinds;
 using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace Sui.Transactions
 {
@@ -149,6 +150,7 @@ namespace Sui.Transactions
 
             Serialization serializer = new Serialization();
             serializer.Serialize(transactionData);
+
             return serializer.GetBytes();
         }
 
@@ -962,14 +964,17 @@ namespace Sui.Transactions
             foreach (TransactionBlockInput input in inputs)
             {
                 // The value is an ObjectID (AccountAddress) add it to the objects to resolve
-                if (input.Value.GetType() == typeof(BString))
+                if (input.Value.GetType() == typeof(string))
                 {
-                    ObjectToResolve objectToResolve = new ObjectToResolve(
+                    if (Regex.IsMatch(((BString)input.Value).value, @"^(0x)?[0-9a-fA-F]{32,64}$"))
+                    {
+                        ObjectToResolve objectToResolve = new ObjectToResolve(
                         ((BString)input.Value).value,
                         input,
                         null
                     );
-                    objectsToResolve.Add(objectToResolve);
+                        objectsToResolve.Add(objectToResolve);
+                    }
                 }
             }
 
@@ -1158,7 +1163,7 @@ namespace Sui.Transactions
                         }
 
                         if (Serializer.ExtractStructType(param_enumerated.param) == null && param_enumerated.param.Type != SuiMoveNormalizedTypeSerializationType.TypeParameter)
-                            throw new Exception("Unknown Call Arg Type");
+                            throw new Exception($"Unknown Call Arg Type");
 
                         if (inputValue.GetType() == typeof(BString))
                         {
@@ -1172,7 +1177,6 @@ namespace Sui.Transactions
             }
             #endregion END - Resolve MoveModules
             #region Resolve objects
-            Debug.Log($"MARCUS: OBJECTS TO RESOLVE COUNT - {objectsToResolve.Count}");
             if (objectsToResolve.Count > 0)
             {
                 List<string> mappedIds = objectsToResolve.Select(x => x.Id).ToList();
@@ -1189,6 +1193,7 @@ namespace Sui.Transactions
                 List<ObjectDataResponse> objectsResponse = new List<ObjectDataResponse>();
                 foreach(List<string> objectIds in objectChunks)
                 {
+                    Debug.Log($"MARCUS::: INSIDE OBJECT CHUNK - {JsonConvert.SerializeObject(objectIds)}");
                     ObjectDataOptions optionsObj = ObjectDataOptions.ShowNone();
                     optionsObj.ShowOwner = true;
 
@@ -1227,6 +1232,7 @@ namespace Sui.Transactions
 
                 foreach (ObjectToResolve objectToResolve in objectsToResolve)
                 {
+                    Debug.Log("MARCUS::: INSIDE RESOLVE OBJECTS");
                     ObjectDataResponse obj = objectsById[objectToResolve.Id];
 
                     int? initialSharedVersion = obj.GetSharedObjectInitialVersion();
@@ -1303,6 +1309,7 @@ namespace Sui.Transactions
 
                 this.BlockDataBuilder.Builder.Inputs.Sort((TransactionBlockInput t1, TransactionBlockInput t2) => t1.Index.CompareTo(t2.Index));
             }
+            Debug.Log("MARCUS::: OUT OF RESOLVE OBJECTS");
             #endregion END - Resolve objects
         }
 
@@ -1327,6 +1334,7 @@ namespace Sui.Transactions
         /// <returns>A `Task` object used for implementations with async calls.</returns>
         private async Task Prepare(BuildOptions options_passed)
         {
+            Debug.Log($"MARCUS::: PREPARE");
             if (IsPrepared)
                 return;
 
@@ -1356,8 +1364,7 @@ namespace Sui.Transactions
 
                     TransactionBlockDataBuilderSerializer tx_block_data_builder = this.BlockDataBuilder;
 
-                    var build_result = tx_block_data_builder.Build(new TransactionBlockDataBuilderSerializer(new TransactionBlockDataBuilder(gasConfig: gas_config)));
-
+                    byte[] build_result = tx_block_data_builder.Build(new TransactionBlockDataBuilderSerializer(new TransactionBlockDataBuilder(gasConfig: gas_config)));
                     Debug.Log($"MARCUS::: SENDER BYTES - [{String.Join(", ", BlockDataBuilder.Builder.Sender.AddressBytes)}]");
                     Debug.Log($"MARCUS::: BUILD RESULT - [{String.Join(", ", build_result)}]");
                     RpcResult<TransactionBlockResponse> dry_run_result = await options.Provider.DryRunTransactionBlock(

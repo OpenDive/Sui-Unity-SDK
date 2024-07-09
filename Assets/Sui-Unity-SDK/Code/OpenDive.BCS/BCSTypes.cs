@@ -334,7 +334,8 @@ namespace OpenDive.BCS
                         Serialization s = new Serialization();
                         element.Serialize(s);
                         byte[] b = s.GetBytes();
-                        serializer.SerializeBytes(b);
+                        //serializer.SerializeBytes(b);
+                        serializer.SerializeFixedBytes(b);
                     }
                 }
             //}

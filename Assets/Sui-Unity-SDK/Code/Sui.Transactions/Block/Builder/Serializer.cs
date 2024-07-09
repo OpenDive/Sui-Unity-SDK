@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.Rpc.Models;
@@ -239,7 +240,7 @@ namespace Sui.Transactions
         private static bool IsSameStruct(SuiMoveNormalziedTypeStruct lhs, StandardStruct rhs)
         {
             return
-                lhs.Struct.StructTag.address == rhs.Address &&
+                lhs.Struct.StructTag.address.AddressBytes.SequenceEqual(rhs.Address.AddressBytes) &&
                 lhs.Struct.StructTag.module == rhs.Module &&
                 lhs.Struct.StructTag.name == rhs.Name;
         }
