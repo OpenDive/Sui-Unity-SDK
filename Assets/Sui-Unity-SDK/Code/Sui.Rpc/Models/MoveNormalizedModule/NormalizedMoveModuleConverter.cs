@@ -95,15 +95,11 @@ namespace Sui.Rpc.Models
         {
             // If the address starts with "0x", remove it
             if (address.StartsWith("0x") && !forceAdd0x)
-            {
-                address = address.Substring(2);
-            }
+                address = address[2..];
 
             // Ensure the address is not longer than the desired length
             if (address.Length > 64)
-            {
-                throw new ArgumentException("The address is longer than expected.");
-            }
+                return null;
 
             // Pad the address with zeros to reach 64 characters
             string paddedAddress = address.PadLeft(64, '0');

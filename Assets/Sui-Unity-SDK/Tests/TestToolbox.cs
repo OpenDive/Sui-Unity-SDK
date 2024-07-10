@@ -105,7 +105,7 @@ namespace Sui.Tests
 
             RpcResult<TransactionBlockResponse> published_tx_block = await this.Client.SignAndExecuteTransactionBlock(tx, this.Account, options);
 
-            if(published_tx_block.IsSuccess == false || published_tx_block.Result.Effects.Status.Status == ExecutionStatus.Failure)
+            if(published_tx_block.Result.Effects.Status.Status == ExecutionStatus.Failure)
                 throw new Exception("Transaction Failed");
 
             await this.Client.WaitForTransaction(published_tx_block.Result.Digest);

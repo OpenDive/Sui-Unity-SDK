@@ -12,6 +12,10 @@ using UnityEngine;
 using System;
 using Newtonsoft.Json;
 using Chaos.NaCl;
+using System.Text.RegularExpressions;
+using UnityEngine.Windows;
+using static UnityEngine.UI.GridLayoutGroup;
+using NBitcoin.DataEncoders;
 
 namespace Sui.Rpc
 {
@@ -98,10 +102,29 @@ namespace Sui.Rpc
 
         public async Task<RpcResult<TransactionBlockResponse>> GetTransactionBlock(string digest, TransactionBlockResponseOptions options = null)
         {
+            if (this.IsValidTransactionDigest(digest) == false)
+                return RpcResult<TransactionBlockResponse>.GetErrorResult("Invalid digest.");
+
             TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
             return await SendRpcRequestAsync<TransactionBlockResponse>(
                 Methods.sui_getTransactionBlock.ToString(),
                 ArgumentBuilder.BuildArguments(digest, opts)
+            );
+        }
+
+        public async Task<RpcResult<IEnumerable<TransactionBlockResponse>>> GetTransactionBlocks(string[] digests, TransactionBlockResponseOptions options = null)
+        {
+            foreach(string digest in digests)
+                if (this.IsValidTransactionDigest(digest) == false)
+                    return RpcResult<IEnumerable<TransactionBlockResponse>>.GetErrorResult("Invalid digest.");
+
+            if (digests.Distinct().Count() != digests.Count())
+                return RpcResult<IEnumerable<TransactionBlockResponse>>.GetErrorResult("Digests do not match.");
+
+            TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
+            return await SendRpcRequestAsync<IEnumerable<TransactionBlockResponse>>(
+                Methods.sui_multiGetTransactionBlocks.ToString(),
+                ArgumentBuilder.BuildArguments(digests, opts)
             );
         }
 
@@ -377,6 +400,9 @@ namespace Sui.Rpc
         public async Task<RpcResult<DynamicFieldPage>> GetDynamicFields(
             string parentObjectId, IObjectDataFilter filter = null, ObjectDataOptions options = null, string cursor = null, int? limit = null)
         {
+            if (this.IsValidSuiAddress(parentObjectId) == false)
+                return RpcResult<DynamicFieldPage>.GetErrorResult("Unable to validate the address.");
+
             return await SendRpcRequestAsync<DynamicFieldPage>(
                 Methods.suix_getDynamicFields.ToString(),
                 ArgumentBuilder.BuildArguments(parentObjectId, cursor, limit, filter, options)
@@ -432,8 +458,26 @@ namespace Sui.Rpc
             );
         }
 
+        public async Task<RpcResult<IEnumerable<ObjectDataResponse>>> MultiGetObjects(string[] objectIds, ObjectDataOptions options = null)
+        {
+            foreach(string id in objectIds)
+                if (this.IsValidSuiAddress(id) == false)
+                    return RpcResult<IEnumerable<ObjectDataResponse>>.GetErrorResult("Unable to validate the address.");
+
+            return await SendRpcRequestAsync<IEnumerable<ObjectDataResponse>>(
+                Methods.sui_multiGetObjects.ToString(),
+                ArgumentBuilder.BuildArguments(
+                    objectIds,
+                    options
+                )
+            );
+        }
+
         public async Task<RpcResult<PaginatedObjectsResponse>> GetOwnedObjects(string owner, IObjectDataFilter filter = null, ObjectDataOptions options = null, string cursor = null, int? limit = null)
         {
+            if (IsValidSuiAddress(owner) == false)
+                return RpcResult<PaginatedObjectsResponse>.GetErrorResult("Unable to validate the address.");
+
             return await SendRpcRequestAsync<PaginatedObjectsResponse>(
                 Methods.suix_getOwnedObjects.ToString(),
                 ArgumentBuilder.BuildArguments(
@@ -443,6 +487,28 @@ namespace Sui.Rpc
                     limit
                 )
             );
+        }
+
+        private bool IsValidSuiAddress(string address)
+        {
+            if (NormalizedTypeConverter.NormalizeSuiAddress(address) == null)
+                return false;
+
+            if (Regex.IsMatch(address, @"^(0x)?[0-9a-fA-F]{32,64}$") == false)
+                return false;
+
+            return true;
+        }
+
+        private bool IsValidTransactionDigest(string digest)
+        {
+            if (Utilities.Base58Encoder.IsValidEncoding(digest) == false)
+                return false;
+
+            Base58Encoder base58Encoder = new Base58Encoder();
+            byte[] digest_data = base58Encoder.DecodeData(digest);
+
+            return digest_data.Count() == 32;
         }
     }
 }
