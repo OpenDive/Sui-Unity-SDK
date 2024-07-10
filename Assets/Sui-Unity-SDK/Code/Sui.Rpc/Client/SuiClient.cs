@@ -447,6 +447,17 @@ namespace Sui.Rpc
             );
         }
 
+        public async Task<RpcResult<ObjectDataResponse>> GetObject(string objectId, ObjectDataOptions options)
+        {
+            return await SendRpcRequestAsync<ObjectDataResponse>(
+                Methods.sui_getObject.ToString(),
+                ArgumentBuilder.BuildArguments(
+                    objectId,
+                    options
+                )
+            );
+        }
+
         public async Task<RpcResult<IEnumerable<ObjectDataResponse>>> MultiGetObjects(AccountAddress[] objectIds, ObjectDataOptions options = null)
         {
             return await SendRpcRequestAsync<IEnumerable<ObjectDataResponse>>(
