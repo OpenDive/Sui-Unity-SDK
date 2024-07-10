@@ -8,20 +8,27 @@ namespace Sui.Rpc.Models
     {
         public SuiOwnerType Type { get; }
 
+        [JsonProperty("AddressOwner", Required = Required.Default)]
         public string Address { get; set; }
 
         [JsonProperty("Shared", Required = Required.Default)]
         public SharedOwner Shared { get; }
 
-        public Owner(SuiOwnerType type)
+        public Owner()
         {
-            Type = type;
+            Type = SuiOwnerType.Immutable;
         }
 
         public Owner(SuiOwnerType type, string address)
         {
             Type = type;
             Address = address;
+        }
+
+        public Owner(int initial_shared_version)
+        {
+            Type = SuiOwnerType.Shared;
+            Shared = new SharedOwner(initial_shared_version);
         }
     }
 
@@ -30,5 +37,10 @@ namespace Sui.Rpc.Models
     {
         [JsonProperty("initial_shared_version", Required = Required.Default)]
         public int? InitialSharedVersion { get; }
+
+        public SharedOwner(int initial_shared_version)
+        {
+            this.InitialSharedVersion = initial_shared_version;
+        }
     }
 }

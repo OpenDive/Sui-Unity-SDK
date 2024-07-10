@@ -501,7 +501,7 @@ namespace Sui.Transactions
         /// <summary>
         /// A `TransactionArgument` representing the gas of the transaction.
         /// </summary> ✅
-        public ITransactionArgument gas = new GasCoin();
+        public SuiTransactionArgument gas = new SuiTransactionArgument(new GasCoin());
 
         /// <summary> ✅
         /// Set the gas payment for the programmable transaction block.
@@ -544,7 +544,7 @@ namespace Sui.Transactions
 
             string id = InputsHandler.GetIDFromCallArg(value);
             TransactionBlockInput[] inserted_arr = BlockDataBuilder.Builder.Inputs.Where((input) => {
-                if (input.Value == null || input.Value.GetType() != typeof(string))
+                if (input.Value == null || input.Value.GetType() != typeof(BString))
                     return false;
                 return id == NormalizedTypeConverter.NormalizeSuiAddress(((BString)input.Value).value);
             }).ToArray();
@@ -1194,14 +1194,12 @@ namespace Sui.Transactions
                 foreach(List<string> objectIds in objectChunks)
                 {
                     Debug.Log($"MARCUS::: INSIDE OBJECT CHUNK - {JsonConvert.SerializeObject(objectIds)}");
-                    ObjectDataOptions optionsObj = ObjectDataOptions.ShowNone();
-                    optionsObj.ShowOwner = true;
 
                     #region RPC Call MultiGetObjects
                     RpcResult<IEnumerable<ObjectDataResponse>> response
                         = await options.Provider.MultiGetObjects(
                             objectIds.Select((id) => AccountAddress.FromHex(id)).ToArray(),
-                            optionsObj
+                            new ObjectDataOptions(show_owner: true)
                     );
                     #endregion END - Call MultiGetObjects
 
@@ -1232,8 +1230,9 @@ namespace Sui.Transactions
 
                 foreach (ObjectToResolve objectToResolve in objectsToResolve)
                 {
-                    Debug.Log("MARCUS::: INSIDE RESOLVE OBJECTS");
                     ObjectDataResponse obj = objectsById[objectToResolve.Id];
+
+                    Debug.Log($"MARCUS::: INSIDE RESOLVE OBJECTS = {JsonConvert.SerializeObject(obj)}");
 
                     int? initialSharedVersion = obj.GetSharedObjectInitialVersion();
 
@@ -1309,7 +1308,6 @@ namespace Sui.Transactions
 
                 this.BlockDataBuilder.Builder.Inputs.Sort((TransactionBlockInput t1, TransactionBlockInput t2) => t1.Index.CompareTo(t2.Index));
             }
-            Debug.Log("MARCUS::: OUT OF RESOLVE OBJECTS");
             #endregion END - Resolve objects
         }
 
@@ -1334,7 +1332,6 @@ namespace Sui.Transactions
         /// <returns>A `Task` object used for implementations with async calls.</returns>
         private async Task Prepare(BuildOptions options_passed)
         {
-            Debug.Log($"MARCUS::: PREPARE");
             if (IsPrepared)
                 return;
 

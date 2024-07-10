@@ -9,10 +9,8 @@ using OpenDive.BCS;
 using Sui.Transactions;
 using Sui.Cryptography;
 using UnityEngine;
-using Sui.Clients;
 using System;
 using Newtonsoft.Json;
-using System.Collections;
 using Chaos.NaCl;
 
 namespace Sui.Rpc
@@ -431,7 +429,7 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<IEnumerable<ObjectDataResponse>>> MultiGetObjects(AccountAddress[] objectIds, ObjectDataOptions options)
+        public async Task<RpcResult<IEnumerable<ObjectDataResponse>>> MultiGetObjects(AccountAddress[] objectIds, ObjectDataOptions options = null)
         {
             return await SendRpcRequestAsync<IEnumerable<ObjectDataResponse>>(
                 Methods.sui_multiGetObjects.ToString(),

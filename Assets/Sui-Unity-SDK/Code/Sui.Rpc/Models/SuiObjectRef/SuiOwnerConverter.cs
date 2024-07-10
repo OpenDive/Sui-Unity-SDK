@@ -1,6 +1,7 @@
 using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace Sui.Rpc.Models
@@ -9,32 +10,24 @@ namespace Sui.Rpc.Models
     {
         public override Owner ReadJson(JsonReader reader, Type objectType, Owner existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.String)
+            if (reader.TokenType == JsonToken.StartObject)
             {
-                var stringValue = reader.Value.ToString();
-                if (stringValue == SuiOwnerType.Shared.ToString())
+                Newtonsoft.Json.Linq.JObject owner_object = Newtonsoft.Json.Linq.JObject.Load(reader);
+                if (owner_object.ContainsKey(SuiOwnerType.Shared.ToString()))
                 {
-                    return new Owner(SuiOwnerType.Shared);
+                    return new Owner(owner_object[SuiOwnerType.Shared.ToString()]["initial_shared_version"].Value<int>());
                 }
-                else if (stringValue == SuiOwnerType.Immutable.ToString())
+                else if (owner_object.ContainsKey(SuiOwnerType.AddressOwner.ToString()))
                 {
-                    return new Owner(SuiOwnerType.Immutable);
+                    return new Owner(SuiOwnerType.AddressOwner, owner_object[SuiOwnerType.AddressOwner.ToString()].Value<string>());
                 }
-            }
-            else
-            {
-                var jObject = serializer.Deserialize<JObject>(reader);
-                if (jObject.ContainsKey(SuiOwnerType.AddressOwner.ToString()))
+                else if (owner_object.ContainsKey(SuiOwnerType.ObjectOwner.ToString()))
                 {
-                    return new Owner(SuiOwnerType.AddressOwner, jObject[SuiOwnerType.AddressOwner.ToString()].Value<string>());
-                }
-                else if (jObject.ContainsKey(SuiOwnerType.ObjectOwner.ToString()))
-                {
-                    return new Owner(SuiOwnerType.ObjectOwner, jObject[SuiOwnerType.ObjectOwner.ToString()].Value<string>());
+                    return new Owner(SuiOwnerType.ObjectOwner, owner_object[SuiOwnerType.ObjectOwner.ToString()].Value<string>());
                 }
             }
 
-            return new Owner(SuiOwnerType.None);
+            return new Owner();
         }
 
         public override bool CanWrite

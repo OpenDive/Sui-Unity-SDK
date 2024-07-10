@@ -1,7 +1,11 @@
+using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Sui.Accounts;
 using Sui.Types;
+using UnityEngine;
 
 namespace Sui.Rpc.Models
 {
