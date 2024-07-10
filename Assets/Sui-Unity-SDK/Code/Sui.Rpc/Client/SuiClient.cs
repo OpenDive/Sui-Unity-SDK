@@ -409,19 +409,28 @@ namespace Sui.Rpc
             );
         }
 
-        public async Task<RpcResult<PastObject>> TryGetPastObject(
-            AccountAddress objectId, ObjectDataOptions options, string version = null)
+        public async Task<RpcResult<ObjectRead>> TryGetPastObject(
+            AccountAddress objectId, ObjectDataOptions options = null, string version = null)
         {
-            return await SendRpcRequestAsync<PastObject>(
+            return await SendRpcRequestAsync<ObjectRead>(
                 Methods.sui_tryGetPastObject.ToString(),
                 ArgumentBuilder.BuildArguments(objectId.ToHex(), version, options)
             );
         }
 
-        public async Task<RpcResult<PastObject[]>> TryMultiGetPastObjects(
+        public async Task<RpcResult<ObjectRead>> TryGetPastObject(
+            string objectId, int version, ObjectDataOptions options = null)
+        {
+            return await SendRpcRequestAsync<ObjectRead>(
+                Methods.sui_tryGetPastObject.ToString(),
+                ArgumentBuilder.BuildArguments(objectId, version, options)
+            );
+        }
+
+        public async Task<RpcResult<ObjectRead[]>> TryMultiGetPastObjects(
             PastObjectRequest pastObjects, ObjectDataOptions options)
         {
-            return await SendRpcRequestAsync<PastObject[]>(
+            return await SendRpcRequestAsync<ObjectRead[]>(
                 Methods.sui_tryMultiGetPastObjects.ToString(),
                 ArgumentBuilder.BuildArguments(pastObjects, options)
             );

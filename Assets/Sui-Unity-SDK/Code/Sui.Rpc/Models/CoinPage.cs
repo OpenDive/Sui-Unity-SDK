@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Numerics;
 using Newtonsoft.Json;
 
 namespace Sui.Rpc.Models
@@ -33,5 +34,15 @@ namespace Sui.Rpc.Models
 
         [JsonProperty("previousTransaction")]
         public string PreviousTransaction { get; set; }
+
+        public ObjectData ToSuiObjectData()
+        {
+            ObjectData res = new ObjectData();
+            res.Digest = this.Digest;
+            res.ObjectId = this.CoinObjectId;
+            res.PreviousTransaction = this.PreviousTransaction;
+            res.Version = BigInteger.Parse(this.Version);
+            return res;
+        }
     }
 }
