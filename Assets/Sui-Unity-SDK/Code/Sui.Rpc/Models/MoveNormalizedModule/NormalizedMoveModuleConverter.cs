@@ -117,7 +117,6 @@ namespace Sui.Rpc.Models
         {
             try
             {
-                Debug.Log($"MARCUS::::: {reader}");
                 JObject typeObj = JObject.Load(reader);
 
                 if (reader.TokenType == JsonToken.StartObject)
@@ -150,7 +149,7 @@ namespace Sui.Rpc.Models
                             break;
                         // SuiMoveNormalizedReferenceType
                         case "Reference":
-                            JObject referenceTypeObj = (JObject)typeObj[objType];
+                            JToken referenceTypeObj = (JToken)typeObj[objType];
                             NormalizedTypeConverter referenceTypeConverter = new NormalizedTypeConverter();
                             SuiMoveNormalizedType reference = referenceTypeConverter.ReadJson(
                                 referenceTypeObj.CreateReader(),
@@ -163,7 +162,7 @@ namespace Sui.Rpc.Models
                             break;
                         // SuiMoveNormalizedMutableReferenceType
                         case "MutableReference":
-                            JObject mutableReferenceTypeObj = (JObject)typeObj[objType];
+                            JToken mutableReferenceTypeObj = (JToken)typeObj[objType];
                             NormalizedTypeConverter mutableReferenceTypeConverter = new NormalizedTypeConverter();
                             SuiMoveNormalizedType mutableReference = mutableReferenceTypeConverter.ReadJson(
                                 mutableReferenceTypeObj.CreateReader(),
@@ -176,7 +175,7 @@ namespace Sui.Rpc.Models
                             break;
                         // SuiMoveNormalizedVectorType
                         case "Vector":
-                            JObject vectorTypeObj = (JObject)typeObj[objType];
+                            JToken vectorTypeObj = (JToken)typeObj[objType];
                             NormalizedTypeConverter vectorTypeConverter = new NormalizedTypeConverter();
                             SuiMoveNormalizedType vector = vectorTypeConverter.ReadJson(
                                 vectorTypeObj.CreateReader(),
@@ -258,22 +257,22 @@ namespace Sui.Rpc.Models
                 foreach (JProperty type in structObj["TypeParameters"])
                     typeParams.Add(JsonConvert.DeserializeObject<SuiMoveStructTypeParameter>((string)type));
             }
-            JArray fields = (JArray)structObj["fields"];
             List<SuiMoveNormalizedField> normalizedFields = new List<SuiMoveNormalizedField>();
-            foreach (JObject field in fields)
+            foreach (JObject field in (JArray)structObj["fields"])
             {
                 SuiMoveNormalizedField normalizedField = new SuiMoveNormalizedField();
 
                 normalizedField.Name = (string)field["name"];
-                JObject typeObj = (JObject)field["type"];
+
+                JToken typeObj = field["type"];
 
                 NormalizedTypeConverter typeConverter = new NormalizedTypeConverter();
                 normalizedField.Type = typeConverter.ReadJson(
                     typeObj.CreateReader(),
-                    typeof(ISuiMoveNormalizedType),
+                    typeof(SuiMoveNormalizedType),
                     null,
                     serializer
-                ) as ISuiMoveNormalizedType;
+                ) as SuiMoveNormalizedType;
 
                 normalizedFields.Add(normalizedField);
             }
@@ -307,17 +306,15 @@ namespace Sui.Rpc.Models
 
             SuiMoveNormalizedModule moveModule = new SuiMoveNormalizedModule();
             Dictionary<string, SuiMoveNormalizedStruct> Structs = new Dictionary<string, SuiMoveNormalizedStruct>();
+            Dictionary<string, NormalizedMoveFunctionResponse> ExposedFunctions = new Dictionary<string, NormalizedMoveFunctionResponse>();
 
             if (item["fileFormatVersion"] != null) moveModule.FileFormatVersion = (int)item["fileFormatVersion"];
             if (item["address"] != null) moveModule.Address = (string)item["address"];
             if (item["name"] != null) moveModule.Name = (string)item["name"];
             List<Friends> Friends = new List<Friends>();
 
-            if (item["friends"] != null)
-            {
-                foreach (JProperty friend in item["friends"])
-                    Friends.Add(JsonConvert.DeserializeObject<Friends>((string)friend));
-            }
+            foreach (JObject friend in item["friends"])
+                Friends.Add(JsonConvert.DeserializeObject<Friends>(friend.ToString()));
 
             moveModule.Friends = Friends.ToArray();
 
@@ -337,6 +334,17 @@ namespace Sui.Rpc.Models
                 Structs[property.Name] = normalizedStruct;
             }
             moveModule.Structs = Structs;
+
+            JObject exposedFunctions = (JObject)item["exposedFunctions"];
+
+            foreach(JProperty property in exposedFunctions.Properties())
+            {
+                JObject exposed_func_obj = (JObject)exposedFunctions[property.Name];
+                ExposedFunctions[property.Name] = JsonConvert.DeserializeObject<NormalizedMoveFunctionResponse>(exposed_func_obj.ToString());
+            }
+
+            moveModule.ExposedFunctions = ExposedFunctions;
+
             return moveModule;
         }
 

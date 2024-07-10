@@ -48,10 +48,9 @@ namespace Sui.Rpc
                 while (!request.isDone)
                     await Task.Yield();
 
-                Debug.Log("REQUEST: DOWNLOADHANDLER ::: " + request.downloadHandler.ToString());
+                Debug.Log("REQUEST: RESULT ::: " + request.downloadHandler.text);
 
-                RpcResult<T> result = JsonConvert.DeserializeObject<RpcResult<T>>(request.downloadHandler.text); ;
-                Debug.Log($"AFTER HANDLE RESULT - {result}");
+                RpcResult<T> result = JsonConvert.DeserializeObject<RpcResult<T>>(request.downloadHandler.text);
                 return result;
             }
         }

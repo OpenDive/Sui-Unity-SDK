@@ -24,6 +24,9 @@ namespace Sui.Rpc.Models
 
         [JsonProperty("structs")]
         public Dictionary<string, SuiMoveNormalizedStruct> Structs { get; set; }
+
+        [JsonProperty("exposedFunctions")]
+        public Dictionary<string, NormalizedMoveFunctionResponse> ExposedFunctions { get; set; }
     }
 
     [JsonObject]
@@ -69,7 +72,7 @@ namespace Sui.Rpc.Models
     [JsonObject]
     public class SuiMoveNormalizedField
     {
-        public SuiMoveNormalizedField(string name, ISuiMoveNormalizedType type)
+        public SuiMoveNormalizedField(string name, SuiMoveNormalizedType type)
         {
             this.Name = name;
             this.Type = type;
@@ -92,7 +95,7 @@ namespace Sui.Rpc.Models
         // - Vector: SuiMoveNormalizedType
         // - SuiMoveNormalizedStructType
         [JsonProperty("type")]
-        public ISuiMoveNormalizedType Type { get; set; }
+        public SuiMoveNormalizedType Type { get; set; }
     }
 
     public interface ISuiMoveNormalizedType { }

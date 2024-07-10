@@ -1,16 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+using Sui.Accounts;
 using UnityEngine;
 
 namespace Sui.Rpc.Models
 {
 	public enum ArgumentType
 	{
-		Object, Pure
+		Object,
+        Pure
 	}
+
+    public enum ObjectValueType
+    {
+        ByImmutableReference,
+        ByMutableReference,
+        ByValue
+    }
 
     [JsonObject, JsonConverter(typeof(MoveFunctionArgTypesConverter))]
     public class MoveFunctionArgTypes
@@ -21,6 +31,21 @@ namespace Sui.Rpc.Models
         {
             this.ArgTypes = ArgTypes;
         }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is not MoveFunctionArgTypes)
+                throw new NotImplementedException();
+
+            MoveFunctionArgTypes other_args = (MoveFunctionArgTypes)obj;
+
+            return this.ArgTypes.SequenceEqual(other_args.ArgTypes);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 
 	[JsonObject]
@@ -28,8 +53,33 @@ namespace Sui.Rpc.Models
     {
 		public ArgumentType ArgumentType;
 
-		public string ArgumentReference;  // Is null when argument type is pure, it isn't when the argument type is object
-	}
+		public ObjectValueType ArgumentReference;
+
+        public MoveFunctionArgType(ArgumentType arument_type, ObjectValueType argument_reference)
+        {
+            this.ArgumentType = arument_type;
+            this.ArgumentReference = argument_reference;
+        }
+
+        public MoveFunctionArgType() { }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is not MoveFunctionArgType)
+                throw new NotImplementedException();
+
+            MoveFunctionArgType other_args = (MoveFunctionArgType)obj;
+
+            return
+                (int)this.ArgumentType == (int)other_args.ArgumentType &&
+                (int)this.ArgumentReference == (int)other_args.ArgumentReference;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+    }
 
     public class MoveFunctionArgTypesConverter : JsonConverter
     {
@@ -40,39 +90,32 @@ namespace Sui.Rpc.Models
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            JObject typesRaw = JObject.Load(reader);
-            JArray types = (JArray)typesRaw["result"];
+            JArray types = JArray.Load(reader);
             List<MoveFunctionArgType> args = new List<MoveFunctionArgType>();
             foreach (JToken type in types)
             {
                 MoveFunctionArgType arg = new MoveFunctionArgType();
-                // TODO: Look into more efficient implementation of this.
-                //if (type["Object"] != null)
-                //{
-                //    arg.ArgumentType = ArgumentType.Object;
-                //    arg.ArgumentReference = (string)type["Object"];
-                //    args.Add(arg);
-                //    continue;
-                //}
-                //arg.ArgumentType = ArgumentType.Pure;
-                //arg.ArgumentReference = null;
-                //args.Add(arg);
-                //continue;
-
-                try
+                if (type.Type == JTokenType.Object)
                 {
                     arg.ArgumentType = ArgumentType.Object;
-                    arg.ArgumentReference = (string)(type as JObject)["Object"];
-                    args.Add(arg);
-                    continue;
+                    switch((string)(type as JObject)["Object"])
+                    {
+                        case "ByImmutableReference":
+                            arg.ArgumentReference = ObjectValueType.ByImmutableReference;
+                            break;
+                        case "ByMutableReference":
+                            arg.ArgumentReference = ObjectValueType.ByMutableReference;
+                            break;
+                        case "ByValue":
+                            arg.ArgumentReference = ObjectValueType.ByValue;
+                            break;
+                    }
+
                 }
-                catch
-                {
+                else
                     arg.ArgumentType = ArgumentType.Pure;
-                    arg.ArgumentReference = null;
-                    args.Add(arg);
-                    continue;
-                }
+
+                args.Add(arg);
             }
             return new MoveFunctionArgTypes(args.ToArray());
         }
