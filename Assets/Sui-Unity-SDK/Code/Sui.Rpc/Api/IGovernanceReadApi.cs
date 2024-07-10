@@ -13,8 +13,7 @@ namespace Sui.Rpc.Api
         /// https://docs.sui.io/sui-jsonrpc#suix_getCommitteeInfo
         /// </summary>
         /// <returns></returns>
-        public Task<RpcResult<CommitteeInfo>> GetCommitteeInfo(BigInteger epoch);
-        public Task<RpcResult<CommitteeInfo>> GetCommitteeInfo();
+        public Task<RpcResult<CommitteeInfo>> GetCommitteeInfo(BigInteger? epoch);
 
         /// <summary>
         /// https://docs.sui.io/sui-jsonrpc#suix_getValidatorsApy
@@ -27,14 +26,14 @@ namespace Sui.Rpc.Api
         /// https://docs.sui.io/sui-jsonrpc#suix_getStakes
         /// </summary>
         /// <returns></returns>
-        public Task<RpcResult<IEnumerable<Stakes>>> GetStakes(AccountAddress owner);
+        public Task<RpcResult<IEnumerable<Stakes>>> GetStakes(string owner);
 
         /// <summary>
         /// Return one or more [DelegatedStake]. If a Stake was withdrawn its status will be Unstaked.
         /// https://docs.sui.io/sui-jsonrpc#suix_getStakesByIds
         /// </summary>
         /// <returns></returns>
-        public Task<RpcResult<IEnumerable<Stakes>>> GetStakesByIds(List<AccountAddress> stakedSuiId);
+        public Task<RpcResult<IEnumerable<Stakes>>> GetStakesByIds(List<string> stakedSuiId);
 
         /// <summary>
         /// Return the latest SUI system state object on-chain.

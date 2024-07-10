@@ -9,6 +9,8 @@ using Newtonsoft.Json;
 using Sui.Rpc.Models;
 using UnityEngine;
 using System.Text;
+using static Sui.Rpc.Models.Stakes;
+using System.Linq;
 
 namespace Sui.Accounts
 {
@@ -155,6 +157,21 @@ namespace Sui.Accounts
             Debug.Log("MARCUS:::HEX STRING - " + addr.HexStringToByteArray().ByteArrayToString());
 
             return new AccountAddress(addr.HexStringToByteArray());
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is not AccountAddress)
+                throw new NotImplementedException();
+
+            AccountAddress other_addr = (AccountAddress)obj;
+
+            return this.AddressBytes.SequenceEqual(other_addr.AddressBytes);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
         }
 
         /// <summary>

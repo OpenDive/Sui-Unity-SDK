@@ -42,10 +42,6 @@ namespace Sui.Tests
                 new SuiTransactionArgument(tx_block.AddPure(new U64((ulong)this.DefaultStakeAmount)))
             });
 
-            var ser = new Serialization();
-            coins_tx[0].Serialize(ser);
-            Debug.Log($"MARCUS::: COIN TX SER - {string.Join(", ", ser.GetBytes())}");
-
             tx_block.AddMoveCallTx
             (
                 new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"0x3::sui_system::request_add_stake"), new SuiMoveNormalizedType[] { }),
@@ -79,6 +75,39 @@ namespace Sui.Tests
 
             if (stake_task.Result.Result.Effects.Status.Status == ExecutionStatus.Failure)
                 Assert.Fail("Transaction Failed");
+        }
+
+        [UnityTest]
+        public IEnumerator DelegatedStakesTest()
+        {
+            yield return this.Toolbox.Setup();
+
+            Task<RpcResult<TransactionBlockResponse>> stake_task = this.AddStake(this.Toolbox.Client, this.Toolbox.Account);
+            yield return new WaitUntil(() => stake_task.IsCompleted);
+
+            Task<RpcResult<IEnumerable<Stakes>>> stake_fetch_task = this.Toolbox.Client.GetStakes(this.Toolbox.Address());
+            yield return new WaitUntil(() => stake_fetch_task.IsCompleted);
+
+            Task<RpcResult<IEnumerable<Stakes>>> stakes_by_id_task = this.Toolbox.Client.GetStakesByIds
+            (
+                new List<string>()
+                {
+                    stake_fetch_task.Result.Result.ToList()[0].StakeList[0].StakedSuiId.ToHex()
+                }
+            );
+            yield return new WaitUntil(() => stakes_by_id_task.IsCompleted);
+
+            Assert.Greater(stake_fetch_task.Result.Result.ToList().Count, 0);
+            Assert.IsTrue(stakes_by_id_task.Result.Result.ToList()[0].StakeList[0].Equals(stake_fetch_task.Result.Result.ToList()[0].StakeList[0]));
+        }
+
+        [UnityTest]
+        public IEnumerator ValidatorFunctionFetchTest()
+        {
+            Task<RpcResult<CommitteeInfo>> committee_info_task = this.Toolbox.Client.GetCommitteeInfo(0);
+            yield return new WaitUntil(() => committee_info_task.IsCompleted);
+
+            Assert.Greater(committee_info_task.Result.Result.Validators.Count(), 0);
         }
     }
 }

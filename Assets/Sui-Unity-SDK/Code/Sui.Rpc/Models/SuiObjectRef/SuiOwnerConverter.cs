@@ -2,7 +2,6 @@ using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Unity.Plastic.Newtonsoft.Json.Linq;
-using UnityEngine;
 
 namespace Sui.Rpc.Models
 {
@@ -10,12 +9,14 @@ namespace Sui.Rpc.Models
     {
         public override Owner ReadJson(JsonReader reader, Type objectType, Owner existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
+            string initial_shared_version_parameter = "initial_shared_version";
+
             if (reader.TokenType == JsonToken.StartObject)
             {
                 Newtonsoft.Json.Linq.JObject owner_object = Newtonsoft.Json.Linq.JObject.Load(reader);
                 if (owner_object.ContainsKey(SuiOwnerType.Shared.ToString()))
                 {
-                    return new Owner(owner_object[SuiOwnerType.Shared.ToString()]["initial_shared_version"].Value<int>());
+                    return new Owner(owner_object[SuiOwnerType.Shared.ToString()][initial_shared_version_parameter].Value<int>());
                 }
                 else if (owner_object.ContainsKey(SuiOwnerType.AddressOwner.ToString()))
                 {

@@ -344,8 +344,7 @@ namespace Sui.Rpc
             SuiClient client = new SuiClient(Constants.MainnetConnection);
             Debug.Log("IRVIN:::: START REQUEST");
 
-            AccountAddress owner = AccountAddress.FromHex("0x8a0907e2990baebbbb87c12821db4845b034e45f937167e68b4925ac3465335a");
-            RpcResult<IEnumerable<Stakes>> rpcResult = await client.GetStakes(owner);
+            RpcResult<IEnumerable<Stakes>> rpcResult = await client.GetStakes("0x8a0907e2990baebbbb87c12821db4845b034e45f937167e68b4925ac3465335a");
 
             List<Stakes> stakes = (List<Stakes>)rpcResult.Result;
             Debug.Log("IRVIN:::: " + stakes.Count);
@@ -374,7 +373,7 @@ namespace Sui.Rpc
                 AccountAddress.FromHex("0xe0e042d1aacba8abf6f32be86c555a08eae5ba2b7972c912f7451104391e8c57")
             };
 
-            RpcResult<IEnumerable<Stakes>> rpcResult = await client.GetStakesByIds(stakedSuiId);
+            RpcResult<IEnumerable<Stakes>> rpcResult = await client.GetStakesByIds(stakedSuiId.Select((addr) => addr.ToHex()).ToList());
 
             List<Stakes> stakes = (List<Stakes>)rpcResult.Result;
             Debug.Log("IRVIN:::: " + stakes.Count);

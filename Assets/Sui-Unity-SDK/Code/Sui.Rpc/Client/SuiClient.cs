@@ -303,18 +303,11 @@ namespace Sui.Rpc
         }
 
         public async Task<RpcResult<CommitteeInfo>> GetCommitteeInfo(
-            BigInteger epoch)
+            BigInteger? epoch = null)
         {
             return await SendRpcRequestAsync<CommitteeInfo>(
                 Methods.suix_getCommitteeInfo.ToString(),
                 ArgumentBuilder.BuildArguments(epoch.ToString())
-            );
-        }
-
-        public async Task<RpcResult<CommitteeInfo>> GetCommitteeInfo()
-        {
-            return await SendRpcRequestAsync<CommitteeInfo>(
-                Methods.suix_getCommitteeInfo.ToString()
             );
         }
 
@@ -326,21 +319,20 @@ namespace Sui.Rpc
         }
 
         public async Task<RpcResult<IEnumerable<Stakes>>> GetStakes(
-            AccountAddress owner)
+            string owner)
         {
             return await SendRpcRequestAsync<IEnumerable<Stakes>>(
                 Methods.suix_getStakes.ToString(),
-                ArgumentBuilder.BuildArguments(owner.ToHex())
+                ArgumentBuilder.BuildArguments(owner)
             );
         }
 
-        public async Task<RpcResult<IEnumerable<Stakes>>> GetStakesByIds(
-            List<AccountAddress> stakedSuiId)
+        public async Task<RpcResult<IEnumerable<Stakes>>> GetStakesByIds(List<string> stakedSuiId)
         {
             return await SendRpcRequestAsync<IEnumerable<Stakes>>(
                 Methods.suix_getStakesByIds.ToString(),
-                ArgumentBuilder.BuildTypeArguments(
-                    stakedSuiId.Select(x => x.ToHex()).ToArray()
+                ArgumentBuilder.BuildArguments(
+                    stakedSuiId
                 )
             );
         }
