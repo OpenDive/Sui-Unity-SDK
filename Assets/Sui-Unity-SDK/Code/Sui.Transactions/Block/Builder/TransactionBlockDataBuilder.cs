@@ -31,7 +31,7 @@ namespace Sui.Transactions.Builder
         /// <summary>
         /// Holds the configuration for gas in the transaction.
         /// </summary>
-        public GasConfig GasConfig { get; set; }
+        public GasData GasConfig { get; set; }
 
         /// <summary>
         /// An array of inputs for the transaction block.
@@ -57,7 +57,7 @@ namespace Sui.Transactions.Builder
             int version = 1,
             AccountAddress sender = null,
             ITransactionExpiration expiration = null,
-            GasConfig gasConfig = null,
+            GasData gasConfig = null,
             List<TransactionBlockInput> inputs = null,
             List<SuiTransaction> transactions = null
         )
@@ -65,7 +65,7 @@ namespace Sui.Transactions.Builder
             this.Version = version;
             this.Sender = sender;
             this.Expiration = expiration != null ? expiration : new TransactionExpirationNone();
-            this.GasConfig = gasConfig != null ? gasConfig : new GasConfig();
+            this.GasConfig = gasConfig != null ? gasConfig : new GasData();
             this.Inputs = inputs != null ? inputs : new List<TransactionBlockInput>();
             this.Transactions = transactions != null ? transactions : new List<SuiTransaction>();
         }
@@ -117,7 +117,7 @@ namespace Sui.Transactions.Builder
                 deserializer.DeserializeU8(),
                 (AccountAddress)AccountAddress.Deserialize(deserializer),
                 (ITransactionExpiration)ITransactionExpiration.Deserialize(deserializer),
-                (GasConfig)GasConfig.Deserialize(deserializer),
+                (GasData)GasData.Deserialize(deserializer),
                 deserializer.DeserializeSequence(typeof(TransactionBlockInput)).Cast<TransactionBlockInput>().ToList(),
                 deserializer.DeserializeSequence(typeof(SuiTransaction)).Cast<SuiTransaction>().ToList()
             );

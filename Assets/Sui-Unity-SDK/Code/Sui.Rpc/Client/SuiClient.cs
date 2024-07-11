@@ -20,6 +20,12 @@ using Codice.CM.Common.Serialization.Replication;
 
 namespace Sui.Rpc
 {
+    public enum RequestType
+    {
+        WaitForEffectsCert,
+        WaitForLocalExecution
+    }
+
     public class SuiClient : IReadApi, ICoinQueryApi, IGovernanceReadApi, IExtendedApi
     {
         private UnityRpcClient _rpcClient;
@@ -48,7 +54,8 @@ namespace Sui.Rpc
         (
             Transactions.TransactionBlock transaction_block,
             Account account,
-            TransactionBlockResponseOptions options = null
+            TransactionBlockResponseOptions options = null,
+            RequestType? request_type = null
         )
         {
             TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
@@ -59,49 +66,56 @@ namespace Sui.Rpc
                 return RpcResult<TransactionBlockResponse>.GetErrorResult(tx_bytes.Error.Message);
 
             SignatureBase signature = account.SignTransactionBlock(tx_bytes.Result);
-            return await this.ExecuteTransactionBlock(tx_bytes.Result, account.ToSerializedSignature(signature), opts);
+            return await this.ExecuteTransactionBlock(tx_bytes.Result, account.ToSerializedSignature(signature), opts, request_type);
         }
 
         public async Task<RpcResult<TransactionBlockResponse>> ExecuteTransactionBlock
         (
             byte[] transaction_block,
             string signature,
-            TransactionBlockResponseOptions options = null
+            TransactionBlockResponseOptions options = null,
+            RequestType? request_type = null
         )
         {
             TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
             Debug.Log($"MARCUS::: EXECUTE TRANSACTION BLOCK - {JsonConvert.SerializeObject(ArgumentBuilder.BuildArguments(transaction_block, new string[] { signature }, opts))}");
             return await SendRpcRequestAsync<TransactionBlockResponse>(
                 Methods.sui_executeTransactionBlock.ToString(),
-                ArgumentBuilder.BuildArguments(transaction_block, new string[] { signature }, opts)
+                ArgumentBuilder.BuildArguments
+                (
+                    transaction_block,
+                    new string[] { signature },
+                    opts,
+                    request_type != null ? request_type.ToString() : null
+                )
             );
         }
 
-        public async Task WaitForTransaction(string transaction)
+        public async Task<RpcResult<TransactionBlockResponse>> WaitForTransaction(string transaction, TransactionBlockResponseOptions options = null)
         {
+            TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
             int count = 0;
             bool is_done = false;
             while (count == 0 && is_done == false)
             {
                 if (count >= 60)
-                    throw new System.Exception("Transaction Timed Out");
+                    return RpcResult<TransactionBlockResponse>.GetErrorResult("Transaction Timed Out");
+
                 await Task.Delay(TimeSpan.FromSeconds(1f));
                 count += 1;
                 is_done = await this.IsValidTransactionBlock(transaction);
             }
+            return await this.GetTransactionBlock(transaction, opts);
         }
 
         private async Task<bool> IsValidTransactionBlock(string transaction)
         {
-            try
-            {
-                RpcResult<TransactionBlockResponse> result = await this.GetTransactionBlock(transaction);
-                return result.Result.TimestampMs != null;
-            }
-            catch
-            {
+            RpcResult<TransactionBlockResponse> result = await this.GetTransactionBlock(transaction);
+
+            if (result.Error != null)
                 return false;
-            }
+
+            return result.Result.TimestampMs != null;
         }
 
         public async Task<RpcResult<TransactionBlockResponse>> GetTransactionBlock(string digest, TransactionBlockResponseOptions options = null)
@@ -129,6 +143,27 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<IEnumerable<TransactionBlockResponse>>(
                 Methods.sui_multiGetTransactionBlocks.ToString(),
                 ArgumentBuilder.BuildArguments(digests, opts)
+            );
+        }
+
+        public async Task<RpcResult<TransactionBlockResponsePage>> QueryTransactionBlocks
+        (
+            string cursor = null,
+            int? limit = null,
+            SortOrder? order = null,
+            ITransactionFilter filter = null,
+            TransactionBlockResponseOptions options = null
+        )
+        {
+            return await SendRpcRequestAsync<TransactionBlockResponsePage>(
+                Methods.suix_queryTransactionBlocks.ToString(),
+                ArgumentBuilder.BuildArguments
+                (
+                    new TransactionBlockResponseQuery(filter, options),
+                    cursor,
+                    limit,
+                    order == null ? null : order == SortOrder.Descending ? true : false
+                )
             );
         }
 
@@ -293,7 +328,7 @@ namespace Sui.Rpc
             IEventFilter query = null,
             EventId cursor = null,
             int? limit = null,
-            SortOrder order = SortOrder.Descending
+            SortOrder? order = null
         )
         {
             return await SendRpcRequestAsync<EventPage>(
@@ -303,7 +338,7 @@ namespace Sui.Rpc
                     query ??= new AllEventFilter(new IEventFilter[] { }),
                     cursor,
                     limit,
-                    order == SortOrder.Descending ? true : false
+                    order == null ? null : order == SortOrder.Descending ? true : false
                 )
             );
         }

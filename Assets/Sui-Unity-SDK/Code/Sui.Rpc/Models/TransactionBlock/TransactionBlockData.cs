@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Sui.Transactions.Builder;
 
 namespace Sui.Rpc.Models
 {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using Newtonsoft.Json;
+using Sui.Transactions.Builder;
 
 namespace Sui.Rpc.Models
 {
@@ -130,6 +131,21 @@ namespace Sui.Rpc.Models
     ///
     /// </code>
     /// </summary>
+    ///
+
+    [JsonObject]
+    public class TransactionBlockResponsePage
+    {
+        [JsonProperty("data")]
+        public List<TransactionBlockResponse> Data { get; set; }
+
+        [JsonProperty("nextCursor")]
+        public string NextCursor { get; set; }
+
+        [JsonProperty("hasNextPage")]
+        public bool HasNextPage { get; set; }
+    }
+
     [JsonObject]
     public class TransactionBlockResponse
     {
@@ -142,7 +158,7 @@ namespace Sui.Rpc.Models
         [JsonProperty("objectChanges")]
         public List<ObjectChange> ObjectChanges { get; set; }
 
-        [JsonProperty("balanceChange")]
+        [JsonProperty("balanceChanges")]
         public List<BalanceChange> BalanceChanges { get; set; }
 
         [JsonProperty("timestampMs", NullValueHandling = NullValueHandling.Include)]
@@ -162,6 +178,29 @@ namespace Sui.Rpc.Models
         // effects : {}
 
         // objectChanges: []
+    }
+
+    [JsonObject]
+    public class SuiTransactionBlock
+    {
+        [JsonProperty("data")]
+        public SuiTransactionBlockData Data { get; set; }
+
+        [JsonProperty("txSignature")]
+        public List<string> TransactionSignature { get; set; }
+    }
+
+    [JsonObject]
+    public class SuiTransactionBlockData
+    {
+        [JsonProperty("messageVersion")]
+        public string MessageVersion { get; set; }
+
+        [JsonProperty("sender")]
+        public string Sender { get; set; }
+
+        [JsonProperty("gasData")]
+        public GasData GasData { get; set; }
     }
 
     [JsonObject]

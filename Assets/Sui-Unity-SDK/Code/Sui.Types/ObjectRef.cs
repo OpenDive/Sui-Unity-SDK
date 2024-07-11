@@ -2,7 +2,7 @@ using System;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.Utilities;
-using UnityEngine;
+using Newtonsoft.Json;
 
 namespace Sui.Types
 {
@@ -14,7 +14,7 @@ namespace Sui.Types
 
     public interface IObjectRef : ISerializable
     {
-        public AccountAddress ObjectId { get; set; }
+        public AccountAddress ObjectID { get; set; }
     }
 
     public class ObjectArg : ISerializable
@@ -30,7 +30,7 @@ namespace Sui.Types
         
         public void Serialize(Serialization serializer)
         {
-            serializer.Serialize((byte) Type);
+            serializer.Serialize((byte)Type);
             serializer.Serialize(ObjectRef);
         }
 
@@ -65,36 +65,40 @@ namespace Sui.Types
     /// </code>
     /// Where `ObjectDigest` is a base58 BCS serialized string
     /// </summary>
+    [JsonObject]
     public class SuiObjectRef : IObjectRef
     {
-        private AccountAddress objectId;
-        public int version;
-        public string digest;
+        [JsonProperty("objectId")]
+        public AccountAddress ObjectID { get; set; }
 
-        public AccountAddress ObjectId { get => objectId; set => objectId = value; }
+        [JsonProperty("version")]
+        public int Version { get; set; }
+
+        [JsonProperty("digest")]
+        public string Digest { get; set; }
 
         public SuiObjectRef(AccountAddress objectId, int version, string digest)
         {
-            this.objectId = objectId;
-            this.version = version;
-            this.digest = digest;
+            this.ObjectID = objectId;
+            this.Version = version;
+            this.Digest = digest;
         }
 
         public SuiObjectRef(string object_id, string version, string digest)
         {
-            this.objectId = AccountAddress.FromHex(object_id);
-            this.version = int.Parse(version);
-            this.digest = digest;
+            this.ObjectID = AccountAddress.FromHex(object_id);
+            this.Version = int.Parse(version);
+            this.Digest = digest;
         }
 
         public void Serialize(Serialization serializer)
         {
-            U64 version = new U64((ulong)this.version);
+            U64 version = new U64((ulong)this.Version);
 
             Base58Encoder decoder = new Base58Encoder();
-            byte[] decode = decoder.DecodeData(this.digest);
+            byte[] decode = decoder.DecodeData(this.Digest);
 
-            this.objectId.Serialize(serializer);
+            this.ObjectID.Serialize(serializer);
             version.Serialize(serializer);
             serializer.Serialize(decode);
         }
@@ -142,11 +146,11 @@ namespace Sui.Types
         /// </summary>
         public bool mutable;
 
-        public AccountAddress ObjectId { get => objectId; set => objectId = value; }
+        public AccountAddress ObjectID { get => objectId; set => objectId = value; }
 
         public SharedObjectRef(AccountAddress objectId, int initialSharedVersion, bool mutable)
         {
-            this.ObjectId = objectId;
+            this.ObjectID = objectId;
             this.InitialSharedVersion = initialSharedVersion;
             this.mutable = mutable;
         }
@@ -156,7 +160,7 @@ namespace Sui.Types
             U64 initialSharedVersion = new U64((ulong)this.InitialSharedVersion);
             Bool mutable = new Bool(this.mutable);
 
-            this.ObjectId.Serialize(serializer);
+            this.ObjectID.Serialize(serializer);
             initialSharedVersion.Serialize(serializer);
             mutable.Serialize(serializer);
         }

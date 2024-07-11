@@ -1,15 +1,19 @@
+using System.Numerics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
 namespace Sui.Rpc.Models
 {
-    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    [JsonObject]
     public class BalanceChange
     {
-        public string Amount { get; set; }
+        [JsonProperty("amount")]
+        public BigInteger Amount { get; set; }
 
+        [JsonProperty("coinType")]
         public string CoinType { get; set; }
 
+        [JsonProperty("owner")]
         public Owner Owner { get; set; }
     }
 }

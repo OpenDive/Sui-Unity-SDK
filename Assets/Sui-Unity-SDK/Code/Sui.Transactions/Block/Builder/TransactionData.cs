@@ -19,7 +19,7 @@ namespace Sui.Transactions.Builder
     {
         public AccountAddress Sender { get; set; }
         public ITransactionExpiration Expiration { get; set; }
-        public GasConfig GasData { get; set; }
+        public GasData GasData { get; set; }
 
         /// <summary>
         /// This can be a ProgrammableTransaction,
@@ -31,7 +31,7 @@ namespace Sui.Transactions.Builder
         (
             AccountAddress sender,
             ITransactionExpiration transactionExpiration,
-            GasConfig gasdata,
+            GasData gasdata,
             Sui.Transactions.Kinds.ITransactionKind transaction
         )
         {
@@ -56,7 +56,7 @@ namespace Sui.Transactions.Builder
             return new TransactionDataV1(
                 AccountAddress.Deserialize(deserializer),
                 (ITransactionExpiration)ISerializable.Deserialize(deserializer),
-                (GasConfig)GasConfig.Deserialize(deserializer),
+                (GasData)GasData.Deserialize(deserializer),
                 (Sui.Transactions.Kinds.ITransactionKind)ISerializable.Deserialize(deserializer)
             );
         }

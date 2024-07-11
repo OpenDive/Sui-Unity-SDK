@@ -1,22 +1,28 @@
-using System;
 using System.Linq;
 using System.Numerics;
+using Newtonsoft.Json;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.Types;
-using Sui.Utilities;
-using UnityEngine;
 
 namespace Sui.Transactions.Builder
 {
-    public class GasConfig : ISerializable
+    [JsonObject]
+    public class GasData : ISerializable
     {
-        public BigInteger? Budget { get; set; }    // BigInt
-        public BigInteger? Price { get; set; }     // BigInt
+        [JsonProperty("budget")]
+        public BigInteger? Budget { get; set; }
+
+        [JsonProperty("price")]
+        public BigInteger? Price { get; set; }
+
+        [JsonProperty("payment")]
         public SuiObjectRef[] Payment { get; set; }
+
+        [JsonProperty("owner")]
         public AccountAddress Owner { get; set; }
 
-        public GasConfig(
+        public GasData(
             string budget = null,
             string price = null,
             SuiObjectRef[] payment = null,
@@ -49,7 +55,7 @@ namespace Sui.Transactions.Builder
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            return new GasConfig(
+            return new GasData(
                 deserializer.DeserializeU64().ToString(),
                 deserializer.DeserializeU64().ToString(),
                 deserializer.DeserializeSequence(typeof(SuiObjectRef)).Cast<SuiObjectRef>().ToArray(),

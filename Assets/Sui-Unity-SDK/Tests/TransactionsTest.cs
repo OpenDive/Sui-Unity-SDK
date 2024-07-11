@@ -45,7 +45,7 @@ namespace Sui.Tests
             Transactions.Builder.TransactionDataV1 transactionData = new(
                 AccountAddress.FromHex(test),
                 new TransactionExpirationNone(),
-                new GasConfig(
+                new Transactions.Builder.GasData(
                     "1000000",
                     "1",
                     new SuiObjectRef[] { paymentRef },
@@ -84,7 +84,7 @@ namespace Sui.Tests
             string sui = "0x0000000000000000000000000000000000000000000000000000000000000002";
             AccountAddress suiAddress = AccountAddress.FromHex(sui);
 
-            GasConfig gasData = new GasConfig(
+            Transactions.Builder.GasData gasData = new Transactions.Builder.GasData(
                 "1000000",
                 "1",
                 new SuiObjectRef[] { paymentRef },

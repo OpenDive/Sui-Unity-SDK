@@ -104,7 +104,7 @@ namespace Sui.Transactions
 
             ITransactionExpiration Expiration;
             AccountAddress Sender;
-            GasConfig GasConfig;
+            Builder.GasData GasConfig;
 
             if (overrides == null)
             {
@@ -859,7 +859,11 @@ namespace Sui.Transactions
         /// <returns>A `string` representing the digest of the block.</returns>
         public async Task<RpcResult<string>> GetDigest(BuildOptions build_options)
         {
-            await Prepare(build_options);
+            RpcError err = await Prepare(build_options);
+
+            if (err != null)
+                return new RpcResult<string>(null, err);
+
             return BlockDataBuilder.GetDigest();
         }
 
@@ -878,17 +882,16 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="options">A `BuildOptions` object that contains the `Provider` and `OnlyTransactionKind` members.</param>
         /// <returns>A `Task` object used for implementation with Coroutines.</returns>
-        public async Task PrepareGasPaymentAsync(BuildOptions options)
+        public async Task<RpcError> PrepareGasPaymentAsync(BuildOptions options)
         {
             if (IsMissingSender(options.OnlyTransactionKind))
-                throw new Exception("Sender Is Missing");
+                return new RpcError(-1, "Sender Is Missing", null);
 
-            if ((options.OnlyTransactionKind.HasValue && options.OnlyTransactionKind == true) || this.BlockDataBuilder.Builder.GasConfig.Payment != null) {
-                return;
-            }
+            if ((options.OnlyTransactionKind.HasValue && options.OnlyTransactionKind == true) || this.BlockDataBuilder.Builder.GasConfig.Payment != null)
+                return null;
 
             if (BlockDataBuilder.Builder.GasConfig.Owner == null && BlockDataBuilder.Builder.Sender == null)
-                throw new Exception("Gas Owner Cannot Be Found");
+                return new RpcError(-1, "Gas Owner Cannot Be Found", null);
 
             string gas_owner =
                 BlockDataBuilder.Builder.GasConfig.Owner != null ?
@@ -906,7 +909,7 @@ namespace Sui.Transactions
                         {
                             return
                                 coin.CoinObjectId ==
-                                ((Sui.Types.SuiObjectRef)object_arg.ObjectRef).ObjectId.ToHex();
+                                ((Sui.Types.SuiObjectRef)object_arg.ObjectRef).ObjectID.ToHex();
                         }
                     }
                     return false;
@@ -926,9 +929,11 @@ namespace Sui.Transactions
             });
 
             if (payment_coins.Count() == 0)
-                throw new Exception("Owner Does Not Have Payment Coins");
+                return new RpcError(-1, "Owner Does Not Have Payment Coins", null);
 
             SetGasPayment(payment_coins.ToArray());
+
+            return null;
         }
 
         /// <summary>
@@ -936,24 +941,28 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="options">A `BuildOptions` object that contains the `Provider` and `OnlyTransactionKind` members.</param>
         /// <returns>A `Task` object used for implementation with Coroutines.</returns>
-        public async Task PrepareGasPriceAsync(BuildOptions options)
+        public async Task<RpcError> PrepareGasPriceAsync(BuildOptions options)
         {
             if (IsMissingSender(options.OnlyTransactionKind))
-                throw new Exception("Sender Is Missing");
+                return new RpcError(-1, "Sender Is Missing", null);
 
             RpcResult<ulong> gas_price = await options.Provider.GetReferenceGasPriceAsync();
 
+            if (gas_price.Error != null)
+                return gas_price.Error;
+
             SetGasPrice(gas_price.Result);
+
+            return null;
         }
 
-        // TODO: Check implementation to verify that it works as intended.
         /// <summary>
         /// Resolves all required Move modules and objects.
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task PrepareTransactions(BuildOptions options)
+        public async Task<RpcError> PrepareTransactions(BuildOptions options)
         {
             // The inputs in the `TransactionBlock`
             List<TransactionBlockInput> inputs              = this.BlockDataBuilder.Builder.Inputs;
@@ -1137,12 +1146,11 @@ namespace Sui.Transactions
                         : normalized.Parameters;
 
                     if (paramsList.Count != moveCall.Arguments.Length)
-                        // TODO: Irvin fix this -- we cannot throw an exception
-                        throw new ArgumentException("Incorrect number of arguments.");
+                        return new RpcError(-1, "Incorrect number of arguments.", null);
 
-                    foreach (var param_enumerated in paramsList.Select((param, i) => new { i, param }))
+                    foreach (Tuple<int, SuiMoveNormalizedType> param_enumerated in paramsList.Select((param, i) => new Tuple<int, SuiMoveNormalizedType>(i, param)))
                     {
-                        SuiTransactionArgument arg = moveCall.Arguments[param_enumerated.i];
+                        SuiTransactionArgument arg = moveCall.Arguments[param_enumerated.Item1];
 
                         if (arg.TransactionArgument.Kind != Types.Arguments.Kind.Input)
                             continue;
@@ -1157,7 +1165,7 @@ namespace Sui.Transactions
                         //// We need to compare agains the RPC response params to know how to cast to a concrete type
                         //// Once we know how to cast, then we will be able to serialize it later on
                         ISerializable inputValue = input.Value;
-                        string ser_type = Serializer.GetPureNormalizedType(param_enumerated.param, inputValue);
+                        string ser_type = Serializer.GetPureNormalizedType(param_enumerated.Item2, inputValue);
 
                         if (ser_type != null)
                         {
@@ -1165,16 +1173,16 @@ namespace Sui.Transactions
                             continue;
                         }
 
-                        if (Serializer.ExtractStructType(param_enumerated.param) == null && param_enumerated.param.Type != SuiMoveNormalizedTypeSerializationType.TypeParameter)
-                            throw new Exception($"Unknown Call Arg Type");
+                        if (Serializer.ExtractStructType(param_enumerated.Item2) == null && param_enumerated.Item2.Type != SuiMoveNormalizedTypeSerializationType.TypeParameter)
+                            return new RpcError(-1, "Unknown Call Arg Type", param_enumerated.Item2);
 
                         if (inputValue.GetType() == typeof(BString))
                         {
-                            objectsToResolve.Add(new ObjectToResolve(((BString)inputValue).value, input, param_enumerated.param));
+                            objectsToResolve.Add(new ObjectToResolve(((BString)inputValue).value, input, param_enumerated.Item2));
                             continue;
                         }
 
-                        throw new Exception("Input Value Is Not Object ID");
+                        return new RpcError(-1, "Input Value Is Not Object ID", inputValue);
                     }
                 }
             }
@@ -1229,7 +1237,7 @@ namespace Sui.Transactions
                     ).Select(obj => obj.Key).ToList();
 
                 if (invalidObjects.Count > 0)
-                    throw new Exception($"The following objects are invalid: {JsonConvert.SerializeObject(invalidObjects)}");
+                    return new RpcError(-1, "Invalid object found.", invalidObjects);
 
                 foreach (ObjectToResolve objectToResolve in objectsToResolve)
                 {
@@ -1312,6 +1320,8 @@ namespace Sui.Transactions
                 this.BlockDataBuilder.Builder.Inputs.Sort((TransactionBlockInput t1, TransactionBlockInput t2) => t1.Index.CompareTo(t2.Index));
             }
             #endregion END - Resolve objects
+
+            return null;
         }
 
         public class ObjectToResolve
@@ -1346,16 +1356,26 @@ namespace Sui.Transactions
                 options.ProtocolConfig = new ProtocolConfig(protocol_config.Result);
             }
 
-            await PrepareGasPriceAsync(options);
-            await PrepareTransactions(options);
+            RpcError gas_price_error = await PrepareGasPriceAsync(options);
+
+            if (gas_price_error != null)
+                return gas_price_error;
+
+            RpcError prepare_transactions_error = await PrepareTransactions(options);
+
+            if (prepare_transactions_error != null)
+                return prepare_transactions_error;
 
             if (options.OnlyTransactionKind == null || (options.OnlyTransactionKind.HasValue && options.OnlyTransactionKind == false))
             {
-                await this.PrepareGasPaymentAsync(options);
+                RpcError gas_payment_error = await this.PrepareGasPaymentAsync(options);
+
+                if (gas_payment_error != null)
+                    return gas_payment_error;
 
                 if (this.BlockDataBuilder.Builder.GasConfig.Budget == null)
                 {
-                    GasConfig gas_config = new GasConfig();
+                    Builder.GasData gas_config = new Builder.GasData();
 
                     gas_config.Budget = GetConfig(LimitKey.MaxTxGas, options);
                     gas_config.Payment = new Sui.Types.SuiObjectRef[] { };

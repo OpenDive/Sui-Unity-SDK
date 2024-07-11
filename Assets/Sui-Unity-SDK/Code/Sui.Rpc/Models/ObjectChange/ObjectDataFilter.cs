@@ -325,4 +325,185 @@ namespace Sui.Rpc.Models
             this.Version = version;
         }
     }
+
+    public class TransactionBlockResponseQuery
+    {
+        [JsonProperty("filter")]
+        public ITransactionFilter Filter { get; set; }
+
+        [JsonProperty("options")]
+        public TransactionBlockResponseOptions Options { get; set; }
+
+        public TransactionBlockResponseQuery
+        (
+            ITransactionFilter filter = null,
+            TransactionBlockResponseOptions options = null
+        )
+        {
+            this.Filter = filter;
+            this.Options = options;
+        }
+    }
+
+    public interface ITransactionFilter { }
+
+    public class CheckpointTransactionFilter: ITransactionFilter
+    {
+        [JsonProperty("Checkpoint")]
+        public string Checkpoint { get; set; }
+
+        public CheckpointTransactionFilter(string checkpoint)
+        {
+            this.Checkpoint = checkpoint;
+        }
+    }
+
+    public class MoveFunctionTransactionFilter: ITransactionFilter
+    {
+        [JsonProperty("MoveFunction")]
+        public TransactionMoveFunction MoveFunction { get; set; }
+
+        public MoveFunctionTransactionFilter(TransactionMoveFunction move_function)
+        {
+            this.MoveFunction = move_function;
+        }
+    }
+
+    public class InputObjectTransactionFilter : ITransactionFilter
+    {
+        [JsonProperty("InputObject")]
+        public string InputObject { get; set; }
+
+        public InputObjectTransactionFilter(string input_object)
+        {
+            this.InputObject = input_object;
+        }
+    }
+
+    public class ChangedObjectTransactionFilter : ITransactionFilter
+    {
+        [JsonProperty("ChangedObject")]
+        public string ChangedObject { get; set; }
+
+        public ChangedObjectTransactionFilter(string changed_object)
+        {
+            this.ChangedObject = changed_object;
+        }
+    }
+
+    public class FromAddressTransactionFilter : ITransactionFilter
+    {
+        [JsonProperty("FromAddress")]
+        public string FromAddress { get; set; }
+
+        public FromAddressTransactionFilter(string from_address)
+        {
+            this.FromAddress = from_address;
+        }
+    }
+
+    public class ToAddressTransactionFilter : ITransactionFilter
+    {
+        [JsonProperty("ToAddress")]
+        public string ToAddress { get; set; }
+
+        public ToAddressTransactionFilter(string to_address)
+        {
+            this.ToAddress = to_address;
+        }
+    }
+
+    public class FromAndToAddressTransactionFilter: ITransactionFilter
+    {
+        [JsonProperty("FromAndToAddress")]
+        public FromAndToAddress FromAndToAddress { get; set; }
+
+        public FromAndToAddressTransactionFilter(FromAndToAddress from_and_to_address)
+        {
+            this.FromAndToAddress = from_and_to_address;
+        }
+    }
+
+    public class FromOrToAddressTransactionFilter : ITransactionFilter
+    {
+        [JsonProperty("FromOrToAddress")]
+        public FromOrToAddress FromOrToAddress { get; set; }
+
+        public FromOrToAddressTransactionFilter(FromOrToAddress from_or_to_address)
+        {
+            this.FromOrToAddress = from_or_to_address;
+        }
+    }
+
+    public class TransactionKindTransactionFilter : ITransactionFilter
+    {
+        [JsonProperty("TransactionKind")]
+        public string TransactionKind { get; set; }
+
+        public TransactionKindTransactionFilter(string transaction_kind)
+        {
+            this.TransactionKind = transaction_kind;
+        }
+    }
+
+    public class TransactionKindInTransactionFilter : ITransactionFilter
+    {
+        [JsonProperty("TransactionKindIn")]
+        public string TransactionKindIn { get; set; }
+
+        public TransactionKindInTransactionFilter(string transaction_kind_in)
+        {
+            this.TransactionKindIn = transaction_kind_in;
+        }
+    }
+
+    public class TransactionMoveFunction
+    {
+        [JsonProperty("function")]
+        public string Function { get; set; }
+
+        [JsonProperty("module")]
+        public string Module { get; set; }
+
+        [JsonProperty("package")]
+        public string Package { get; set; }
+
+        public TransactionMoveFunction
+        (
+            string function = null,
+            string module = null,
+            string package = null
+        )
+        {
+            this.Function = function;
+            this.Module = module;
+            this.Package = package;
+        }
+    }
+
+    public class FromAndToAddress
+    {
+        [JsonProperty("from")]
+        public string From { get; set; }
+
+        [JsonProperty("to")]
+        public string To { get; set; }
+
+        public FromAndToAddress(string from, string to)
+        {
+            this.From = from;
+            this.To = to;
+        }
+    }
+
+    public class FromOrToAddress
+    {
+        [JsonProperty("addr")]
+        public string Addr { get; set; }
+
+        public FromOrToAddress(string addr)
+        {
+            this.Addr = addr;
+        }
+    }
 }

@@ -22,19 +22,19 @@ namespace Sui.Rpc.Models
     ///     }
     /// </code>
     /// </summary>
-    [JsonObject]
-    public class GasData
-    {
-        [JsonProperty("payment")]
-        public List<ObjectRef> Payment { get; set; }
+    //[JsonObject]
+    //public class GasDataOld
+    //{
+    //    [JsonProperty("payment")]
+    //    public List<ObjectRef> Payment { get; set; }
 
-        [JsonProperty("owner")]
-        public string Owner { get; set; }
+    //    [JsonProperty("owner")]
+    //    public string Owner { get; set; }
 
-        [JsonProperty("price")]
-        public BigInteger Price { get; set; }
+    //    [JsonProperty("price")]
+    //    public BigInteger Price { get; set; }
 
-        [JsonProperty("budget")]
-        public BigInteger Budget { get; set; }
-    }
+    //    [JsonProperty("budget")]
+    //    public BigInteger Budget { get; set; }
+    //}
 }

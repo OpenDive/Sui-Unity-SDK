@@ -14,6 +14,7 @@ using Sui.Rpc.Models;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using System.Collections;
+using OpenDive.BCS;
 
 namespace Sui.Tests
 {
@@ -133,6 +134,84 @@ namespace Sui.Tests
             return new PublishedPackage(package_id, published_tx_block.Result);
         }
 
+        public string[] GetRandomAddresses(int amount) => Enumerable.Range(0, amount).Select(_ => new Account().SuiAddress()).ToArray();
+
+        public async Task<RpcResult<TransactionBlockResponse>> PaySui
+        (
+            int num_recipients = 1,
+            string[] recipients = null,
+            int[] amounts = null,
+            string coin_id = null
+        )
+        {
+            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+
+            string[] recipients_tx = recipients ??= this.GetRandomAddresses(num_recipients);
+            int[] amounts_tx =
+                amounts ??=
+                Enumerable.Range(0, num_recipients).Select(_ => this.DefaultSendAmount).ToArray();
+
+            if (recipients_tx.Count() != amounts_tx.Count())
+                return RpcResult<TransactionBlockResponse>.GetErrorResult("Recipients and amounts do not match.");
+
+            string coin_id_tx = coin_id ??= (await this.Client.GetCoins(this.Address(), "0x2::sui::SUI")).Result.Data[0].CoinObjectId;
+
+            foreach (Tuple<int, string> recipient in recipients_tx.Select((rec, i) => new Tuple<int, string>(i, rec)))
+            {
+                List<SuiTransactionArgument> coin = tx_block.AddSplitCoinsTx
+                (
+                    new SuiTransactionArgument(tx_block.AddObjectInput(coin_id_tx)),
+                    new SuiTransactionArgument[]
+                    {
+                        new SuiTransactionArgument(tx_block.AddPure(new U64((ulong)amounts_tx[recipient.Item1])))
+                    }
+                );
+                tx_block.AddTransferObjectsTx(coin.ToArray(), recipient.Item2);
+            }
+
+            RpcResult<TransactionBlockResponse> published_tx_block = await this.Client.SignAndExecuteTransactionBlock
+            (
+                tx_block,
+                this.Account,
+                new TransactionBlockResponseOptions(showEffects: true, showObjectChanges: true)
+            );
+
+            if (published_tx_block.Error != null || published_tx_block.Result.Effects.Status.Status == ExecutionStatus.Failure)
+                return RpcResult<TransactionBlockResponse>.GetErrorResult
+                (
+                    $"Transaction failed with message: {published_tx_block.Error.Message ??= published_tx_block.Result.Effects.Status.Error}"
+                );
+
+            return published_tx_block;
+        }
+
+        public async Task<RpcResult<IEnumerable<TransactionBlockResponse>>> ExecutePaySuiNTimes
+        (
+            int n_times,
+            int num_recipients_per_txn = 1,
+            string[] recipients = null,
+            int[] amounts = null
+        )
+        {
+            List<TransactionBlockResponse> txns = new List<TransactionBlockResponse>();
+
+            for (int i = 0; i < n_times; ++i)
+            {
+                RpcResult<TransactionBlockResponse> tx_response = await this.PaySui(num_recipients_per_txn, recipients, amounts);
+
+                if (tx_response.Error != null || tx_response.Result.Effects.Status.Status == ExecutionStatus.Failure)
+                    return RpcResult<IEnumerable<TransactionBlockResponse>>.GetErrorResult
+                    (
+                        $"One of the Transactions failed with message: {tx_response.Error.Message ??= tx_response.Result.Effects.Status.Error}"
+                    );
+
+                await this.Client.WaitForTransaction(tx_response.Result.Digest);
+                txns.Add(tx_response.Result);
+            }
+
+            return new RpcResult<IEnumerable<TransactionBlockResponse>>(txns);
+        }
+
         public IEnumerator Setup()
         {
             bool is_initializing = true;
@@ -152,7 +231,7 @@ namespace Sui.Tests
             }
         }
 
-        public JObject GetModule(string name)
+        private JObject GetModule(string name)
         {
             try
             {

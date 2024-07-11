@@ -25,7 +25,7 @@ namespace Sui.Transactions
 				ObjectRefType.Shared,
 				new SharedObjectRef
 				(
-					AccountAddress.FromHex(NormalizedTypeConverter.NormalizeSuiAddress(shared_object_ref.ObjectId.ToHex())),
+					AccountAddress.FromHex(NormalizedTypeConverter.NormalizeSuiAddress(shared_object_ref.ObjectID.ToHex())),
 					shared_object_ref.InitialSharedVersion,
 					shared_object_ref.mutable
 				)
@@ -37,10 +37,10 @@ namespace Sui.Transactions
 			switch(arg.Input.Type)
             {
 				case ObjectRefType.ImmOrOwned:
-					AccountAddress object_id_immutable = ((Sui.Types.SuiObjectRef)arg.Input.ObjectRef).ObjectId;
+					AccountAddress object_id_immutable = ((Sui.Types.SuiObjectRef)arg.Input.ObjectRef).ObjectID;
 					return NormalizedTypeConverter.NormalizeSuiAddress(object_id_immutable.ToHex());
 				case ObjectRefType.Shared:
-					AccountAddress object_id_shared = ((Sui.Types.SharedObjectRef)arg.Input.ObjectRef).ObjectId;
+					AccountAddress object_id_shared = ((Sui.Types.SharedObjectRef)arg.Input.ObjectRef).ObjectID;
 					return NormalizedTypeConverter.NormalizeSuiAddress(object_id_shared.ToHex());
 				default:
 					throw new Exception("Not Implemented");
