@@ -5,6 +5,12 @@ using Org.BouncyCastle.Crypto.Digests;
 using Sui.Cryptography;
 using Sui.Utilities;
 using static Sui.Cryptography.SignatureUtils;
+using Newtonsoft.Json;
+using Sui.Rpc.Models;
+using UnityEngine;
+using System.Text;
+using static Sui.Rpc.Models.Stakes;
+using System.Linq;
 
 namespace Sui.Accounts
 {
@@ -19,12 +25,15 @@ namespace Sui.Accounts
     /// and MultiSig with corresponding flag bytes of 0x00, 0x01, 0x02, and 0x03, respectively.
     /// https://docs.sui.io/learn/cryptography/sui-wallet-specs#address-format
     /// </summary>
+    [JsonConverter(typeof(SuiAddressJsonConverter))]
     public class AccountAddress : ISerializableTag
     {
+        public static readonly int OldLength = 20;
+
         /// <summary>
         /// Length of a Sui account address.
         /// </summary>
-        private static readonly int Length = 32;
+        public static readonly int Length = 32;
 
 
         private byte[] _addressBytes;
@@ -95,9 +104,12 @@ namespace Sui.Accounts
         /// <param name="address"></param>
         public AccountAddress(byte[] suiAddress)
         {
-            if (suiAddress.Length != Length)
+            Debug.Log("IRVIN::: bytes length: " + suiAddress.Length);
+            if (suiAddress.Length != OldLength && suiAddress.Length != Length)
                 throw new ArgumentException("Invalid address length. It must be " + Length + " bytes");
+            Debug.Log("IRVIN::: bytes assigning ...");
             AddressBytes = suiAddress;
+            Debug.Log("IRVIN::: bytes assigning ...");
         }
 
         /// <summary>
@@ -118,8 +130,48 @@ namespace Sui.Accounts
         /// <returns></returns>
         public static AccountAddress FromHex(string suiAddress)
         {
-            byte[] suiAddressBytes = suiAddress.HexStringToByteArray();
-            return new AccountAddress(suiAddressBytes);
+            //byte[] suiAddressBytes = suiAddress.HexStringToByteArray();
+            //return new AccountAddress(suiAddressBytes);
+
+            if (string.IsNullOrWhiteSpace(suiAddress))
+                throw new ArgumentException("Address string is empty.");
+
+            //if (suiAddress.Contains("0x") && suiAddress.Length == 3)
+            //{
+            //    suiAddress = "0x" + suiAddress;
+            //}
+
+            string addr = suiAddress;
+
+            if (suiAddress[0..2].Equals("0x")) {
+                addr = suiAddress[2..];
+            }
+
+            // TODO: Document that Sui changed their address length from 20 to 32, hence some old addresses are shorter
+            if (addr.Length < AccountAddress.Length * 2)
+            {
+                string pad = new string('0', AccountAddress.Length * 2 - addr.Length);
+                addr = pad + addr;
+            }
+
+            Debug.Log("MARCUS:::HEX STRING - " + addr.HexStringToByteArray().ByteArrayToString());
+
+            return new AccountAddress(addr.HexStringToByteArray());
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is not AccountAddress)
+                throw new NotImplementedException();
+
+            AccountAddress other_addr = (AccountAddress)obj;
+
+            return this.AddressBytes.SequenceEqual(other_addr.AddressBytes);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
         }
 
         /// <summary>
@@ -133,6 +185,18 @@ namespace Sui.Accounts
             return new AccountAddress(suiAddressBytes);
         }
 
+        public static AccountAddress FromBase58(string suiAddress)
+        {
+            byte[] bytes = Encoding.ASCII.GetBytes(suiAddress);
+            Base58Encoder base58Encoder = new Base58Encoder();
+            if (Base58Encoder.IsValidEncoding(suiAddress) == false)
+                throw new ArgumentException("Not a valid Base58 string - " + suiAddress);
+
+            Debug.Log(suiAddress);
+            byte[] suiAddressBytes = base58Encoder.DecodeData(suiAddress);
+            return new AccountAddress(suiAddressBytes);
+        }
+
         /// <summary>
         /// Returns a hex string representation of a Sui address.
         /// </summary>
@@ -141,7 +205,8 @@ namespace Sui.Accounts
         {
             string addressHex = BitConverter.ToString(AddressBytes); // Turn into hexadecimal string
             addressHex = addressHex.Replace("-", "").ToLowerInvariant(); // Remove '-' characters from hex string hash
-            addressHex = "0x" + addressHex.Substring(0, 64);
+            //addressHex = "0x" + addressHex.Substring(0, 64); // TODO: Address this
+            addressHex = "0x" + addressHex.Substring(0, AddressBytes.Length * 2); // It is assumed that at this stage the bytes are valid, so it's either 20 or 32 bytes
             return addressHex;
         }
 
@@ -160,12 +225,12 @@ namespace Sui.Accounts
         /// <returns></returns>
         public override string ToString()
         {
-            return ToBase64();
+            return ToHex();
         }
 
         public void Serialize(Serialization serializer)
         {
-            throw new NotImplementedException();
+            serializer.SerializeFixedBytes(this.AddressBytes);
         }
 
         public static AccountAddress Deserialize(Deserialization deserializer)

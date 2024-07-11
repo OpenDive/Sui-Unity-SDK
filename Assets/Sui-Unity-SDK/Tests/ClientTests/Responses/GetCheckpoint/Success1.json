@@ -1,0 +1,19 @@
+﻿{
+    "jsonrpc": "2.0",
+    "result": {
+        "epoch": "0",
+        "sequenceNumber": "0",
+        "digest": "C5k3cUvNL1ejYNyy6Xgri78dSZCPENHJnY6wzketTccv",
+        "networkTotalTransactions": "1",
+        "epochRollingGasCostSummary": {
+            "computationCost": "0",
+            "storageCost": "0",
+            "storageRebate": "0",
+            "nonRefundableStorageFee": "0"
+        },
+        "timestampMs": "1698349906298",
+        "transactions": [ "3P54PRYUMLfriLZ5i8Kmd13VLf58XwYywZKW8YfRn5jY" ],
+        "checkpointCommitments": [],
+        "validatorSignature": "p5+pmMfn7ZmkBMSlptWFUpDijCI8+0zXuanBooLCSzBh5RjJTpQtHNnckfpBuIBa"
+    }
+}

@@ -1,0 +1,19 @@
+﻿{
+    "jsonrpc": "2.0",
+    "result": [
+        {
+            "data": {
+                "objectId": "0xd0f544b2bbe3f65c194d3cf30bd3771439f89786fd06002127c16becd497815b",
+                "version": "7217843",
+                "digest": "4RHWpwbUuZbmSdTebHVmpQPKTYd5V75zD9U9bY4DwhMr"
+            }
+        },
+        {
+            "data": {
+                "objectId": "0x1b98b1f1efdd0361d8fead88072b32d9385d94b64124827740d42c38e2fa55ad",
+                "version": "7217843",
+                "digest": "J7hPuVZ4rUCPs4rKhCTdq5fXmA952P5d6qyKc5Y2KZ5p"
+            }
+        }
+    ]
+}

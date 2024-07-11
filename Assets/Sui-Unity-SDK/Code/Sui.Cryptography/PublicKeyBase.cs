@@ -1,8 +1,11 @@
 using System;
+using System.Data.SqlTypes;
 using Chaos.NaCl;
 using Org.BouncyCastle.Crypto.Digests;
 using Sui.Accounts;
+using Sui.Rpc.Models;
 using Sui.Utilities;
+using UnityEngine;
 using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Cryptography
@@ -10,30 +13,33 @@ namespace Sui.Cryptography
     public abstract class PublicKeyBase
     {
         /// <summary>
-        /// Signature scheme for the public key
+        /// Signature scheme for the public key.
         /// </summary>
         public abstract SignatureScheme SignatureScheme { get; }
 
         /// <summary>
-        /// The lenght of the public key
+        /// The lenght of the public key.
         /// </summary>
         public abstract int KeyLength { get; }
 
         /// <summary>
-        /// Public key represented as a byte array
+        /// Public key represented as a byte array.
         /// </summary>
         private byte[] _keyBytes;
 
         /// <summary>
-        /// Public key represented as a hex string
+        /// Public key represented as a hex string.
         /// </summary>
         private string _keyHex;
 
         /// <summary>
-        /// Public key represented as a base64 string
+        /// Public key represented as a base64 string.
         /// </summary>
         private string _keyBase64;
 
+        /// <summary>
+        /// Public key represented as a hex string.
+        /// </summary>
         public string KeyHex
         {
             get
@@ -60,6 +66,9 @@ namespace Sui.Cryptography
             set => _keyHex = value;
         }
 
+        /// <summary>
+        /// Public key represented as a base64 string.
+        /// </summary>
         public string KeyBase64
         {
             get
@@ -82,6 +91,9 @@ namespace Sui.Cryptography
             set => _keyBase64 = value;
         }
 
+        /// <summary>
+        /// Public key represented as a byte array.
+        /// </summary>
         public byte[] KeyBytes
         {
             get
@@ -126,10 +138,12 @@ namespace Sui.Cryptography
             if (Utils.IsValidEd25519HexKey(publicKey))
             {
                 KeyHex = publicKey ?? throw new ArgumentNullException(nameof(publicKey));
+                _keyBytes = CryptoBytes.FromHexString(publicKey);
             }
             else if(Utils.IsBase64String(publicKey))
             {
                 KeyBase64 = publicKey ?? throw new ArgumentNullException(nameof(publicKey));
+                _keyBytes = CryptoBytes.FromBase64String(publicKey);
             }
             else
             {
@@ -162,15 +176,64 @@ namespace Sui.Cryptography
         public string ToBase64() => KeyBase64;
 
         /// <summary>
+        /// Return the private key as a hex string.
+        /// </summary>
+        /// <returns>The private key as a hex string.</returns>
+        public string ToHex() => KeyHex;
+
+        /// <summary>
         /// Return the Sui representation of the public key encoded in
         /// base-64. A Sui public key is formed by the concatenation
-        /// of the scheme flag with the raw bytes of the public key
+        /// of the scheme flag with the raw bytes of the public key.
         /// </summary>
         /// <returns></returns>
         public string ToSuiPublicKey()
         {
             byte[] bytes = ToSuiBytes();
             return CryptoBytes.ToBase64String(bytes);
+        }
+
+        /// <summary>
+        /// Creates a PublicKey object from a base-64
+        /// string representation of a Sui-formatted public key.
+        /// A Sui public key is formed by the concatenation
+        /// of the scheme flag with the raw bytes of the public key.
+        /// </summary>
+        /// <param name="suiPubKey"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public static PublicKeyBase FromSuiPublicKey(string suiPublicKey)
+        {
+            byte[] suiPubKeybytes = CryptoBytes.FromBase64String(suiPublicKey);
+            byte flag = suiPubKeybytes[0];
+            SignatureScheme signatureScheme = SignatureFlagToScheme.GetScheme(flag);
+
+            int len = suiPubKeybytes.Length - 1;
+            byte[] pubKeyBytes = new byte[len];
+
+            switch (signatureScheme)
+            {
+                case SignatureScheme.ED25519:
+                    Array.Copy(suiPubKeybytes, 1, pubKeyBytes, 0, len);
+                    return new Ed25519.PublicKey(pubKeyBytes); 
+                case SignatureScheme.Secp256k1:
+                    //Array.Copy(suiPubKeybytes, 1, pubKeyBytes, 0, len);
+                    //return new Sui.Cryptography.Secp256k1.PublicKey(pubKeyBytes);
+                    break;
+                case SignatureScheme.Secp256r1:
+                    //Array.Copy(suiPubKeybytes, 1, pubKeyBytes, 0, len);
+                    //return new Sui.Cryptography.Secp256r1.PublicKey(pubKeyBytes);
+                    break;
+                case SignatureScheme.MultiSig:
+                    throw new NotSupportedException("Multisign public key not supported.");
+                case SignatureScheme.Zk:
+                    throw new NotSupportedException("Zk public key not supported.");
+                default:
+                    Array.Copy(suiPubKeybytes, 1, pubKeyBytes, 0, len);
+                    return new Ed25519.PublicKey(pubKeyBytes);
+            }
+
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -188,6 +251,8 @@ namespace Sui.Cryptography
         /// <param name="signature"></param>
         /// <returns></returns>
         abstract public bool Verify(byte[] message, SignatureBase signature);
+
+        abstract public bool VerifyTransactionBlock(byte[] transaction_block, SignatureBase signature);
 
         /// <summary>
         /// Signature is committed to the intent message of the transaction data,
@@ -274,10 +339,37 @@ namespace Sui.Cryptography
         //    return "0x" + addressHex.Substring(0, 64);
         //}
 
-        public AccountAddress ToSuiAddress()
+        public string ToSuiAddress()
         {
-            return new AccountAddress(KeyBytes, SignatureScheme);
+            byte[] hashed_address = new byte[32];
+            byte[] prehash_address = new byte[this.KeyLength + 1];
+            prehash_address[0] = SignatureSchemeToFlag.GetFlag(SignatureScheme.ED25519);
+            Array.Copy(_keyBytes, 0, prehash_address, 1, _keyBytes.Length);
+            Blake2bDigest blake2b = new Blake2bDigest(256);
+            blake2b.BlockUpdate(prehash_address, 0, prehash_address.Length);
+            blake2b.DoFinal(hashed_address, 0);
+            string addressHex = CryptoBytes.ToHexStringLower(hashed_address);
+            return NormalizedTypeConverter.NormalizeSuiAddress(addressHex);
         }
+
+        //public static string GetDigestFromBytes(byte[] bytes)
+        //{
+        //    string type_tag = "TransactionData";
+        //    byte[] type_tag_bytes = Encoding.UTF8.GetBytes((type_tag + "::"));
+
+        //    List<byte> data_with_tag = new List<byte>();
+
+        //    data_with_tag.AddRange(type_tag_bytes);
+        //    data_with_tag.AddRange(bytes);
+
+        //    byte[] hashed_data = new byte[32];
+        //    Blake2bDigest blake2b = new Blake2bDigest(256);
+        //    blake2b.BlockUpdate(data_with_tag.ToArray(), 0, data_with_tag.Count());
+        //    blake2b.DoFinal(hashed_data, 0);
+
+        //    Base58Encoder base58Encoder = new Base58Encoder();
+        //    return base58Encoder.EncodeData(hashed_data);
+        //}
 
         /// <summary>
         /// Return signature scheme flag of the public key

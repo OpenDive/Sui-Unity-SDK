@@ -3,13 +3,12 @@ using Chaos.NaCl;
 using NBitcoin;
 using Sui.Utilities;
 using static Sui.Cryptography.SignatureUtils;
-//using Utils = Sui.Utilities.Utils;
 
 namespace Sui.Cryptography.Ed25519
 {
     /// <summary>
     /// Implements the functionality of a private key.
-    /// The key may be viewed as a Hex or Base58 string as supported by Sui.
+    /// The key may be viewed as a Hex or Base64 string as supported by Sui.
     /// </summary>
     public class PrivateKey : PrivateKeyBase, IPrivateKey
     {
@@ -27,7 +26,7 @@ namespace Sui.Cryptography.Ed25519
             {
                 // if the private key bytes have not being initialized,
                 // but the 32-byte (64 character) string private key has been set
-                // decode the string based on the key format (i.e. Hex or Base58)
+                // decode the string based on the key format (i.e. Hex or Base64)
                 if (_keyBytes == null && _extendedKeyBytes == null)
                 {
                     if (_keyHex != null)

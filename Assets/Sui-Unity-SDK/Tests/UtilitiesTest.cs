@@ -1,4 +1,7 @@
+using System.Text;
 using NUnit.Framework;
+using UnityEngine;
+using Sui.Utilities;
 
 namespace Sui.Tests.Cryptography
 {
@@ -25,6 +28,26 @@ namespace Sui.Tests.Cryptography
             Assert.AreEqual(false, isValidHex1);
             bool isValidHex2 = Utilities.Utils.IsValidEd25519HexKey(invalidPkHex2);
             Assert.AreEqual(false, isValidHex2);
+        }
+
+        [Test]
+        public void HashTypedData()
+        {
+            string typeTag = "TransactionData::";
+            byte[] expected = new byte[]{ 84, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 68, 97, 116, 97, 58, 58 };
+            byte[] bytes = Encoding.ASCII.GetBytes(typeTag);
+            Debug.Log(bytes.ToReadableString());
+            Debug.Log(Encoding.UTF8.GetBytes(typeTag).ToReadableString());
+        }
+
+        [Test]
+        public void Base58()
+        {
+            byte[] bytes = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            Base58Encoder encoder = new Base58Encoder();
+            string base58 = encoder.EncodeData(bytes);
+            Debug.Log("BASE58: " + base58);
+            Debug.Log("BYTES: " + encoder.DecodeData(base58).ByteArrayToString());
         }
     }
 }

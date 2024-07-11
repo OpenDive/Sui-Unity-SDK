@@ -6,6 +6,7 @@ using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Accounts
 {
+    // TODO: Implement toSerializedSignature for Public Keys
     public class Account
     {
         /// <summary>
@@ -26,7 +27,7 @@ namespace Sui.Accounts
         /// <summary>
         /// Represents an AccoutAddress object.
         /// </summary>
-        public AccountAddress AccountAddress { get; set; }
+        public AccountAddress AccountAddress { get { return AccountAddress.FromHex(PublicKey.ToSuiAddress()); } set => AccountAddress = value; }
 
         /// <summary>
         /// Private key as 32-byte array
@@ -47,29 +48,24 @@ namespace Sui.Accounts
         {
             SignatureScheme = signatureScheme;
 
-            if(signatureScheme == SignatureScheme.ED25519)
+            switch (signatureScheme)
             {
-
-            }
-            else if (signatureScheme == SignatureScheme.Secp256k1)
-            {
-
-            }
-            else if (signatureScheme == SignatureScheme.Secp256r1)
-            {
-
-            }
-            else if(signatureScheme == SignatureScheme.MultiSig)
-            {
-
-            }
-            else if(signatureScheme == SignatureScheme.Zk)
-            {
-
-            }
-            else
-            {
-
+                case SignatureScheme.ED25519:
+                    PrivateKey = new Cryptography.Ed25519.PrivateKey(privateKey);
+                    PublicKey = PrivateKey.PublicKey();
+                    break;
+                case SignatureScheme.Secp256k1:
+                    throw new NotImplementedException();
+                    //break;
+                case SignatureScheme.Secp256r1:
+                    throw new NotImplementedException();
+                    //break;
+                case SignatureScheme.MultiSig:
+                    throw new NotImplementedException();
+                    //break;
+                case SignatureScheme.Zk:
+                    throw new NotImplementedException();
+                    //break;
             }
         }
 
@@ -77,58 +73,64 @@ namespace Sui.Accounts
         /// Generates an account from a random seed.
         /// </summary>
         /// <param name="signatureScheme"></param>
-        private Account(SignatureScheme signatureScheme = SignatureScheme.ED25519)
+        public Account(SignatureScheme signatureScheme = SignatureScheme.ED25519)
         {
             SignatureScheme = signatureScheme;
 
-            if (signatureScheme == SignatureScheme.ED25519)
+            switch (signatureScheme)
             {
-                PrivateKey = Cryptography.Ed25519.PrivateKey.Random();
-                PublicKey = PrivateKey.PublicKey();
-
-            }
-            else if (signatureScheme == SignatureScheme.Secp256k1)
-            {
-                throw new NotImplementedException();
-            }
-            else if (signatureScheme == SignatureScheme.Secp256r1)
-            {
-                throw new NotImplementedException();
-            }
-            else if (signatureScheme == SignatureScheme.MultiSig)
-            {
-                throw new NotImplementedException();
-            }
-            else if (signatureScheme == SignatureScheme.Zk)
-            {
-                throw new NotImplementedException();
-            }
-            else
-            {
-                throw new NotImplementedException();
+                case SignatureScheme.ED25519:
+                    PrivateKey = Cryptography.Ed25519.PrivateKey.Random();
+                    PublicKey = PrivateKey.PublicKey();
+                    break;
+                case SignatureScheme.Secp256k1:
+                    throw new NotImplementedException();
+                    //break;
+                case SignatureScheme.Secp256r1:
+                    throw new NotImplementedException();
+                    //break;
+                case SignatureScheme.MultiSig:
+                    throw new NotImplementedException();
+                    //break;
+                case SignatureScheme.Zk:
+                    throw new NotImplementedException();
+                    //break;
             }
         }
 
-
+        /// <summary>
+        /// Generate an Account of given signature scheme
+        /// </summary>
+        /// <param name="signatureScheme"></param>
+        /// <returns></returns>
         public static Account Generate(SignatureScheme signatureScheme = SignatureScheme.ED25519)
         {
             return new Account(signatureScheme);
         }
 
+        /// <summary>
+        /// Verifies a given signature.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="signature"></param>
+        /// <returns></returns>
         public bool Verify(byte[] message, SignatureBase signature)
         {
             return PublicKey.Verify(message, signature);
         }
 
-        public SignatureBase Sign(byte[] message)
-        {
-            return PrivateKey.Sign(message);
-        }
+        /// <summary>
+        /// Signs a message with the account's private key.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        public SignatureBase Sign(byte[] message) => PrivateKey.Sign(message);
 
-        public AccountAddress SuiAddress()
-        {
-            return PublicKey.ToSuiAddress();
-        }
+        /// <summary>
+        /// Derives a Sui address from the account's public key.
+        /// </summary>
+        /// <returns></returns>
+        public string SuiAddress() => PublicKey.ToSuiAddress();
 
         /// <summary>
         /// Sign messages with a specific intent. By combining
@@ -139,28 +141,31 @@ namespace Sui.Accounts
         /// <param name="bytes"></param>
         /// <param name="intent"></param>
         /// <returns></returns>
-        public SignatureWithBytes SignWithIntent(byte[] bytes, IntentScope intent)
+        public SignatureBase SignWithIntent(byte[] bytes, IntentScope intent)
         {
             byte[] intentMessage = CreateMessageWithIntent(intent, bytes);
+
             // BLAKE2b hash
             byte[] digest = new byte[32];
             Blake2bDigest blake2b = new(256);
             blake2b.BlockUpdate(intentMessage, 0, intentMessage.Length);
             blake2b.DoFinal(digest, 0);
+            return this.Sign(digest);
+        }
 
-            byte[] privateKeySig = Sign(digest).Data();
-
+        public string ToSerializedSignature(SignatureBase signature)
+        {
             SerializeSignatureInput serializedSigInput = new SerializeSignatureInput();
-            serializedSigInput.Signature = privateKeySig;
+            serializedSigInput.Signature = signature.Data();
             serializedSigInput.SignatureScheme = SignatureScheme;
             serializedSigInput.PublicKey = PublicKey;
 
-            string signature = SignatureBase.ToSerializedSignature(serializedSigInput);
+            return SignatureBase.ToSerializedSignature(serializedSigInput);
+        }
 
-            SignatureWithBytes sigWithBytes = new SignatureWithBytes();
-            sigWithBytes.Signature = signature;
-            sigWithBytes.Bytes = CryptoBytes.ToBase64String(bytes);
-            return sigWithBytes;
+        public bool VerifyTransactionBlock(byte[] transaction_block, SignatureBase signature)
+        {
+            return PublicKey.VerifyTransactionBlock(transaction_block, signature);
         }
 
         /// <summary>
@@ -169,7 +174,7 @@ namespace Sui.Accounts
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        public SignatureWithBytes SignTransactionBlock(byte[] bytes)
+        public SignatureBase SignTransactionBlock(byte[] bytes)
         {
             return SignWithIntent(bytes, IntentScope.TransactionData);
         }

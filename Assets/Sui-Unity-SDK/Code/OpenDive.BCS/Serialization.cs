@@ -1,4 +1,5 @@
 ﻿// An implementation of BCS in C#
+using System;
 using System.IO;
 using System.Numerics;
 using System.Runtime.Serialization;
@@ -290,8 +291,17 @@ namespace OpenDive.BCS
         {
             byte lower = (byte)(num & 0xFF);
             byte upper = (byte)(num >> 8 & 0xFF);
-            output.Write(new[] { upper, lower });
+            byte[] bytes = new byte[] { upper, lower };
+            Array.Reverse(bytes); // We need to reverse the order for little endian
+            output.Write(bytes);
+            //output.Write(new[] { upper, lower });
             return this;
+
+            //byte[] bytes = BitConverter.GetBytes(num);
+            //if (!BitConverter.IsLittleEndian)
+            //    Array.Reverse(bytes); //reverse it so we get big endian.
+            //output.Write(bytes);
+            //return this;
         }
 
         /// <summary>

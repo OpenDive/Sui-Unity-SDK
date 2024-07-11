@@ -99,7 +99,7 @@ namespace Sui.Utilities
 					}
 				}
 			}
-			return maybeb58 && str.Length > 0;
+			return maybeb58 && str.Count() > 0;
 		}
 
 

@@ -1,0 +1,7 @@
+﻿{
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32602,
+    "message": "Verified checkpoint not found for sequence number: 1234567890"
+  }
+}

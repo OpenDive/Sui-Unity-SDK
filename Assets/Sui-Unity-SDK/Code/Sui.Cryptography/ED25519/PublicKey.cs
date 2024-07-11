@@ -1,4 +1,5 @@
 using System;
+using Org.BouncyCastle.Crypto.Digests;
 using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Cryptography.Ed25519
@@ -36,11 +37,41 @@ namespace Sui.Cryptography.Ed25519
         /// <returns></returns>
         public override byte Flag() => SignatureSchemeToFlag.ED25519;
 
+        /// <summary>
+        /// Verifies a signature from a Signature object.
+        /// </summary>
+        /// <param name="message">The message that was signed by the private key.</param>
+        /// <param name="signature">The serialized signature to verify.</param>
+        /// <returns></returns>
         public override bool Verify(byte[] message, SignatureBase signature)
         {
             throw new System.NotImplementedException();
         }
 
+        public bool VerifyWithIntent(byte[] bytes, SignatureBase signature, IntentScope intent)
+        {
+            byte[] intentMessage = CreateMessageWithIntent(intent, bytes);
+
+            // BLAKE2b hash
+            byte[] digest = new byte[32];
+            Blake2bDigest blake2b = new(256);
+            blake2b.BlockUpdate(intentMessage, 0, intentMessage.Length);
+            blake2b.DoFinal(digest, 0);
+
+            return VerifyRaw(digest, signature.Data());
+        }
+
+        public override bool VerifyTransactionBlock(byte[] transaction_block, SignatureBase signature)
+        {
+            return VerifyWithIntent(transaction_block, signature, IntentScope.TransactionData);
+        }
+
+        /// <summary>
+        /// Verifies a signatures that has been serialized as hex string.
+        /// </summary>
+        /// <param name="message">The message that was signed by the private key.</param>
+        /// <param name="serializedSignature">The serialized signature to verify.</param>
+        /// <returns></returns>
         public override bool Verify(byte[] message, string serializedSignature)
         {
             ParsedSignatureOutput parsedSignature
@@ -59,6 +90,12 @@ namespace Sui.Cryptography.Ed25519
             return VerifyRaw(message, signature);
         }
 
+        /// <summary>
+        /// Verifies a signature passed as a raw set of bytes.
+        /// </summary>
+        /// <param name="message">The message that was signed by the private key.</param>
+        /// <param name="signature">The signature to verify.</param>
+        /// <returns></returns>
         public override bool VerifyRaw(byte[] message, byte[] signature)
         {
             return Chaos.NaCl.Ed25519.Verify(signature, message, ToRawBytes());

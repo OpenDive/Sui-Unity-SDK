@@ -3,6 +3,11 @@ using System;
 using Sui.Utilities;
 using Sui.Cryptography.Ed25519;
 using UnityEngine;
+using Sui.Accounts;
+using Sui.Transactions;
+using Sui.Rpc;
+using Sui.Cryptography;
+using System.Threading.Tasks;
 
 namespace Sui.Tests.Cryptography
 {
@@ -65,10 +70,10 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PrivateKeyFromBase64tringSuccess()
         {
-            string pkHex = "0x99da9559e15e913ee9ab2e53e3dfad575da33b49be1125bb922e33494f498828";
+            //string pkHex = "0x99da9559e15e913ee9ab2e53e3dfad575da33b49be1125bb922e33494f498828";
             string pkBase64 = "mdqVWeFekT7pqy5T49+tV12jO0m+ESW7ki4zSU9JiCg=";
             byte[] pkBytes = { 153, 218, 149, 89, 225, 94, 145, 62, 233, 171, 46, 83, 227, 223, 173, 87, 93, 163, 59, 73, 190, 17, 37, 187, 146, 46, 51, 73, 79, 73, 136, 40 };
-            string publicKey = "Gy9JCW4+Xb0Pz6nAwM2S2as7IVRLNNXdSmXZi4eLmSI=";
+            //string publicKey = "Gy9JCW4+Xb0Pz6nAwM2S2as7IVRLNNXdSmXZi4eLmSI=";
             PrivateKey pk = new PrivateKey(pkBase64);
 
             //Assert.AreEqual(1, 0, pk.PublicKey().ToBase64());
@@ -133,9 +138,26 @@ namespace Sui.Tests.Cryptography
         }
 
         [Test]
-        public void PrivateKeySignature()
+        public async Task TransactionSigningSuccess()
         {
-            Assert.AreEqual(1, 0);
+            Account account = new Account();
+            TransactionBlock tx_block = new TransactionBlock();
+            SuiClient client = new SuiClient(Constants.LocalnetConnection);
+
+            tx_block.SetSender(AccountAddress.FromHex(account.SuiAddress()));
+            tx_block.SetGasPrice(5);
+            tx_block.SetGasBudget(100);
+            byte[] digest = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            Base58Encoder base58Encoder = new Base58Encoder();
+            tx_block.SetGasPayment(new Types.SuiObjectRef[] { new Types.SuiObjectRef
+            (
+                AccountAddress.FromHex(string.Format("{0:0}", new System.Random().NextDouble() * 100000).PadLeft(64, '0')),
+                new System.Random().Next() * 10000,
+                base58Encoder.EncodeData(digest)
+            ) });
+            byte[] bytes = await tx_block.Build(new BuildOptions(client));
+            SignatureBase serialized_signature = account.SignTransactionBlock(bytes);
+            Assert.IsTrue(account.VerifyTransactionBlock(bytes, serialized_signature));
         }
 
         /// <summary>

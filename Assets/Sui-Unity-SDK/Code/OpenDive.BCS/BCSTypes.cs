@@ -1,4 +1,6 @@
 ﻿using Sui.Accounts;
+using Sui.Rpc.Models;
+using Sui.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +32,134 @@ namespace OpenDive.BCS
         public static ISerializable Deserialize(Deserialization deserializer) => throw new NotImplementedException();
     }
 
+    public class SerializableTypeTag: ISerializable
+    {
+        public TypeTag Type { get; set; }
+        public ISerializable Value { get; set; }
+
+        public SerializableTypeTag(ISerializable value)
+        {
+            this.Value = value;
+
+            if (value.GetType() == typeof(SuiStructTag))
+                this.Type = TypeTag.STRUCT;
+            else if (value.GetType() == typeof(AccountAddress))
+                this.Type = TypeTag.ACCOUNT_ADDRESS;
+            else
+                throw new NotImplementedException();
+        }
+
+        public SerializableTypeTag(string string_value)
+        {
+            SuiStructTag struct_tag = SuiStructTag.FromStr(string_value);
+
+            if (struct_tag != null)
+            {
+                this.Value = struct_tag;
+                this.Type = TypeTag.STRUCT;
+            }
+            else
+            {
+                AccountAddress account_address = AccountAddress.FromHex(string_value);
+                if (account_address != null)
+                {
+                    this.Value = account_address;
+                    this.Type = TypeTag.ACCOUNT_ADDRESS;
+                }
+                else if (string_value == "bool")
+                {
+                    this.Value = null;
+                    this.Type = TypeTag.BOOL;
+                }
+                else if (string_value == "u8")
+                {
+                    this.Value = null;
+                    this.Type = TypeTag.U8;
+                }
+                else if (string_value == "u16")
+                {
+                    this.Value = null;
+                    this.Type = TypeTag.U16;
+                }
+                else if (string_value == "u32")
+                {
+                    this.Value = null;
+                    this.Type = TypeTag.U32;
+                }
+                else if (string_value == "u64")
+                {
+                    this.Value = null;
+                    this.Type = TypeTag.U64;
+                }
+                else if (string_value == "u128")
+                {
+                    this.Value = null;
+                    this.Type = TypeTag.U128;
+                }
+                else if (string_value == "u256")
+                {
+                    this.Value = null;
+                    this.Type = TypeTag.U256;
+                }
+                else
+                    throw new NotImplementedException();
+            }
+        }
+
+        public SerializableTypeTag(TypeTag type, ISerializable value = null)
+        {
+            this.Type = type;
+            this.Value = value;
+        }
+
+        public override string ToString()
+        {
+            switch (this.Type)
+            {
+                case TypeTag.ACCOUNT_ADDRESS:
+                    return "address";
+                default:
+                    return this.Type.ToString().ToLower();
+            }
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            serializer.SerializeU8((byte)(int)this.Type);
+            this.Value.Serialize(serializer);
+        }
+
+        public static ISerializableTag Deserialize(Deserialization deserializer)
+        {
+            TypeTag variant = (TypeTag)deserializer.DeserializeUleb128();
+
+            if (variant == TypeTag.BOOL)
+                return Bool.Deserialize(deserializer);
+            else if (variant == TypeTag.U8)
+                return U8.Deserialize(deserializer);
+            else if (variant == TypeTag.U16)
+                return U16.Deserialize(deserializer);
+            else if (variant == TypeTag.U32)
+                return U32.Deserialize(deserializer);
+            else if (variant == TypeTag.U64)
+                return U64.Deserialize(deserializer);
+            else if (variant == TypeTag.U128)
+                return U128.Deserialize(deserializer);
+            else if (variant == TypeTag.U256)
+                return U256.Deserialize(deserializer);
+            else if (variant == TypeTag.ACCOUNT_ADDRESS)
+                return AccountAddress.Deserialize(deserializer);
+            else if (variant == TypeTag.STRUCT)
+                return StructTag.Deserialize(deserializer);
+            else if (variant == TypeTag.SIGNER)
+                throw new NotImplementedException();
+            else if (variant == TypeTag.VECTOR)
+                throw new NotImplementedException();
+
+            throw new NotImplementedException();
+        }
+    }
+
     public interface ISerializableTag : ISerializable
     {
         public TypeTag Variant();
@@ -38,6 +168,7 @@ namespace OpenDive.BCS
 
         public void SerializeTag(Serialization serializer)
         {
+            serializer.SerializeU32AsUleb128((uint)(int)this.Variant());
             this.Serialize(serializer);
         }
 
@@ -62,8 +193,8 @@ namespace OpenDive.BCS
             else if (variant == TypeTag.U256)
                 return U256.Deserialize(deserializer);
             // TODO: Clean up
-            //else if (variant == TypeTag.ACCOUNT_ADDRESS)
-            //    return AccountAddress.Deserialize(deserializer);
+            else if (variant == TypeTag.ACCOUNT_ADDRESS)
+                return AccountAddress.Deserialize(deserializer);
             else if (variant == TypeTag.SIGNER)
                 throw new NotImplementedException();
             else if (variant == TypeTag.VECTOR)
@@ -81,7 +212,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class TagSequence : ISerializable
     {
-        ISerializableTag[] serializableTags;
+        public ISerializableTag[] serializableTags;
 
         public TagSequence(ISerializableTag[] serializableTags)
         {
@@ -157,7 +288,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class Sequence : ISerializable
     {
-        ISerializable[] values;
+        public ISerializable[] values;
 
         public int Length
         {
@@ -181,28 +312,33 @@ namespace OpenDive.BCS
         {
             serializer.SerializeU32AsUleb128((uint)this.values.Length);
 
-            foreach (ISerializable element in this.values)
-            {
-                Type elementType = element.GetType();
-                if (elementType == typeof(Sequence))
+            // TODO: Check if adding this check prevent trying to iterate through empty sequences / arrays
+            //if(this.values.Length > 0)
+            //{
+                foreach (ISerializable element in this.values)
                 {
-                    Serialization seqSerializer = new Serialization();
-                    Sequence seq = (Sequence)element;
-                    seqSerializer.Serialize(seq);
+                    Type elementType = element.GetType();
+                    if (elementType == typeof(Sequence))
+                    {
+                        Serialization seqSerializer = new Serialization();
+                        Sequence seq = (Sequence)element;
+                        seqSerializer.Serialize(seq);
 
-                    byte[] elementsBytes = seqSerializer.GetBytes();
-                    int sequenceLen = elementsBytes.Length;
-                    serializer.SerializeU32AsUleb128((uint)sequenceLen);
-                    serializer.SerializeFixedBytes(elementsBytes);
+                        byte[] elementsBytes = seqSerializer.GetBytes();
+                        int sequenceLen = elementsBytes.Length;
+                        serializer.SerializeU32AsUleb128((uint)sequenceLen);
+                        serializer.SerializeFixedBytes(elementsBytes);
+                    }
+                    else
+                    {
+                        Serialization s = new Serialization();
+                        element.Serialize(s);
+                        byte[] b = s.GetBytes();
+                        //serializer.SerializeBytes(b);
+                        serializer.SerializeFixedBytes(b);
+                    }
                 }
-                else
-                {
-                    Serialization s = new Serialization();
-                    element.Serialize(s);
-                    byte[] b = s.GetBytes();
-                    serializer.SerializeBytes(b);
-                }
-            }
+            //}
         }
 
         public static Sequence Deserialize(Deserialization deser)
@@ -243,7 +379,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class BytesSequence : ISerializable
     {
-        byte[][] values;
+        public byte[][] values;
 
         public BytesSequence(byte[][] values)
         {
@@ -451,7 +587,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class Bytes : ISerializable
     {
-        byte[] values;
+        public byte[] values;
 
         public Bytes(byte[] values)
         {
@@ -503,7 +639,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class Bool : ISerializableTag
     {
-        bool value;
+        public bool value;
 
         public Bool(bool value)
         {
@@ -560,7 +696,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class U8 : ISerializableTag
     {
-        byte value;
+        public byte value;
 
         public U8(byte value)
         {
@@ -730,7 +866,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class U64 : ISerializableTag
     {
-        ulong value;
+        public ulong value;
 
         public U64(ulong value)
         {
@@ -788,7 +924,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class U128 : ISerializableTag
     {
-        BigInteger value;
+        public BigInteger value;
 
         public U128(BigInteger value)
         {
@@ -846,7 +982,7 @@ namespace OpenDive.BCS
     /// </summary>
     public class U256 : ISerializableTag
     {
-        BigInteger value;
+        public BigInteger value;
 
         public U256(BigInteger value)
         {
@@ -904,10 +1040,10 @@ namespace OpenDive.BCS
     /// </summary>
     public class StructTag : ISerializableTag
     {
-        AccountAddress address;
-        string module;
-        string name;
-        ISerializableTag[] typeArgs;
+        public AccountAddress address;
+        public string module;
+        public string name;
+        public ISerializableTag[] typeArgs;
 
         public StructTag(AccountAddress address, string module, string name, ISerializableTag[] typeArgs)
         {
@@ -924,14 +1060,11 @@ namespace OpenDive.BCS
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128((uint)this.Variant());
+            //serializer.SerializeU32AsUleb128((uint)this.Variant());
             this.address.Serialize(serializer);
             serializer.Serialize(this.module);
             serializer.Serialize(this.name);
-            serializer.SerializeU32AsUleb128((uint)this.typeArgs.Length);
-
-            for (int i = 0; i < this.typeArgs.Length; i++)
-                this.typeArgs[i].Serialize(serializer);
+            serializer.Serialize(this.typeArgs);
         }
 
         public static StructTag Deserialize(Deserialization deserializer)
@@ -1028,5 +1161,186 @@ namespace OpenDive.BCS
         {
             return base.GetHashCode();
         }
+    }
+
+    public class SuiStructTag : ISerializable
+    {
+        public AccountAddress address;
+        public string module;
+        public string name;
+        public SerializableTypeTag[] typeArgs;
+
+        public SuiStructTag(AccountAddress address, string module, string name, SerializableTypeTag[] typeArgs)
+        {
+            this.address = address;
+            this.module = module;
+            this.name = name;
+            this.typeArgs = typeArgs;
+        }
+
+        public SuiStructTag(string suiStructTag)
+        {
+            SuiStructTag result = FromStr(suiStructTag);
+            this.address = result.address;
+            this.module = result.module;
+            this.name = result.name;
+            this.typeArgs = result.typeArgs;
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            this.address.Serialize(serializer);
+            serializer.Serialize(this.module);
+            serializer.Serialize(this.name);
+            serializer.Serialize(this.typeArgs);
+        }
+
+        public static SuiStructTag Deserialize(Deserialization deserializer)
+        {
+            AccountAddress address = AccountAddress.Deserialize(deserializer);
+            string module = deserializer.DeserializeString();
+            string name = deserializer.DeserializeString();
+
+            int length = deserializer.DeserializeUleb128();
+            // TODO: Implement deserializer for ISuiMoveNormalizedType
+            //List<ISerializableTag> typeArgsList = new List<ISuiMoveNormalizedType>();
+
+            //while (typeArgsList.Count < length)
+            //{
+            //    ISerializableTag val = ISerializableTag.DeserializeTag(deserializer);
+            //    typeArgsList.Add(val);
+            //}
+
+            //ISerializableTag[] typeArgsArr = typeArgsList.ToArray();
+
+            SuiStructTag structTag = new SuiStructTag(
+                address,
+                module,
+                name,
+                Array.Empty<SerializableTypeTag>()
+            );
+
+            return structTag;
+        }
+
+        public override bool Equals(object other)
+        {
+            if (other is not SuiStructTag)
+                throw new NotImplementedException();
+
+            SuiStructTag otherStructTag = (SuiStructTag)other;
+
+            return 
+                this.address.AddressBytes.SequenceEqual(otherStructTag.address.AddressBytes)
+                && this.module == otherStructTag.module
+                && this.name == otherStructTag.name
+                && Enumerable.SequenceEqual(this.typeArgs, otherStructTag.typeArgs);
+        }
+
+        public override string ToString()
+        {
+            string value = string.Format(
+                "{0}::{1}::{2}",
+                this.address.ToHex(),
+                this.module.ToString(),
+                this.name.ToString()
+            );
+
+            if (this.typeArgs != null && this.typeArgs.Length > 0)
+            {
+                value += string.Format("<{0}", this.typeArgs[0].ToString());
+                foreach (SerializableTypeTag typeArg in this.typeArgs[1..])
+                    value += string.Format(", {0}", typeArg.ToString());
+                value += ">";
+            }
+            return value;
+        }
+
+        public static SuiStructTag FromStr(string typeTag)
+        {
+            string name = "";
+            int index = 0;
+            SerializableTypeTag nested_value = null;
+
+            while (index < typeTag.Length)
+            {
+                char letter = typeTag[index];
+                index += 1;
+
+                if (letter == '<')
+                {
+                    nested_value = new SerializableTypeTag(typeTag[index..typeTag.Length]);
+                    break;
+                }
+                else if (letter == '>')
+                    break;
+                else
+                    name += letter;
+            }
+
+            string[] split = name.Split("::");
+            AccountAddress address = AccountAddress.FromHex(split[0]);
+
+            return new SuiStructTag(
+                address,
+                split[1],
+                split[2],
+                nested_value != null ?
+                    new SerializableTypeTag[] { nested_value } :
+                    Array.Empty<SerializableTypeTag>()
+            );
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+    }
+
+    public class SuiMoveNormalizedStructType: ISerializable
+    {
+        public SuiStructTag StructTag;
+        public SuiMoveNormalizedType[] TypeArguments;
+
+        public SuiMoveNormalizedStructType(SuiStructTag structTag, SuiMoveNormalizedType[] type_arguments)
+        {
+            this.StructTag = structTag;
+            this.TypeArguments = type_arguments;
+        }
+
+        public SuiMoveNormalizedStructType(string structTag, SuiMoveNormalizedType[] type_arguments)
+        {
+            this.StructTag = SuiStructTag.FromStr(structTag);
+            this.TypeArguments = type_arguments;
+        }
+
+        public SuiMoveNormalizedStructType(string address, string module, string name, SuiMoveNormalizedType[] type_arguments)
+        {
+            this.StructTag = new SuiStructTag(AccountAddress.FromHex(address), module, name, new SerializableTypeTag[] { });
+            this.TypeArguments = type_arguments;
+        }
+
+        public SuiMoveNormalizedStructType(AccountAddress address, string module, string name, SuiMoveNormalizedType[] type_arguments)
+        {
+            this.StructTag = new SuiStructTag(address, module, name, new SerializableTypeTag[] { });
+            this.TypeArguments = type_arguments;
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            serializer.Serialize(this.StructTag.address);
+            serializer.Serialize(this.StructTag.module);
+            serializer.Serialize(this.StructTag.name);
+
+            if (this.TypeArguments.Length != 0)
+                serializer.Serialize(this.TypeArguments);
+        }
+
+        //public static SuiMoveNormalizedStructType Deserialize(Deserialization deserializer)
+        //{
+        //    return new SuiMoveNormalizedStructType(
+        //        SuiStructTag.Deserialize(deserializer)
+        //    );
+        //}
     }
 }
