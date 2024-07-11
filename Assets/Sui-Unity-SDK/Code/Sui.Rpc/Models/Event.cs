@@ -5,6 +5,19 @@ using Newtonsoft.Json.Linq;
 namespace Sui.Rpc.Models
 {
 	[JsonObject]
+	public class EventPage
+	{
+		[JsonProperty("data")]
+		public Event[] Data { get; set; }
+
+        [JsonProperty("nextCursor")]
+        public EventId NextCursor { get; set; }
+
+        [JsonProperty("hasNextPage")]
+        public bool HasNextPage { get; set; }
+    }
+
+	[JsonObject]
 	public class Event
 	{
 		[JsonProperty("id")]
@@ -25,7 +38,7 @@ namespace Sui.Rpc.Models
 		[JsonProperty("parsedJson")]
 		public JObject ParsedJson { get; set; }
 
-	[JsonProperty("bcs", Required = Required.Default)]
+		[JsonProperty("bcs", Required = Required.Default)]
 		public string BCS { get; set; }
 
 		[JsonProperty("timestampMs", Required = Required.Default)]

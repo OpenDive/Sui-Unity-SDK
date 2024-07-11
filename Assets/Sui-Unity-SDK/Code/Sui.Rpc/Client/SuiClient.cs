@@ -16,6 +16,7 @@ using System.Text.RegularExpressions;
 using UnityEngine.Windows;
 using static UnityEngine.UI.GridLayoutGroup;
 using NBitcoin.DataEncoders;
+using Codice.CM.Common.Serialization.Replication;
 
 namespace Sui.Rpc
 {
@@ -284,6 +285,26 @@ namespace Sui.Rpc
             return await SendRpcRequestAsync<Models.Event[]>(
                 Methods.sui_getEvents.ToString(),
                 ArgumentBuilder.BuildArguments(transactionDigest)
+            );
+        }
+
+        public async Task<RpcResult<EventPage>> QueryEvents
+        (
+            IEventFilter query = null,
+            EventId cursor = null,
+            int? limit = null,
+            SortOrder order = SortOrder.Descending
+        )
+        {
+            return await SendRpcRequestAsync<EventPage>(
+                Methods.suix_queryEvents.ToString(),
+                ArgumentBuilder.BuildArguments
+                (
+                    query ??= new AllEventFilter(new IEventFilter[] { }),
+                    cursor,
+                    limit,
+                    order == SortOrder.Descending ? true : false
+                )
             );
         }
 
