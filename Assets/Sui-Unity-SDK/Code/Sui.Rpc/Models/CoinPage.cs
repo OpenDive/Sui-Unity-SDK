@@ -44,5 +44,15 @@ namespace Sui.Rpc.Models
             res.Version = BigInteger.Parse(this.Version);
             return res;
         }
+
+        public Types.SuiObjectRef ToSuiObjectRef()
+        {
+            return new Types.SuiObjectRef
+            (
+                this.CoinObjectId,
+                this.Version,
+                this.Digest
+            );
+        }
     }
 }

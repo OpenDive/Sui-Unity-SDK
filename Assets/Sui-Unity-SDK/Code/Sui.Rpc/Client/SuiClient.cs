@@ -52,10 +52,13 @@ namespace Sui.Rpc
         {
             TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
             transaction_block.SetSenderIfNotSet(AccountAddress.FromHex(account.SuiAddress()));
-            //Debug.Log($"MARCUS::: EXECUTE TRANSACTION BLOCK - {JsonConvert.SerializeObject(transaction_block.BlockDataBuilder.Builder.Inputs)}");
-            byte[] tx_bytes = await transaction_block.Build(new BuildOptions(this));
-            SignatureBase signature = account.SignTransactionBlock(tx_bytes);
-            return await this.ExecuteTransactionBlock(tx_bytes, account.ToSerializedSignature(signature), opts);
+            RpcResult<byte[]> tx_bytes = await transaction_block.Build(new BuildOptions(this));
+
+            if (tx_bytes.Error != null)
+                return RpcResult<TransactionBlockResponse>.GetErrorResult(tx_bytes.Error.Message);
+
+            SignatureBase signature = account.SignTransactionBlock(tx_bytes.Result);
+            return await this.ExecuteTransactionBlock(tx_bytes.Result, account.ToSerializedSignature(signature), opts);
         }
 
         public async Task<RpcResult<TransactionBlockResponse>> ExecuteTransactionBlock
@@ -380,8 +383,12 @@ namespace Sui.Rpc
         {
             string sender_address = sender.SuiAddress();
             transaction_block.SetSenderIfNotSet(AccountAddress.FromHex(sender_address));
-            byte[] result = await transaction_block.Build(new BuildOptions(this, null, true));
-            string dev_inspect_tx_bytes = CryptoBytes.ToBase64String(result);
+            RpcResult<byte[]> tx_bytes = await transaction_block.Build(new BuildOptions(this, null, true));
+
+            if (tx_bytes.Error != null)
+                return RpcResult<DevInspectResponse>.GetErrorResult(tx_bytes.Error.Message);
+
+            string dev_inspect_tx_bytes = CryptoBytes.ToBase64String(tx_bytes.Result);
             return await SendRpcRequestAsync<DevInspectResponse>(
                 Methods.sui_devInspectTransactionBlock.ToString(),
                 ArgumentBuilder.BuildArguments(sender_address, dev_inspect_tx_bytes, gasPrice, epoch)

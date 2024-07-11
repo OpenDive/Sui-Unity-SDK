@@ -163,7 +163,6 @@ namespace Sui.Cryptography
             publicKey.CopyTo(KeyBytes.AsSpan());
         }
 
-
         /// <summary>
         /// Return the base-64 representation of the raw public key
         /// </summary>

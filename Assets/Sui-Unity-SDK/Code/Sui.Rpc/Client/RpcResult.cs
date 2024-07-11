@@ -7,7 +7,7 @@ namespace Sui.Rpc
         public T Result { get; set; }
         public RpcError Error { get; set; }
 
-        public RpcResult(T result, RpcError error)
+        public RpcResult(T result, RpcError error = null)
         {
             this.Result = result;
             this.Error = error;

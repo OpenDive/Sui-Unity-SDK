@@ -51,6 +51,12 @@ namespace Sui.Rpc
                 Debug.Log("REQUEST: RESULT ::: " + request.downloadHandler.text);
 
                 RpcResult<T> result = JsonConvert.DeserializeObject<RpcResult<T>>(request.downloadHandler.text);
+
+                if (result.Error != null)
+                    Debug.Log($"REQUEST: ERROR ::: {result.Error.Message}");
+                else
+                    Debug.Log($"REQUEST: NO ERROR");
+
                 return result;
             }
         }

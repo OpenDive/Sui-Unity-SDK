@@ -22,6 +22,7 @@ namespace Sui.Rpc.Models
 
             // TODO: Needs to be cleaned up, too much repeated code
             Debug.Log("OBJECT TYPE: " + jo["type"]?.ToObject<ObjectChangeType>());
+            Debug.Log($"MARCUS::: OBJECT VALUE - {JsonConvert.SerializeObject(jo)}");
             switch (jo["type"]?.ToObject<ObjectChangeType>())
             {
                 case ObjectChangeType.Published:
@@ -60,10 +61,9 @@ namespace Sui.Rpc.Models
                 case ObjectChangeType.Deleted:
                     return new DeletedObjectChange
                     {
-                        Digest = jo["digest"].Value<string>(),
                         Type = ObjectChangeType.Deleted,
                         Version = jo["version"].Value<string>(),
-                        ObjectId = jo["objectId"].ToObject<ObjectId>(serializer),
+                        ObjectId = new ObjectId(jo["objectId"].Value<string>()),
                         ObjectType = jo["objectType"].Value<string>(),
                         Sender = jo["sender"].Value<string>()
                     };

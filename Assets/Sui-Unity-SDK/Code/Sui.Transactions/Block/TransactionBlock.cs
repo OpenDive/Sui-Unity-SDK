@@ -20,6 +20,7 @@ using Chaos.NaCl;
 using Sui.Transactions.Kinds;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
+using Sui.Rpc.Client;
 
 namespace Sui.Transactions
 {
@@ -71,7 +72,9 @@ namespace Sui.Transactions
             return new TransactionBlockDataBuilderSerializer(data);
         }
 
-        public byte[] Build
+        //new RpcError(-1, $"Transaction failed with message - {dry_run_result.Result.Effects.Status.Error}", null)
+
+        public RpcResult<byte[]> Build
         (
             TransactionBlockDataBuilderSerializer overrides = null,
             bool? only_transaction_kind = null
@@ -96,7 +99,7 @@ namespace Sui.Transactions
             {
                 Serialization ser = new Serialization();
                 ser.Serialize(programmableTx);
-                return ser.GetBytes();
+                return new RpcResult<byte[]>(ser.GetBytes());
             }
 
             ITransactionExpiration Expiration;
@@ -117,24 +120,16 @@ namespace Sui.Transactions
             }
 
             if (Sender == null)
-            {
-                throw new Exception("Missing transaction sender");
-            }
+                return RpcResult<byte[]>.GetErrorResult("Missing transaction sender");
 
             if (GasConfig.Budget == null)
-            {
-                throw new Exception("Missing gas budget");
-            }
+                return RpcResult<byte[]>.GetErrorResult("Missing gas budget");
 
             if (GasConfig.Payment == null)
-            {
-                throw new Exception("Missing gas payment");
-            }
+                return RpcResult<byte[]>.GetErrorResult("Missing gas payment");
 
             if (GasConfig.Price == null)
-            {
-                throw new Exception("Missing gas price");
-            }
+                return RpcResult<byte[]>.GetErrorResult("Missing gas price");
 
             if (Builder.GasConfig.Owner != null)
                 GasConfig.Owner = Builder.GasConfig.Owner;
@@ -151,13 +146,17 @@ namespace Sui.Transactions
             Serialization serializer = new Serialization();
             serializer.Serialize(transactionData);
 
-            return serializer.GetBytes();
+            return new RpcResult<byte[]>(serializer.GetBytes());
         }
 
-        public string GetDigest()
+        public RpcResult<string> GetDigest()
         {
-            byte[] bytes = Build();
-            return TransactionBlockDataBuilderSerializer.GetDigestFromBytes(bytes);
+            RpcResult<byte[]> bytes = Build();
+
+            if (bytes.Error != null)
+                return RpcResult<string>.GetErrorResult(bytes.Error.Message);
+
+            return new RpcResult<string>(TransactionBlockDataBuilderSerializer.GetDigestFromBytes(bytes.Result));
         }
 
         public TransactionBlockDataBuilder Snapshot()
@@ -843,9 +842,13 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="build_options">An instance of `BuildOptions` that contains the options passed for preparing the transaction block.</param>
         /// <returns>A `byte[]` object representing the built block.</returns>
-        public async Task<byte[]> Build(BuildOptions build_options)
+        public async Task<RpcResult<byte[]>> Build(BuildOptions build_options)
         {
-            await Prepare(build_options);
+            RpcError err = await Prepare(build_options);
+
+            if (err != null)
+                return new RpcResult<byte[]>(null, err);
+
             return BlockDataBuilder.Build(null, build_options.OnlyTransactionKind);
         }
 
@@ -854,7 +857,7 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="build_options">An instance of `BuildOptions` that contains the options passed for preparing the transaction block.</param>
         /// <returns>A `string` representing the digest of the block.</returns>
-        public async Task<string> GetDigest(BuildOptions build_options)
+        public async Task<RpcResult<string>> GetDigest(BuildOptions build_options)
         {
             await Prepare(build_options);
             return BlockDataBuilder.GetDigest();
@@ -964,7 +967,7 @@ namespace Sui.Transactions
             foreach (TransactionBlockInput input in inputs)
             {
                 // The value is an ObjectID (AccountAddress) add it to the objects to resolve
-                if (input.Value.GetType() == typeof(string))
+                if (input.Value.GetType() == typeof(BString))
                 {
                     if (Regex.IsMatch(((BString)input.Value).value, @"^(0x)?[0-9a-fA-F]{32,64}$"))
                     {
@@ -1330,10 +1333,10 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="options_passed">An instance of `BuildOptions` that contains the options passed for preparing the transaction block.</param>
         /// <returns>A `Task` object used for implementations with async calls.</returns>
-        private async Task Prepare(BuildOptions options_passed)
+        private async Task<RpcError> Prepare(BuildOptions options_passed)
         {
             if (IsPrepared)
-                return;
+                return null;
 
             BuildOptions options = options_passed;
 
@@ -1361,15 +1364,19 @@ namespace Sui.Transactions
 
                     TransactionBlockDataBuilderSerializer tx_block_data_builder = this.BlockDataBuilder;
 
-                    byte[] build_result = tx_block_data_builder.Build(new TransactionBlockDataBuilderSerializer(new TransactionBlockDataBuilder(gasConfig: gas_config)));
+                    RpcResult<byte[]> build_result = tx_block_data_builder.Build(new TransactionBlockDataBuilderSerializer(new TransactionBlockDataBuilder(gasConfig: gas_config)));
+
+                    if (build_result.Error != null)
+                        return build_result.Error;
+
                     Debug.Log($"MARCUS::: SENDER BYTES - [{String.Join(", ", BlockDataBuilder.Builder.Sender.AddressBytes)}]");
-                    Debug.Log($"MARCUS::: BUILD RESULT - [{String.Join(", ", build_result)}]");
+                    Debug.Log($"MARCUS::: BUILD RESULT - [{String.Join(", ", build_result.Result)}]");
                     RpcResult<TransactionBlockResponse> dry_run_result = await options.Provider.DryRunTransactionBlock(
-                        Convert.ToBase64String(build_result)
+                        Convert.ToBase64String(build_result.Result)
                     );
 
-                    if (dry_run_result != null && dry_run_result.Result.Effects.Status.Status == ExecutionStatus.Failure)
-                        throw new Exception("Dry Run Failed");
+                    if (dry_run_result.Error != null || dry_run_result.Result.Effects.Status.Status == ExecutionStatus.Failure)
+                        return dry_run_result.Error ??= new RpcError(-1, $"Transaction failed with message - {dry_run_result.Result.Effects.Status.Error}", null);
 
                     int safe_overhead =
                         (int)TransactionConstants.gasSafeOverhead *
@@ -1414,6 +1421,7 @@ namespace Sui.Transactions
             }
 
             IsPrepared = true;
+            return null;
         }
     }
 

@@ -80,6 +80,13 @@ namespace Sui.Types
             this.digest = digest;
         }
 
+        public SuiObjectRef(string object_id, string version, string digest)
+        {
+            this.objectId = AccountAddress.FromHex(object_id);
+            this.version = int.Parse(version);
+            this.digest = digest;
+        }
+
         public void Serialize(Serialization serializer)
         {
             U64 version = new U64((ulong)this.version);
