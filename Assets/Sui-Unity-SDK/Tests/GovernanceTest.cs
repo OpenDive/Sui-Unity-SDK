@@ -39,7 +39,7 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             List<SuiTransactionArgument> coins_tx = tx_block.AddSplitCoinsTx(tx_block.gas, new SuiTransactionArgument[]
             {
-                new SuiTransactionArgument(tx_block.AddPure(new U64((ulong)this.DefaultStakeAmount)))
+                tx_block.AddPure(new U64((ulong)this.DefaultStakeAmount))
             });
 
             tx_block.AddMoveCallTx
@@ -48,9 +48,9 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {
-                        new SuiTransactionArgument(tx_block.AddObjectInput(this.StateObjectID)),
+                        tx_block.AddObjectInput(this.StateObjectID),
                         coins_tx[0],
-                        new SuiTransactionArgument(tx_block.AddPure(AccountAddress.FromHex(active_validator)))
+                        tx_block.AddPure(AccountAddress.FromHex(active_validator))
                 }
             );
 

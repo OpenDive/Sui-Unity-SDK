@@ -10,8 +10,6 @@ namespace Sui.Transactions.Types
 {
     public class Upgrade : ITransaction
     {
-        public Kind Kind => Kind.Upgrade;
-
         public byte[][] Modules;
         public AccountAddress[] Dependencies;
         public string PackagID;

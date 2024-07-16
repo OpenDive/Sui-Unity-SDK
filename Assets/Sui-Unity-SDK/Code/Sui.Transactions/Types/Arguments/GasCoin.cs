@@ -8,21 +8,21 @@ namespace Sui.Transactions.Types.Arguments
     ///     { kind: 'GasCoin' }
     /// </code>
     /// </summary>
-    public class GasCoin : ITransactionArgument
-    {
-        public Kind Kind => Kind.GasCoin;
+    //public class GasCoin : ITransactionArgument
+    //{
+    //    public Kind Kind => Kind.GasCoin;
 
-        public GasCoin() { }
+    //    public GasCoin() { }
 
-        public void Serialize(Serialization serializer)
-        {
-            serializer.SerializeU32AsUleb128((uint)(int)Kind);
-        }
+    //    public void Serialize(Serialization serializer)
+    //    {
+    //        serializer.SerializeU32AsUleb128((uint)(int)Kind);
+    //    }
 
-        public static GasCoin Deserialize(Deserialization deserializer)
-        {
-            deserializer.DeserializeUleb128();
-            return new GasCoin();
-        }
-    }
+    //    public static GasCoin Deserialize(Deserialization deserializer)
+    //    {
+    //        deserializer.DeserializeUleb128();
+    //        return new GasCoin();
+    //    }
+    //}
 }

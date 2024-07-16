@@ -463,7 +463,7 @@ namespace Sui.Rpc
         public async Task<RpcResult<DynamicFieldPage>> GetDynamicFields(
             string parentObjectId, IObjectDataFilter filter = null, ObjectDataOptions options = null, string cursor = null, int? limit = null)
         {
-            if (this.IsValidSuiAddress(parentObjectId) == false)
+            if (SuiClient.IsValidSuiAddress(parentObjectId) == false)
                 return RpcResult<DynamicFieldPage>.GetErrorResult("Unable to validate the address.");
 
             return await SendRpcRequestAsync<DynamicFieldPage>(
@@ -544,7 +544,7 @@ namespace Sui.Rpc
         public async Task<RpcResult<IEnumerable<ObjectDataResponse>>> MultiGetObjects(string[] objectIds, ObjectDataOptions options = null)
         {
             foreach(string id in objectIds)
-                if (this.IsValidSuiAddress(id) == false)
+                if (SuiClient.IsValidSuiAddress(id) == false)
                     return RpcResult<IEnumerable<ObjectDataResponse>>.GetErrorResult("Unable to validate the address.");
 
             return await SendRpcRequestAsync<IEnumerable<ObjectDataResponse>>(
@@ -572,7 +572,7 @@ namespace Sui.Rpc
             );
         }
 
-        private bool IsValidSuiAddress(string address)
+        public static bool IsValidSuiAddress(string address)
         {
             if (NormalizedTypeConverter.NormalizeSuiAddress(address) == null)
                 return false;

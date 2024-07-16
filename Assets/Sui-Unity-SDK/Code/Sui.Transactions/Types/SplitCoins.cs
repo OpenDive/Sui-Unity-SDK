@@ -25,11 +25,6 @@ namespace Sui.Transactions.Types
     public class SplitCoins : ITransaction
     {
         /// <summary>
-        /// SplitCoins transaction kind.
-        /// </summary>
-        public Kind Kind => Kind.SplitCoins;
-
-        /// <summary>
         /// Coin transaction argument.
         /// </summary>
         public SuiTransactionArgument Coin;
@@ -49,11 +44,6 @@ namespace Sui.Transactions.Types
             // Check that it's an actual in or U16, U32, U64 wrapped
             Coin = coin;
             Amounts = amounts;
-        }
-
-        public static List<SplitCoins> Create(GasCoin coin, ulong[] amounts)
-        {
-            throw new NotImplementedException();
         }
 
         public void Serialize(Serialization serializer)

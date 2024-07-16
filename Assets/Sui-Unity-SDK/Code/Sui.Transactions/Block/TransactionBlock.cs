@@ -13,7 +13,7 @@ using Sui.Transactions.Types;
 using Sui.Transactions.Types.Arguments;
 using Sui.Types;
 using UnityEngine;
-using Kind = Sui.Transactions.Types.Kind;
+using Kind = Sui.Transactions.Types.TransactionKind;
 using Org.BouncyCastle.Crypto.Digests;
 using NBitcoin.DataEncoders;
 using Chaos.NaCl;
@@ -72,8 +72,6 @@ namespace Sui.Transactions
             return new TransactionBlockDataBuilderSerializer(data);
         }
 
-        //new RpcError(-1, $"Transaction failed with message - {dry_run_result.Result.Effects.Status.Error}", null)
-
         public RpcResult<byte[]> Build
         (
             TransactionBlockDataBuilderSerializer overrides = null,
@@ -81,12 +79,12 @@ namespace Sui.Transactions
         )
         {
             // Resolve inputs down to values:
-            List<ICallArg> inputs = this.Builder.Inputs
-                .Select<TransactionBlockInput, ICallArg>((input) => {
+            List<CallArg> inputs = this.Builder.Inputs
+                .Select<TransactionBlockInput, CallArg>((input) => {
                     return input.Value.GetType() == typeof(PureCallArg) ?
-                        (PureCallArg)input.Value :
+                        new CallArg(CallArgumentType.Pure, (PureCallArg)input.Value) :
                         input.Value.GetType() == typeof(ObjectCallArg) ?
-                            (ObjectCallArg)input.Value :
+                            new CallArg(CallArgumentType.Object, (ObjectCallArg)input.Value) :
                             null;
                 })
                 .Where(value => value != null)
@@ -95,7 +93,7 @@ namespace Sui.Transactions
             ProgrammableTransaction programmableTx
                 = new ProgrammableTransaction(inputs.ToArray(), Builder.Transactions);
 
-            if (only_transaction_kind.HasValue && only_transaction_kind == true)
+            if (only_transaction_kind != null && only_transaction_kind == true)
             {
                 Serialization ser = new Serialization();
                 ser.Serialize(programmableTx);
@@ -136,15 +134,21 @@ namespace Sui.Transactions
             else
                 GasConfig.Owner = Sender;
 
-            Sui.Transactions.Builder.TransactionDataV1 transactionData = new Sui.Transactions.Builder.TransactionDataV1(
+            Sui.Transactions.Builder.TransactionDataV1 transactionDataV1 = new Sui.Transactions.Builder.TransactionDataV1(
                 Sender,
                 Expiration,
                 GasConfig,
-                programmableTx
+                new Kinds.TransactionBlockKind
+                (
+                    SuiTransactionKindType.ProgrammableTransaction,
+                    programmableTx
+                )
             );
 
+            TransactionData transaction_data = new TransactionData(TransactionType.V1, transactionDataV1);
+
             Serialization serializer = new Serialization();
-            serializer.Serialize(transactionData);
+            serializer.Serialize(transaction_data);
 
             return new RpcResult<byte[]>(serializer.GetBytes());
         }
@@ -202,9 +206,9 @@ namespace Sui.Transactions
     public class TransactionObjectArgument : IObjectArgument
     {
         public ObjectArgumentType Type => ObjectArgumentType.transactionObjectArgument;
-        public ITransactionArgument Argument;
+        public SuiTransactionArgument Argument;
 
-        public TransactionObjectArgument(ITransactionArgument argument)
+        public TransactionObjectArgument(SuiTransactionArgument argument)
         {
             this.Argument = argument;
         }
@@ -247,9 +251,9 @@ namespace Sui.Transactions
     public class TransactionArgumentTransactionObjectInput : ITransactionObjectInput
     {
         public TransactionObjectInputType Type => TransactionObjectInputType.transactionObjectArgument;
-        public ITransactionArgument Input;
+        public SuiTransactionArgument Input;
 
-        public TransactionArgumentTransactionObjectInput(ITransactionArgument input)
+        public TransactionArgumentTransactionObjectInput(SuiTransactionArgument input)
         {
             this.Input = input;
         }
@@ -500,7 +504,7 @@ namespace Sui.Transactions
         /// <summary>
         /// A `TransactionArgument` representing the gas of the transaction.
         /// </summary> ✅
-        public SuiTransactionArgument gas = new SuiTransactionArgument(new GasCoin());
+        public SuiTransactionArgument gas = new SuiTransactionArgument(TransactionArgumentKind.GasCoin, null);
 
         /// <summary> ✅
         /// Set the gas payment for the programmable transaction block.
@@ -523,20 +527,20 @@ namespace Sui.Transactions
         /// <param name="type">A `Sui.Types.Type` representing the type of the input.</param>
         /// <param name="value">An `ISerializable` representing the value of the input.</param>
         /// <returns>A `TransactionBlockInput` object.</returns>
-        public TransactionBlockInput AddInput
+        public SuiTransactionArgument AddInput
         (
-            Sui.Types.Type type,
+            CallArgumentType type,
             ISerializable value
         )
         {
             int index = this.BlockDataBuilder.Builder.Inputs.Count();
             var input = new TransactionBlockInput(index, value, type);
             this.BlockDataBuilder.Builder.Inputs.Add(input);
-            return input;
+            return new SuiTransactionArgument(TransactionArgumentKind.Input, input);
         }
 
         ///  ✅
-        public ITransactionArgument AddObjectInput(ITransactionObjectInput value)
+        public SuiTransactionArgument AddObjectInput(ITransactionObjectInput value)
         {
             if (value.Type == TransactionObjectInputType.transactionObjectArgument)
                 return ((TransactionArgumentTransactionObjectInput)value).Input;
@@ -549,32 +553,32 @@ namespace Sui.Transactions
             }).ToArray();
 
             if (inserted_arr.Count() != 0)
-                return inserted_arr[0];
+                return new SuiTransactionArgument(TransactionArgumentKind.Input, inserted_arr[0]);
 
             switch(value.Type)
             {
                 case TransactionObjectInputType.stringArgument:
                     string string_argument = ((StringTransactionObjectInput)value).Input;
-                    return AddInput(Sui.Types.Type.Object, new BString(string_argument));
+                    return AddInput(CallArgumentType.Object, new BString(string_argument));
                 case TransactionObjectInputType.objectCallArgument:
                     ObjectArg object_call_argument = ((CallArgTransactionObjectInput)value).Input;
-                    return AddInput(Sui.Types.Type.Object, object_call_argument);
+                    return AddInput(CallArgumentType.Object, object_call_argument);
                 case TransactionObjectInputType.transactionObjectArgument:
-                    ITransactionArgument transaction_argument = ((TransactionArgumentTransactionObjectInput)value).Input;
-                    return AddInput(Sui.Types.Type.Object, transaction_argument);
+                    SuiTransactionArgument transaction_argument = ((TransactionArgumentTransactionObjectInput)value).Input;
+                    return AddInput(CallArgumentType.Object, transaction_argument);
             }
 
             throw new Exception("Not Implemented");
         }
 
         /// ✅
-        public ITransactionArgument AddObjectInput(string id)
+        public SuiTransactionArgument AddObjectInput(string id)
         {
             return AddObjectInput(new StringTransactionObjectInput(id));
         }
 
         /// ✅
-        public ITransactionArgument AddObjectInput(IObjectArgument object_argument)
+        public SuiTransactionArgument AddObjectInput(IObjectArgument object_argument)
         {
             switch(object_argument.Type)
             {
@@ -582,7 +586,7 @@ namespace Sui.Transactions
                     string argument_string = ((StringObjectArgument)object_argument).Argument;
                     return AddObjectInput(new StringTransactionObjectInput(argument_string));
                 case ObjectArgumentType.transactionObjectArgument:
-                    ITransactionArgument argument_transaction = ((TransactionObjectArgument)object_argument).Argument;
+                    SuiTransactionArgument argument_transaction = ((TransactionObjectArgument)object_argument).Argument;
                     return AddObjectInput(new TransactionArgumentTransactionObjectInput(argument_transaction));
             }
 
@@ -590,13 +594,13 @@ namespace Sui.Transactions
         }
 
         /// ✅
-        public ITransactionArgument AddObjectRef(ObjectArg object_arg)
+        public SuiTransactionArgument AddObjectRef(ObjectArg object_arg)
         {
             return AddObjectInput(new CallArgTransactionObjectInput(object_arg));
         }
 
         /// ✅
-        public ITransactionArgument AddSharedObjectRef(SharedObjectRef shared_object_ref)
+        public SuiTransactionArgument AddSharedObjectRef(SharedObjectRef shared_object_ref)
         {
             return AddObjectInput(new CallArgTransactionObjectInput(InputsHandler.SharedObjectRef(shared_object_ref)));
         }
@@ -611,9 +615,9 @@ namespace Sui.Transactions
         ///     to be raw bytes, and will be used directly.
         /// </param> ✅
         /// <returns></returns>
-        public TransactionBlockInput AddPure(ISerializable value)
+        public SuiTransactionArgument AddPure(ISerializable value)
         {
-            return AddInput(Sui.Types.Type.Pure, value);
+            return AddInput(CallArgumentType.Pure, value);
         }
 
         /// <summary>
@@ -624,9 +628,9 @@ namespace Sui.Transactions
         ///     pure value.
         /// </param> ✅
         /// <returns></returns>
-        public TransactionBlockInput AddPure(byte[] value)
+        public SuiTransactionArgument AddPure(byte[] value)
         {
-            return AddInput(Sui.Types.Type.Pure, new Bytes(value));
+            return AddInput(CallArgumentType.Pure, new Bytes(value));
         }
 
         /// <summary>
@@ -650,11 +654,11 @@ namespace Sui.Transactions
             List<SuiTransactionArgument> results = new List<SuiTransactionArgument>();
 
             if (return_value_count == null)
-                results.Add(new SuiTransactionArgument(transaction_result.TransactionArgument));
+                results.Add(transaction_result.TransactionArgument);
             else
             {
-                foreach(ITransactionArgument nested_result in transaction_result)
-                    results.Add(new SuiTransactionArgument(nested_result));
+                foreach(SuiTransactionArgument nested_result in transaction_result)
+                    results.Add(nested_result);
 
                 results.Reverse();
             }
@@ -690,7 +694,7 @@ namespace Sui.Transactions
         public List<SuiTransactionArgument> AddSplitCoinsTx(SuiTransactionArgument coin, params SuiTransactionArgument[] amounts)
         {
             SplitCoins splitCoinsTx = new SplitCoins(coin, amounts);
-            return this.AddTransaction(new Types.SuiTransaction(splitCoinsTx));
+            return this.AddTransaction(new Types.SuiTransaction(Kind.SplitCoins, splitCoinsTx));
         }
 
         /// <summary>
@@ -702,7 +706,7 @@ namespace Sui.Transactions
         public List<SuiTransactionArgument> AddMergeCoinsTx(SuiTransactionArgument destination, SuiTransactionArgument[] sources)
         {
             MergeCoins merge_coins_tx = new MergeCoins(destination, sources);
-            return this.AddTransaction(new Types.SuiTransaction(merge_coins_tx));
+            return this.AddTransaction(new Types.SuiTransaction(Kind.MergeCoins, merge_coins_tx));
         }
 
         /// <summary>
@@ -714,7 +718,7 @@ namespace Sui.Transactions
         public List<SuiTransactionArgument> AddPublishTx(byte[][] modules, AccountAddress[] dependencies)
         {
             Publish publish_tx = new Publish(modules, dependencies);
-            return this.AddTransaction(new Types.SuiTransaction(publish_tx));
+            return this.AddTransaction(new Types.SuiTransaction(Kind.Publish, publish_tx));
         }
 
         /// <summary>
@@ -732,7 +736,7 @@ namespace Sui.Transactions
                 }).ToArray(),
                 dependencies.Select((dependency) => AccountAddress.FromHex(dependency)).ToArray()
             );
-            return this.AddTransaction(new Types.SuiTransaction(publish_tx));
+            return this.AddTransaction(new Types.SuiTransaction(Kind.Publish, publish_tx));
         }
 
         /// <summary>
@@ -752,7 +756,7 @@ namespace Sui.Transactions
         )
         {
             Upgrade upgrade_tx = new Upgrade(modules, dependencies, packageId, ticket);
-            return this.AddTransaction(new Types.SuiTransaction(upgrade_tx));
+            return this.AddTransaction(new Types.SuiTransaction(Kind.Upgrade, upgrade_tx));
         }
 
         /// <summary>
@@ -772,7 +776,7 @@ namespace Sui.Transactions
         )
         {
             MoveCall moveCallTx = new MoveCall(target, typeArguments, arguments);
-            return AddTransaction(new Types.SuiTransaction(moveCallTx), return_value_count);
+            return AddTransaction(new Types.SuiTransaction(Kind.MoveCall, moveCallTx), return_value_count);
         }
 
         /// <summary>
@@ -784,7 +788,7 @@ namespace Sui.Transactions
         public List<SuiTransactionArgument> AddTransferObjectsTx(SuiTransactionArgument[] objects, SuiTransactionArgument address)
         {
             TransferObjects transfer_tx = new TransferObjects(objects, address);
-            return this.AddTransaction(new Types.SuiTransaction(transfer_tx));
+            return this.AddTransaction(new Types.SuiTransaction(Kind.TransferObjects, transfer_tx));
         }
 
         /// <summary>
@@ -795,8 +799,8 @@ namespace Sui.Transactions
         /// <returns>A `SuiTransactionArgument` array representing the result of the transfer object operation.</returns>
         public List<SuiTransactionArgument> AddTransferObjectsTx(SuiTransactionArgument[] objects, string address)
         {
-            TransferObjects transfer_tx = new TransferObjects(objects, new SuiTransactionArgument(AddPure(AccountAddress.FromHex(address))));
-            return this.AddTransaction(new Types.SuiTransaction(transfer_tx));
+            TransferObjects transfer_tx = new TransferObjects(objects, AddPure(AccountAddress.FromHex(address)));
+            return this.AddTransaction(new Types.SuiTransaction(Kind.TransferObjects, transfer_tx));
         }
 
         /// <summary>
@@ -808,7 +812,7 @@ namespace Sui.Transactions
         public List<SuiTransactionArgument> AddMakeMoveVecTx(SuiTransactionArgument[] objects, SuiStructTag type = null)
         {
             MakeMoveVec make_move_vec_tx = new MakeMoveVec(objects, type);
-            return this.AddTransaction(new Types.SuiTransaction(make_move_vec_tx));
+            return this.AddTransaction(new Types.SuiTransaction(Kind.MakeMoveVec, make_move_vec_tx));
         }
 
         /// <summary>
@@ -995,7 +999,7 @@ namespace Sui.Transactions
             {
                 #region Process MoveCall Transaction
                 // Special case move call:
-                if (transaction.Transaction.Kind == Kind.MoveCall)
+                if (transaction.Kind == Kind.MoveCall)
                 {
                     // Determine if any of the arguments require encoding.
                     // - If they don't, then this is good to go.
@@ -1004,7 +1008,7 @@ namespace Sui.Transactions
                     SuiTransactionArgument[] arguments = moveTx.Arguments;
 
                     bool needsResolution = arguments.Any(arg => {
-                        if (arg.TransactionArgument.Kind == Types.Arguments.Kind.Input)
+                        if (arg.Kind == TransactionArgumentKind.Input)
                         {
                             TransactionBlockInput argInput = (TransactionBlockInput)arg.TransactionArgument;
                             int index = argInput.Index;
@@ -1029,13 +1033,13 @@ namespace Sui.Transactions
                         {
                             foreach (var argument_outer in moveTx.Arguments.Select((value, i) => new { i, value }))
                             {
-                                if (argument_outer.value.TransactionArgument.Kind == Types.Arguments.Kind.Input)
+                                if (argument_outer.value.Kind == TransactionArgumentKind.Input)
                                 {
                                     foreach (var argument_inner in move_call.Arguments.Select((value, i) => new { i, value }))
                                     {
                                         if
                                         (
-                                            argument_inner.value.TransactionArgument.Kind == Types.Arguments.Kind.Input
+                                            argument_inner.value.Kind == TransactionArgumentKind.Input
                                         )
                                         {
                                             TransactionBlockInput outer_input =
@@ -1062,12 +1066,12 @@ namespace Sui.Transactions
                 #endregion END - Process MoveCall Transaction
 
                 #region Process TransferObjects Transaction
-                else if (transaction.Transaction.Kind == Kind.TransferObjects)
+                else if (transaction.Kind == Kind.TransferObjects)
                 {
                     TransferObjects transferObjectsTx = (TransferObjects)transaction.Transaction;
                     SuiTransactionArgument address = transferObjectsTx.Address;
 
-                    if (address.TransactionArgument.Kind == Sui.Transactions.Types.Arguments.Kind.Input)
+                    if (address.Kind == TransactionArgumentKind.Input)
                     {
                         // Cast the address as a `TransactionBlockInput` to get index property
                         TransactionBlockInput addressInput = (TransactionBlockInput)address.TransactionArgument;
@@ -1088,13 +1092,13 @@ namespace Sui.Transactions
                 #region Process SplitCoins Transaction
                 // Special handling for values that where previously encoded using the wellKnownEncoding pattern.
                 // This should only happen when transaction block data was hydrated from an old version of the SDK
-                else if (transaction.Transaction.Kind == Kind.SplitCoins)
+                else if (transaction.Kind == Kind.SplitCoins)
                 {
                     SplitCoins splitCoinsTx = (SplitCoins)transaction.Transaction;
                     SuiTransactionArgument[] amounts = splitCoinsTx.Amounts;
                     foreach(SuiTransactionArgument amount in amounts)
                     {
-                        if(amount.TransactionArgument.Kind == Types.Arguments.Kind.Input)
+                        if(amount.Kind == TransactionArgumentKind.Input)
                         {   // Cast the amount as a `TransactionBlockInput` to get index property
                             TransactionBlockInput amountTxbInput = (TransactionBlockInput)amount.TransactionArgument;
                             // Get the TXBInput object at the index provided by the amount argument
@@ -1152,7 +1156,7 @@ namespace Sui.Transactions
                     {
                         SuiTransactionArgument arg = moveCall.Arguments[param_enumerated.Item1];
 
-                        if (arg.TransactionArgument.Kind != Types.Arguments.Kind.Input)
+                        if (arg.Kind != TransactionArgumentKind.Input)
                             continue;
 
                         TransactionBlockInput inputArg = (TransactionBlockInput)arg.TransactionArgument;
@@ -1296,14 +1300,14 @@ namespace Sui.Transactions
                                 ICallArg call_arg_to_resolve = (ICallArg)objectToResolve.Input.Value;
                                 if
                                 (
-                                    call_arg_to_resolve.Type == Sui.Types.Type.Object &&
+                                    call_arg_to_resolve.GetType() == typeof(ObjectCallArg) &&
                                     ((ObjectCallArg)call_arg_to_resolve).ObjectArg.Type == ObjectRefType.Shared
                                 )
                                 {
                                     SharedObjectRef shared = (SharedObjectRef)((ObjectCallArg)call_arg_to_resolve).ObjectArg.ObjectRef;
-                                    shared.mutable =
+                                    shared.Mutable =
                                         (call_arg_resolved.GetType() == typeof(ObjectCallArg) && ((ObjectCallArg)call_arg_resolved).IsMutableSharedObjectInput()) ||
-                                        shared.mutable;
+                                        shared.Mutable;
                                     objectToResolve.Input.Value = new ObjectCallArg(new ObjectArg(ObjectRefType.Shared, shared));
                                 }
                             }

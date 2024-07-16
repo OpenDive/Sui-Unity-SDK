@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.Transactions.Types.Arguments;
@@ -34,11 +38,6 @@ namespace Sui.Transactions.Types
     /// </summary>
     public class MoveCall : ITransaction, ISerializable
     {
-        public Kind Kind
-        {
-            get => Kind.MoveCall;
-        }
-
         /// <summary>
         /// The module id that contains the target function
         /// Represents the following:
@@ -87,6 +86,18 @@ namespace Sui.Transactions.Types
             Target          = target;
             TypeArguments   = typeArguments;
             Arguments       = arguments;
+        }
+
+        public MoveCall(JToken input)
+        {
+            this.Target = input.ToObject<SuiMoveNormalizedStructType>();
+            this.TypeArguments = new SerializableTypeTag[] { };
+
+            List<SuiTransactionArgument> arguments = new List<SuiTransactionArgument>();
+            foreach (JToken arg in (JArray)input["arguments"])
+                arguments.Add(arg.ToObject<SuiTransactionArgument>());
+
+            this.Arguments = arguments.ToArray();
         }
 
         // TODO: Full implementation is needed

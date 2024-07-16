@@ -53,7 +53,7 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {
-                    new SuiTransactionArgument(tx_block.AddPure(new U64((ulong)val)))
+                    tx_block.AddPure(new U64((ulong)val))
                 }
             );
 
@@ -74,7 +74,7 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             List<SuiTransactionArgument> vec = tx_block.AddMakeMoveVecTx
             (
-                objects.Select((obj) => new SuiTransactionArgument(tx_block.AddObjectInput(obj))).ToArray(),
+                objects.Select((obj) => tx_block.AddObjectInput(obj)).ToArray(),
                 with_type ? SuiStructTag.FromStr($"{this.PackageID}::entry_point_vector::Obj") : null
             );
             tx_block.AddMoveCallTx
@@ -134,8 +134,8 @@ namespace Sui.Tests
             (
                 new SuiTransactionArgument[]
                 {
-                    new SuiTransactionArgument(tx_block.AddObjectInput(coin_ids[1])),
-                    new SuiTransactionArgument(tx_block.AddObjectInput(coin_ids[2]))
+                    tx_block.AddObjectInput(coin_ids[1]),
+                    tx_block.AddObjectInput(coin_ids[2])
                 }
             );
             tx_block.AddMoveCallTx
@@ -144,7 +144,7 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { new SerializableTypeTag(SuiStructTag.FromStr("0x2::sui::SUI")) },
                 new SuiTransactionArgument[]
                 {
-                    new SuiTransactionArgument(tx_block.AddObjectInput(coin_ids[0])),
+                    tx_block.AddObjectInput(coin_ids[0]),
                     vec[0]
                 }
             );

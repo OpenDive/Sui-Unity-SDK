@@ -7,8 +7,6 @@ namespace Sui.Transactions.Types
 {
     public class MergeCoins : ITransaction
     {
-        public Kind Kind => Kind.MergeCoins;
-
         SuiTransactionArgument Destination;
         SuiTransactionArgument[] Sources;
 

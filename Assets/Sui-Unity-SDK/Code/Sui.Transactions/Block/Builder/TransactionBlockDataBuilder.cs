@@ -8,6 +8,7 @@ using Sui.Transactions.Kinds;
 using Sui.Utilities;
 using Sui.Transactions.Types.Arguments;
 using Sui.Types;
+using Sui.Rpc.Client;
 
 namespace Sui.Transactions.Builder
 {
@@ -43,6 +44,8 @@ namespace Sui.Transactions.Builder
         /// </summary>
         public List<SuiTransaction> Transactions { get; set; }
 
+        public SuiError Error { get; set; }
+
         /// <summary>
         /// Initializes a new instance of `SerializedTransactionDataBuilder`.
         /// </summary>
@@ -73,9 +76,12 @@ namespace Sui.Transactions.Builder
         public TransactionBlockDataBuilder(TransactionDataV1 v1_transaction)
         {
             if (v1_transaction.Transaction.Type != SuiTransactionKindType.ProgrammableTransaction)
-                throw new Exception("Unable to Create Transaction Block Data Builder.");
+            {
+                this.Error = new SuiError(0, "Unable to Create Transaction Block Data Builder.", null);
+                return;
+            }
 
-            ProgrammableTransaction program_tx = (ProgrammableTransaction)v1_transaction.Transaction;
+            ProgrammableTransaction program_tx = (ProgrammableTransaction)v1_transaction.Transaction.Transaction;
 
             this.Version = 1;
             this.Sender = v1_transaction.Sender;
@@ -115,8 +121,8 @@ namespace Sui.Transactions.Builder
             return new TransactionBlockDataBuilder
             (
                 deserializer.DeserializeU8(),
-                (AccountAddress)AccountAddress.Deserialize(deserializer),
-                (ITransactionExpiration)ITransactionExpiration.Deserialize(deserializer),
+                AccountAddress.Deserialize(deserializer),
+                (ITransactionExpiration)Deserialize(deserializer),
                 (GasData)GasData.Deserialize(deserializer),
                 deserializer.DeserializeSequence(typeof(TransactionBlockInput)).Cast<TransactionBlockInput>().ToList(),
                 deserializer.DeserializeSequence(typeof(SuiTransaction)).Cast<SuiTransaction>().ToList()

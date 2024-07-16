@@ -28,32 +28,41 @@ namespace Sui.Tests
             // ////////////////////////////////////////
             // Programmable Transaction Block -- Inputs
             SuiObjectRef paymentRef = new SuiObjectRef(AccountAddress.FromHex(objectId), version, digest);
-            ICallArg[] inputs = new ICallArg[] { new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef)) };
+            CallArg[] inputs = new CallArg[] { new CallArg(CallArgumentType.Object, new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef))) };
 
             MoveCall moveCallTransaction = new MoveCall(
                 new SuiMoveNormalizedStructType(new SuiStructTag(suiAddress, "display", "new", new SerializableTypeTag[0]), new Rpc.Models.SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
-                new SerializableTypeTag[] { new SerializableTypeTag(new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[0])) },
-                new SuiTransactionArgument[] { new SuiTransactionArgument(new TransactionBlockInput(0)) } // TODO: We should not use this abstract, this should be a "pure" or an "object.
+                new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(suiAddress, "capy", "Capy", new SerializableTypeTag[0])) },
+                new SuiTransactionArgument[] { new SuiTransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(0)) } // TODO: We should not use this abstract, this should be a "pure" or an "object.
             );
 
-            List<Sui.Transactions.Types.SuiTransaction> transactions = new List<Sui.Transactions.Types.SuiTransaction> { new SuiTransaction(moveCallTransaction) };
+            List<Sui.Transactions.Types.SuiTransaction> transactions = new List<Sui.Transactions.Types.SuiTransaction> { new SuiTransaction(TransactionKind.MoveCall, moveCallTransaction) };
 
             ////////////////////////////////////////
             //Programmable Transaction Block--  Transactions
             // This is createdi in "build"
             ////////////////////////////////////////
-            Transactions.Builder.TransactionDataV1 transactionData = new(
-                AccountAddress.FromHex(test),
-                new TransactionExpirationNone(),
-                new Transactions.Builder.GasData(
-                    "1000000",
-                    "1",
-                    new SuiObjectRef[] { paymentRef },
-                    suiAddress
-                ),
-                new ProgrammableTransaction(
-                    inputs,
-                    transactions
+            TransactionData transactionData = new TransactionData
+            (
+                TransactionType.V1,
+                new Transactions.Builder.TransactionDataV1
+                (
+                    AccountAddress.FromHex(test),
+                    new TransactionExpirationNone(),
+                    new Transactions.Builder.GasData(
+                        "1000000",
+                        "1",
+                        new SuiObjectRef[] { paymentRef },
+                        suiAddress
+                    ),
+                    new TransactionBlockKind
+                    (
+                        SuiTransactionKindType.ProgrammableTransaction, new ProgrammableTransaction
+                        (
+                            inputs,
+                            transactions
+                        )
+                    )
                 )
             );
 
@@ -91,30 +100,32 @@ namespace Sui.Tests
                 suiAddress
             );
 
-            ICallArg[] inputs = new ICallArg[] { new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef)) };
+            CallArg[] inputs = new CallArg[] { new CallArg(CallArgumentType.Object, new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef))) };
 
             MoveCall moveCallTransaction = new MoveCall(
                 new SuiMoveNormalizedStructType(new SuiStructTag(suiAddress, "display", "new", new SerializableTypeTag[0]), new Rpc.Models.SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
-                new SerializableTypeTag[] { new SerializableTypeTag(new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[0])) },
+                new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(suiAddress, "capy", "Capy", new SerializableTypeTag[0])) },
                 new SuiTransactionArgument[]
                 {
-                    new SuiTransactionArgument(new TransactionBlockInput(0)),
-                    new SuiTransactionArgument(new TransactionBlockInput(1)),
-                    new SuiTransactionArgument(new Result(2))
+                    new SuiTransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(0)),
+                    new SuiTransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(1)),
+                    new SuiTransactionArgument(TransactionArgumentKind.Result, new Result(2))
                 }
             );
 
-            List<Sui.Transactions.Types.SuiTransaction> transactions = new List<Sui.Transactions.Types.SuiTransaction> { new SuiTransaction(moveCallTransaction) };
+            List<Sui.Transactions.Types.SuiTransaction> transactions = new List<Sui.Transactions.Types.SuiTransaction> { new SuiTransaction(TransactionKind.MoveCall, moveCallTransaction) };
 
-            ProgrammableTransaction programmableTransaction
-                = new(inputs, transactions);
-
-            Transactions.Builder.TransactionDataV1 transactionData = new(
+            Transactions.Builder.TransactionDataV1 transactionDataV1 = new(
                 sender,
                 expiration,
                 gasData,
-                programmableTransaction
+                new TransactionBlockKind(SuiTransactionKindType.ProgrammableTransaction, new ProgrammableTransaction(
+                    inputs,
+                    transactions
+                ))
             );
+
+            Transactions.Builder.TransactionData transactionData = new TransactionData(TransactionType.V1, transactionDataV1);
 
             Serialization serializer = new Serialization();
             transactionData.Serialize(serializer);

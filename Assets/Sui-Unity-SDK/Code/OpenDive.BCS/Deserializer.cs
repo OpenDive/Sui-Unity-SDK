@@ -142,6 +142,32 @@ namespace OpenDive.BCS
             return BString.Deserialize(this.Read(this.DeserializeUleb128()));
         }
 
+        public ISerializable DeserializeOptional(Type valueDecoderType)
+        {
+            int is_null = this.PeekByte();
+
+            if (is_null != 0)
+            {
+                MethodInfo method = valueDecoderType.GetMethod("Deserialize", new Type[] { typeof(Deserialization) });
+                return (ISerializable)method.Invoke(null, new[] { this });
+            }
+
+            return null;
+        }
+
+        private int PeekByte()
+        {
+            long originalPosition = this.input.Position;
+
+            // Read the next byte
+            int nextByte = this.input.ReadByte();
+
+            // Restore the original position
+            this.input.Position = originalPosition;
+
+            return nextByte;
+        }
+
         //public ISerializable Struct(ISerializable structObj )
         public ISerializable Struct(Type structType)
         {
@@ -210,10 +236,9 @@ namespace OpenDive.BCS
             byte[] value = new byte[length];
             int totalRead = this.input.Read(value, 0, length);
 
-            if (totalRead == 0 || totalRead < length)
-            {
+            if (totalRead < length)
                 throw new Exception("Unexpected end of input. Requested: " + length + ", found: " + totalRead);
-            }
+
             return value;
         }
 

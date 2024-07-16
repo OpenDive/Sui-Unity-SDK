@@ -11,8 +11,6 @@ namespace Sui.Transactions.Types
     /// </summary>
     public class Publish : ITransaction
     {
-        public Kind Kind => Kind.Publish;
-
         public byte[][] Modules;
         public AccountAddress[] Dependencies;
 

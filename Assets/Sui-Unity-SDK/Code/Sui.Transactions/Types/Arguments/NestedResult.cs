@@ -28,8 +28,6 @@ namespace Sui.Transactions.Types.Arguments
         public int Index;
         public int ResultIndex;
 
-        public Kind Kind => Kind.NestedResult;
-
         public NestedResult(int index, int resultIndex)
         {
             Index = index;

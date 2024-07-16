@@ -13,7 +13,7 @@ namespace Sui.Transactions
 
 			if (sharedObject != null)
 			{
-				return sharedObject.mutable;
+				return sharedObject.Mutable;
 			}
 			return false;
 		}
@@ -27,7 +27,7 @@ namespace Sui.Transactions
 				(
 					AccountAddress.FromHex(NormalizedTypeConverter.NormalizeSuiAddress(shared_object_ref.ObjectID.ToHex())),
 					shared_object_ref.InitialSharedVersion,
-					shared_object_ref.mutable
+					shared_object_ref.Mutable
 				)
 			);
         }

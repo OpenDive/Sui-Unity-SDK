@@ -110,6 +110,7 @@ namespace Sui.Rpc.Models
         MutableReference
     }
 
+    [JsonConverter(typeof(NormalizedTypeConverter))]
     public class SuiMoveNormalizedType: ISerializable
     {
         public ISuiMoveNormalizedType NormalizedType;

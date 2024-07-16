@@ -25,8 +25,6 @@ namespace Sui.Transactions.Types
     /// </summary>
 public class TransferObjects : ITransaction
     {
-        public Kind Kind => Kind.TransferObjects;
-
         /// <summary>
         /// 
         /// </summary>

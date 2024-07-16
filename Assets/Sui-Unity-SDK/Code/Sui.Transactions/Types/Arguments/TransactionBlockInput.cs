@@ -25,11 +25,6 @@ namespace Sui.Transactions.Types.Arguments
     public class TransactionBlockInput : ITransactionArgument
     {
         /// <summary>
-        /// Transaction block input kind.
-        /// </summary>
-        public Kind Kind => Kind.Input;
-
-        /// <summary>
         /// The index within the programmable block transaction input list.
         /// </summary>
         public int Index { get; private set; }
@@ -44,7 +39,7 @@ namespace Sui.Transactions.Types.Arguments
         /// <summary>
         /// The type of Input being used.
         /// </summary>
-        public Sui.Types.Type? Type { get; set; }
+        public CallArgumentType? Type { get; set; }
 
         /// <summary>
         /// Create a TransactionBlockInput object
@@ -52,7 +47,7 @@ namespace Sui.Transactions.Types.Arguments
         /// <param name="index"></param>
         /// <param name="value"></param>
         //public TransactionBlockInput(int index, ICallArg value) TODO: Look into this
-        public TransactionBlockInput(int index, ISerializable? value, Sui.Types.Type? type)
+        public TransactionBlockInput(int index, ISerializable? value, CallArgumentType? type)
         {
             this.Index = index;
             this.Value = value;

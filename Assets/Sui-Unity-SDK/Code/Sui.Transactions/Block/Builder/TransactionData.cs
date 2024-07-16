@@ -1,17 +1,56 @@
 using System;
 using OpenDive.BCS;
 using Sui.Accounts;
+using Sui.Rpc.Client;
+using Sui.Transactions.Kinds;
 using Sui.Types;
 using Sui.Utilities;
 using UnityEngine;
 
 namespace Sui.Transactions.Builder
 {
-    public interface ITransactionData : ISerializable
+    public enum TransactionType
     {
-        public enum Type
+        V1
+    }
+
+    public interface ITransactionData : ISerializable { }
+
+    public class TransactionData: ISerializable
+    {
+        public TransactionType Type { get; set; }
+        public ITransactionData Transaction;
+
+        public TransactionData
+        (
+            TransactionType type,
+            ITransactionData transaction
+        )
         {
-            V1
+            this.Type = type;
+            this.Transaction = transaction;
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            serializer.SerializeU8((byte)this.Type);
+            serializer.Serialize(Transaction);
+        }
+
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            byte type = deserializer.DeserializeU8();
+            switch (type)
+            {
+                case 0:
+                    return new TransactionData
+                    (
+                        TransactionType.V1,
+                        (TransactionDataV1)ISerializable.Deserialize(deserializer)
+                    );
+                default:
+                    return new SuiError(0, "Unable to deserialize Transaction Data", null);
+            }
         }
     }
 
@@ -20,19 +59,14 @@ namespace Sui.Transactions.Builder
         public AccountAddress Sender { get; set; }
         public ITransactionExpiration Expiration { get; set; }
         public GasData GasData { get; set; }
-
-        /// <summary>
-        /// This can be a ProgrammableTransaction,
-        /// or ChangeEpoch, Genesis, or ConsensusCommitPrologue
-        /// </summary>
-        public Sui.Transactions.Kinds.ITransactionKind Transaction { get; set; }
+        public TransactionBlockKind Transaction { get; set; }
 
         public TransactionDataV1
         (
             AccountAddress sender,
             ITransactionExpiration transactionExpiration,
             GasData gasdata,
-            Sui.Transactions.Kinds.ITransactionKind transaction
+            TransactionBlockKind transaction
         )
         {
             this.Sender = sender;
@@ -43,7 +77,6 @@ namespace Sui.Transactions.Builder
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU8(0); // We add the version number V1 - 0 byte
             Transaction.Serialize(serializer);
             Sender.Serialize(serializer);
             GasData.Serialize(serializer);
@@ -52,12 +85,11 @@ namespace Sui.Transactions.Builder
 
         public static TransactionDataV1 Deserialize(Deserialization deserializer)
         {
-            deserializer.DeserializeUleb128();
             return new TransactionDataV1(
                 AccountAddress.Deserialize(deserializer),
                 (ITransactionExpiration)ISerializable.Deserialize(deserializer),
                 (GasData)GasData.Deserialize(deserializer),
-                (Sui.Transactions.Kinds.ITransactionKind)ISerializable.Deserialize(deserializer)
+                (TransactionBlockKind)ISerializable.Deserialize(deserializer)
             );
         }
     }

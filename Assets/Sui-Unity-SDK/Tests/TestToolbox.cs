@@ -160,10 +160,10 @@ namespace Sui.Tests
             {
                 List<SuiTransactionArgument> coin = tx_block.AddSplitCoinsTx
                 (
-                    new SuiTransactionArgument(tx_block.AddObjectInput(coin_id_tx)),
+                    tx_block.AddObjectInput(coin_id_tx),
                     new SuiTransactionArgument[]
                     {
-                        new SuiTransactionArgument(tx_block.AddPure(new U64((ulong)amounts_tx[recipient.Item1])))
+                        tx_block.AddPure(new U64((ulong)amounts_tx[recipient.Item1]))
                     }
                 );
                 tx_block.AddTransferObjectsTx(coin.ToArray(), recipient.Item2);

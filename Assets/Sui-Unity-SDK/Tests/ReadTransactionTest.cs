@@ -50,7 +50,7 @@ namespace Sui.Tests
                 tx_block.gas,
                 new SuiTransactionArgument[]
                 {
-                    new SuiTransactionArgument(tx_block.AddPure(new U64(1)))
+                    tx_block.AddPure(new U64(1))
                 }
             );
             tx_block.AddTransferObjectsTx(coin.ToArray(), toolbox.Address());
@@ -163,6 +163,25 @@ namespace Sui.Tests
             yield return new WaitUntil(() => all_transactions_task.IsCompleted);
 
             Assert.Greater(all_transactions_task.Result.Result.Data.Count, 0);
+        }
+
+        [UnityTest]
+        public IEnumerator GenesisTransactionFetchTest()
+        {
+            yield return this.PaySuiWithCheck();
+
+            Task<RpcResult<TransactionBlockResponsePage>> all_transactions_task = this.Toolbox.Client.QueryTransactionBlocks(limit: 1, order: SortOrder.Ascending);
+            yield return new WaitUntil(() => all_transactions_task.IsCompleted);
+
+            Task<RpcResult<TransactionBlockResponse>> transaction_block_task = this.Toolbox.Client.GetTransactionBlock
+            (
+                all_transactions_task.Result.Result.Data[0].Digest,
+                new TransactionBlockResponseOptions(showInput: true)
+            );
+            yield return new WaitUntil(() => transaction_block_task.IsCompleted);
+
+            Transactions.Kinds.TransactionBlockKind tx_kind = transaction_block_task.Result.Result.Transaction.Data.Transaction;
+            Assert.IsTrue(tx_kind.Type == Sui.Transactions.Kinds.SuiTransactionKindType.Genesis);
         }
     }
 }

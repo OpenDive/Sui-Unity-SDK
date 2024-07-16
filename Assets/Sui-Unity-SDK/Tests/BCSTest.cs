@@ -28,10 +28,10 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(capyAddress, "capy", "Capy", new SerializableTypeTag[0])) },
                 new SuiTransactionArgument[]
                 {
-                    new SuiTransactionArgument(new GasCoin()),
-                    new SuiTransactionArgument(new NestedResult(0, 1)),
-                    new SuiTransactionArgument(new TransactionBlockInput(3)),
-                    new SuiTransactionArgument(new Result(1))
+                    new SuiTransactionArgument(TransactionArgumentKind.GasCoin, null),
+                    new SuiTransactionArgument(TransactionArgumentKind.NestedResult, new NestedResult(0, 1)),
+                    new SuiTransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(3)),
+                    new SuiTransactionArgument(TransactionArgumentKind.Result, new Result(1))
                 }
             );
 

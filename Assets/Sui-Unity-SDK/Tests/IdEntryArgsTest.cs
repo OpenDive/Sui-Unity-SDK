@@ -38,7 +38,7 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {
-                        new SuiTransactionArgument(tx_block.AddPure(AccountAddress.FromHex(this.DefaultAddress)))
+                        tx_block.AddPure(AccountAddress.FromHex(this.DefaultAddress))
                 }
             );
             TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true);

@@ -43,8 +43,8 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {
-                        new SuiTransactionArgument(tx_block.AddPure(new BString(str))),
-                        new SuiTransactionArgument(tx_block.AddPure(new U64((ulong)len)))
+                        tx_block.AddPure(new BString(str)),
+                        tx_block.AddPure(new U64((ulong)len))
                 }
             );
             TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true);
@@ -73,8 +73,8 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {
-                        new SuiTransactionArgument(tx_block.AddPure(new Sequence(str.Select((val) => new BString(val)).ToArray()))),
-                        new SuiTransactionArgument(tx_block.AddPure(new U64((ulong)len)))
+                        tx_block.AddPure(new Sequence(str.Select((val) => new BString(val)).ToArray())),
+                        tx_block.AddPure(new U64((ulong)len))
                 }
             );
             TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true);

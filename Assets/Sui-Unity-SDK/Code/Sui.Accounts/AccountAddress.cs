@@ -130,33 +130,41 @@ namespace Sui.Accounts
         /// <returns></returns>
         public static AccountAddress FromHex(string suiAddress)
         {
-            //byte[] suiAddressBytes = suiAddress.HexStringToByteArray();
-            //return new AccountAddress(suiAddressBytes);
-
-            if (string.IsNullOrWhiteSpace(suiAddress))
-                throw new ArgumentException("Address string is empty.");
-
-            //if (suiAddress.Contains("0x") && suiAddress.Length == 3)
-            //{
-            //    suiAddress = "0x" + suiAddress;
-            //}
-
-            string addr = suiAddress;
-
-            if (suiAddress[0..2].Equals("0x")) {
-                addr = suiAddress[2..];
-            }
-
-            // TODO: Document that Sui changed their address length from 20 to 32, hence some old addresses are shorter
-            if (addr.Length < AccountAddress.Length * 2)
+            try
             {
-                string pad = new string('0', AccountAddress.Length * 2 - addr.Length);
-                addr = pad + addr;
+                //byte[] suiAddressBytes = suiAddress.HexStringToByteArray();
+                //return new AccountAddress(suiAddressBytes);
+
+                if (string.IsNullOrWhiteSpace(suiAddress))
+                    throw new ArgumentException("Address string is empty.");
+
+                //if (suiAddress.Contains("0x") && suiAddress.Length == 3)
+                //{
+                //    suiAddress = "0x" + suiAddress;
+                //}
+
+                string addr = suiAddress;
+
+                if (suiAddress[0..2].Equals("0x"))
+                {
+                    addr = suiAddress[2..];
+                }
+
+                // TODO: Document that Sui changed their address length from 20 to 32, hence some old addresses are shorter
+                if (addr.Length < AccountAddress.Length * 2)
+                {
+                    string pad = new string('0', AccountAddress.Length * 2 - addr.Length);
+                    addr = pad + addr;
+                }
+
+                Debug.Log("MARCUS:::HEX STRING - " + addr.HexStringToByteArray().ByteArrayToString());
+
+                return new AccountAddress(addr.HexStringToByteArray());
             }
-
-            Debug.Log("MARCUS:::HEX STRING - " + addr.HexStringToByteArray().ByteArrayToString());
-
-            return new AccountAddress(addr.HexStringToByteArray());
+            catch
+            {
+                return null;
+            }
         }
 
         public override bool Equals(object obj)

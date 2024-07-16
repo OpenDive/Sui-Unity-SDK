@@ -1,13 +1,58 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OpenDive.BCS;
 using Sui.Accounts;
-using Sui.Types;
+using UnityEngine;
 
 namespace Sui.Transactions.Builder
 {
-    [JsonObject]
+    public class GasDataConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(GasData);
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            JObject gas_data = JObject.Load(reader);
+
+            string owner = gas_data["owner"].Value<string>();
+            string price = gas_data["price"].Value<string>();
+            string budget = gas_data["budget"].Value<string>();
+
+            List<Sui.Types.SuiObjectRef> objects = new List<Sui.Types.SuiObjectRef>();
+            foreach (JObject payment_object in (JArray)gas_data["payment"])
+                objects.Add
+                (
+                    new Sui.Types.SuiObjectRef
+                    (
+                        payment_object["objectId"].Value<string>(),
+                        payment_object["version"].Value<int>(),
+                        payment_object["digest"].Value<string>()
+                    )
+                );
+
+            return new GasData
+            (
+                budget,
+                price,
+                objects.ToArray(),
+                AccountAddress.FromHex(owner)
+            );
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    [JsonConverter(typeof(GasDataConverter))]
     public class GasData : ISerializable
     {
         [JsonProperty("budget")]
@@ -17,7 +62,7 @@ namespace Sui.Transactions.Builder
         public BigInteger? Price { get; set; }
 
         [JsonProperty("payment")]
-        public SuiObjectRef[] Payment { get; set; }
+        public Sui.Types.SuiObjectRef[] Payment { get; set; }
 
         [JsonProperty("owner")]
         public AccountAddress Owner { get; set; }
@@ -25,7 +70,7 @@ namespace Sui.Transactions.Builder
         public GasData(
             string budget = null,
             string price = null,
-            SuiObjectRef[] payment = null,
+            Sui.Types.SuiObjectRef[] payment = null,
             AccountAddress owner = null
         )
         {
@@ -58,7 +103,7 @@ namespace Sui.Transactions.Builder
             return new GasData(
                 deserializer.DeserializeU64().ToString(),
                 deserializer.DeserializeU64().ToString(),
-                deserializer.DeserializeSequence(typeof(SuiObjectRef)).Cast<SuiObjectRef>().ToArray(),
+                deserializer.DeserializeSequence(typeof(Sui.Types.SuiObjectRef)).Cast<Sui.Types.SuiObjectRef>().ToArray(),
                 AccountAddress.Deserialize(deserializer)
             );
         }

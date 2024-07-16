@@ -69,7 +69,6 @@ namespace Sui.Rpc.Models
 
             foreach (JToken typeObject in typeObj)
             {
-                Debug.Log($"MARCUS::::: NORMALIZED LIST CONVERSION {typeObject.ToString()}");
                 NormalizedTypeConverter jsonConverter = new NormalizedTypeConverter();
                 SuiMoveNormalizedType normalizedType = jsonConverter.ReadJson(
                     typeObject.CreateReader(),

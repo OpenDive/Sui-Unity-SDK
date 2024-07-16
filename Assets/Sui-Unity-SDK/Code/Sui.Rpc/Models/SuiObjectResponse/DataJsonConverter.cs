@@ -38,5 +38,4 @@ namespace Sui.Rpc.Models
             }
         }
     }
-
 }

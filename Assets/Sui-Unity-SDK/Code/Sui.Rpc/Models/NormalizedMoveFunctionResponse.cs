@@ -18,10 +18,10 @@ namespace Sui.Rpc.Models
         [JsonProperty("typeParameters")]
         public List<TypeParameter> TypeParameters { get; set; }
 
-        [JsonProperty("parameters"), JsonConverter(typeof(NormalizedTypesConverter))]
+        [JsonProperty("parameters")]
         public List<SuiMoveNormalizedType> Parameters { get; set; }
 
-        [JsonProperty("return"), JsonConverter(typeof(NormalizedTypesConverter))]
+        [JsonProperty("return")]
         public List<SuiMoveNormalizedType> Return { get; set; }
 
         public bool HasTxContext()

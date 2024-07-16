@@ -50,8 +50,8 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             List<SuiTransactionArgument> coin = tx_block.AddSplitCoinsTx
             (
-                new SuiTransactionArgument(new GasCoin()),
-                new SuiTransactionArgument[] { new SuiTransactionArgument(tx_block.AddPure(new U64(10))) }
+                tx_block.gas,
+                new SuiTransactionArgument[] { tx_block.AddPure(new U64(10)) }
             );
             tx_block.AddTransferObjectsTx(coin.ToArray(), this.Toolbox.Account.SuiAddress());
             yield return ValidateDevInspectTransaction
@@ -78,7 +78,7 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { new SerializableTypeTag(SuiStructTag.FromStr("0x2::coin::Coin<0x2::sui::SUI>")) },
                 new SuiTransactionArgument[]
                 {
-                        new SuiTransactionArgument(tx_block.AddPure(new BString(coin_0.CoinObjectId)))
+                        tx_block.AddPure(new BString(coin_0.CoinObjectId))
                 }
             );
             tx_block.AddTransferObjectsTx(obj.ToArray(), this.Toolbox.Account.SuiAddress());

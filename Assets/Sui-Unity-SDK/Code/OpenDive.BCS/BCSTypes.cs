@@ -1,4 +1,6 @@
-﻿using Sui.Accounts;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Sui.Accounts;
 using Sui.Rpc.Models;
 using Sui.Utilities;
 using System;
@@ -1258,37 +1260,44 @@ namespace OpenDive.BCS
 
         public static SuiStructTag FromStr(string typeTag)
         {
-            string name = "";
-            int index = 0;
-            SerializableTypeTag nested_value = null;
-
-            while (index < typeTag.Length)
+            try
             {
-                char letter = typeTag[index];
-                index += 1;
+                string name = "";
+                int index = 0;
+                SerializableTypeTag nested_value = null;
 
-                if (letter == '<')
+                while (index < typeTag.Length)
                 {
-                    nested_value = new SerializableTypeTag(typeTag[index..typeTag.Length]);
-                    break;
+                    char letter = typeTag[index];
+                    index += 1;
+
+                    if (letter == '<')
+                    {
+                        nested_value = new SerializableTypeTag(typeTag[index..typeTag.Length]);
+                        break;
+                    }
+                    else if (letter == '>')
+                        break;
+                    else
+                        name += letter;
                 }
-                else if (letter == '>')
-                    break;
-                else
-                    name += letter;
+
+                string[] split = name.Split("::");
+                AccountAddress address = AccountAddress.FromHex(split[0]);
+
+                return new SuiStructTag(
+                    address,
+                    split[1],
+                    split[2],
+                    nested_value != null ?
+                        new SerializableTypeTag[] { nested_value } :
+                        Array.Empty<SerializableTypeTag>()
+                );
             }
-
-            string[] split = name.Split("::");
-            AccountAddress address = AccountAddress.FromHex(split[0]);
-
-            return new SuiStructTag(
-                address,
-                split[1],
-                split[2],
-                nested_value != null ?
-                    new SerializableTypeTag[] { nested_value } :
-                    Array.Empty<SerializableTypeTag>()
-            );
+            catch
+            {
+                return null;
+            }
         }
 
         public override int GetHashCode()
@@ -1297,6 +1306,34 @@ namespace OpenDive.BCS
         }
     }
 
+    public class StructTypeConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(SuiMoveNormalziedTypeStruct);
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.StartObject)
+            {
+                JObject structTypeObj = (JObject)JToken.ReadFrom(reader);
+                AccountAddress address = AccountAddress.FromHex(NormalizedTypeConverter.NormalizeSuiAddress((string)structTypeObj["package"]));
+                string module = structTypeObj["module"].Value<string>();
+                string name = structTypeObj["function"].Value<string>();
+                return new SuiMoveNormalizedStructType(address, module, name, new List<SuiMoveNormalizedType>().ToArray());
+            }
+
+            throw new NotImplementedException();
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    [JsonConverter(typeof(StructTypeConverter))]
     public class SuiMoveNormalizedStructType: ISerializable
     {
         public SuiStructTag StructTag;
@@ -1335,12 +1372,5 @@ namespace OpenDive.BCS
             if (this.TypeArguments.Length != 0)
                 serializer.Serialize(this.TypeArguments);
         }
-
-        //public static SuiMoveNormalizedStructType Deserialize(Deserialization deserializer)
-        //{
-        //    return new SuiMoveNormalizedStructType(
-        //        SuiStructTag.Deserialize(deserializer)
-        //    );
-        //}
     }
 }

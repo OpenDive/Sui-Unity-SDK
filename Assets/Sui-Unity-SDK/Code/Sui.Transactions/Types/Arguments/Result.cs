@@ -7,11 +7,11 @@ using UnityEngine;
 
 namespace Sui.Transactions.Types.Arguments
 {
-    public class TransactionResult : IEnumerable<ITransactionArgument>, IEnumerator<ITransactionArgument>
+    public class TransactionResult : IEnumerable<SuiTransactionArgument>, IEnumerator<SuiTransactionArgument>
     {
         private int _position = -1;
 
-        public ITransactionArgument Current
+        public SuiTransactionArgument Current
         {
             get
             {
@@ -26,7 +26,7 @@ namespace Sui.Transactions.Types.Arguments
             throw new NotImplementedException();
         }
 
-        public IEnumerator<ITransactionArgument> GetEnumerator()
+        public IEnumerator<SuiTransactionArgument> GetEnumerator()
         {
             return this;
         }
@@ -48,18 +48,18 @@ namespace Sui.Transactions.Types.Arguments
         }
 
         private ushort _count;
-        private List<ITransactionArgument> _nestedResults;
+        private List<SuiTransactionArgument> _nestedResults;
 
-        public ITransactionArgument TransactionArgument;
+        public SuiTransactionArgument TransactionArgument;
 
         public TransactionResult(ushort index, ushort? amount = null)
         {
-            TransactionArgument = new Result(index);
+            TransactionArgument = new SuiTransactionArgument(TransactionArgumentKind.Result, new Result(index));
             _count = amount ?? 1;
-            _nestedResults = new List<ITransactionArgument>();
+            _nestedResults = new List<SuiTransactionArgument>();
         }
 
-        public ITransactionArgument NestedResultFor(ushort resultIndex)
+        public SuiTransactionArgument NestedResultFor(ushort resultIndex)
         {
             int index = resultIndex + 1;
             if (index < _nestedResults.Count)
@@ -67,12 +67,13 @@ namespace Sui.Transactions.Types.Arguments
                 return _nestedResults[index];
             }
 
-            if (TransactionArgument.Kind == Kind.Result)
+            if (TransactionArgument.Kind == TransactionArgumentKind.Result)
             {
-                var result = ((Result)TransactionArgument).Index;
-                var nestedResult = new NestedResult(result, resultIndex);
-                _nestedResults.Add(nestedResult);
-                return nestedResult;
+                int result = ((Result)TransactionArgument.TransactionArgument).Index;
+                NestedResult nestedResult = new NestedResult(result, resultIndex);
+                SuiTransactionArgument argument = new SuiTransactionArgument(TransactionArgumentKind.NestedResult, nestedResult);
+                _nestedResults.Add(argument);
+                return argument;
             }
 
             return null;
@@ -84,8 +85,6 @@ namespace Sui.Transactions.Types.Arguments
     /// </summary>
     public class Result : ITransactionArgument
     {
-        Kind ITransactionArgument.Kind => Kind.Result;
-
         public int Index { get; private set; }
 
         /// <summary>

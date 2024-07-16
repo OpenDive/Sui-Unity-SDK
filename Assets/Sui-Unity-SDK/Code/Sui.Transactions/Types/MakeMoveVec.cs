@@ -6,8 +6,6 @@ namespace Sui.Transactions.Types
 {
     public class MakeMoveVec : ITransaction
     {
-        public Kind Kind => Kind.MakeMoveVec;
-
         public SuiTransactionArgument[] Objects;
         public SuiStructTag Type;
 

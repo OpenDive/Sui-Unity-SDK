@@ -167,17 +167,8 @@ namespace Sui.Rpc.Models
         [JsonProperty("digest")]
         public string Digest { get; set; }
 
-        // TODO: Complete deserialization
-
-        //[JsonProperty("transaction")]
-        //public TransactionBlock Transaction { get; set; }
-
-        //[JsonProperty("rawTransaction")]
-        //public string RawTransaction { get; set; }
-
-        // effects : {}
-
-        // objectChanges: []
+        [JsonProperty("transaction")]
+        public SuiTransactionBlock Transaction { get; set; }
     }
 
     [JsonObject]
@@ -201,6 +192,9 @@ namespace Sui.Rpc.Models
 
         [JsonProperty("gasData")]
         public GasData GasData { get; set; }
+
+        [JsonProperty("transaction")]
+        public Transactions.Kinds.TransactionBlockKind Transaction { get; set; }
     }
 
     [JsonObject]
@@ -212,9 +206,23 @@ namespace Sui.Rpc.Models
         [JsonProperty("events")]
         public List<SuiEvent> Events { get; set; }
 
+        //[JsonProperty("results")]
+        //public List<ExecutionResultType> Results { get; set; }
+
         [JsonProperty("error", Required = Required.Default)]
         public string Error { get; set; }
+    }
 
-        // TODO: Implement ExecutionResultType value
+    // TODO: Implement full types:
+    // MutableReferenceOutputType: (MoveNormalizedStructType, byte[], string)
+    // ReturnValueType: (byte[], MoveNormalizedStructType)
+    [JsonObject]
+    public class ExecutionResultType
+    {
+        [JsonProperty("mutableReferenceOutputs")]
+        public string[] MutableReferenceOutputs { get; set; }
+
+        [JsonProperty("returnValues")]
+        public string[] ReturnValues { get; set; }
     }
 }
