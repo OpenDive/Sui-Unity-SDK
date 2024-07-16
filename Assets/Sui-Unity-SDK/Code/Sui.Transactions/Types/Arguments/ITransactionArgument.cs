@@ -130,7 +130,7 @@ namespace Sui.Transactions.Types.Arguments
                     serializer.SerializeU32AsUleb128(3);
                     break;
             }
-            serializer.Serialize(TransactionArgument);
+            if (this.TransactionArgument != null) serializer.Serialize(TransactionArgument);
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)

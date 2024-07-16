@@ -34,7 +34,8 @@ namespace Sui.Tests
     {
         public int DefaultGasBudget = 10_000_000;
         public int DefaultSendAmount = 1_000;
-        string DefaultRecipient = "0x0c567ffdf8162cb6d51af74be0199443b92e823d4ba6ced24de5c6c463797d46";
+        public string DefaultRecipient = "0x0c567ffdf8162cb6d51af74be0199443b92e823d4ba6ced24de5c6c463797d46";
+
         private readonly string customResourcePath = Path.Combine(Application.dataPath, "Sui-Unity-SDK/Tests/Resources");
 
         public Account Account;

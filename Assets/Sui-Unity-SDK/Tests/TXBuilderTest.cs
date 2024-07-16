@@ -71,9 +71,12 @@ namespace Sui.Tests
             );
             yield return new WaitUntil(() => result_task.IsCompleted);
 
-            Assert.IsTrue(local_digest_task.Result.Result == result_task.Result.Result.Digest);
+            Task<RpcResult<TransactionBlockResponse>> wait_task = client.WaitForTransaction(local_digest_task.Result.Result, options);
+            yield return new WaitUntil(() => wait_task.IsCompleted);
 
-            if (result_task.Result.Result.Effects.Status.Status == ExecutionStatus.Failure)
+            Assert.IsTrue(local_digest_task.Result.Result == wait_task.Result.Result.Digest);
+
+            if (wait_task.Result.Result.Effects.Status.Status == ExecutionStatus.Failure)
                 Assert.Fail("Transaction Failed");
         }
 
@@ -94,6 +97,85 @@ namespace Sui.Tests
                 new SuiTransactionArgument[] { tx_block.AddPure(new U64((ulong)(this.Toolbox.DefaultGasBudget * 2))) }
             );
             tx_block.AddTransferObjectsTx(coin.ToArray(), this.Toolbox.Address());
+
+            yield return this.ValidateTransaction
+            (
+                this.Toolbox.Client,
+                this.Toolbox.Account,
+                tx_block
+            );
+        }
+
+        [UnityTest]
+        public IEnumerator MergeCoinTest()
+        {
+            yield return this.Toolbox.Setup();
+
+            Task<RpcResult<CoinPage>> coins_task = this.Toolbox.GetCoins();
+            yield return new WaitUntil(() => coins_task.IsCompleted);
+
+            CoinDetails coin_0 = coins_task.Result.Result.Data[0];
+            CoinDetails coin_1 = coins_task.Result.Result.Data[1];
+
+            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+
+            tx_block.AddMergeCoinsTx
+            (
+                tx_block.AddObjectInput(coin_0.CoinObjectId),
+                new SuiTransactionArgument[] { tx_block.AddObjectInput(coin_1.CoinObjectId) }
+            );
+
+            yield return this.ValidateTransaction
+            (
+                this.Toolbox.Client,
+                this.Toolbox.Account,
+                tx_block
+            );
+        }
+
+        [UnityTest]
+        public IEnumerator MoveCallTest()
+        {
+            yield return this.Toolbox.Setup();
+
+            Task<RpcResult<CoinPage>> coins_task = this.Toolbox.GetCoins();
+            yield return new WaitUntil(() => coins_task.IsCompleted);
+
+            CoinDetails coin_0 = coins_task.Result.Result.Data[0];
+
+            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+            tx_block.AddMoveCallTx
+            (
+                new SuiMoveNormalizedStructType(SuiStructTag.FromStr("0x2::pay::split"), new SuiMoveNormalizedType[] { }),
+                new SerializableTypeTag[] { new SerializableTypeTag("0x2::sui::SUI") },
+                new SuiTransactionArgument[]
+                {
+                        tx_block.AddObjectInput(coin_0.CoinObjectId),
+                        tx_block.AddPure(new U64((ulong)(this.Toolbox.DefaultGasBudget * 2)))
+                }
+            );
+
+            yield return this.ValidateTransaction
+            (
+                this.Toolbox.Client,
+                this.Toolbox.Account,
+                tx_block
+            );
+        }
+
+        [UnityTest]
+        public IEnumerator SplitCoinAndTransferObjectWithGasCoinTest()
+        {
+            yield return this.Toolbox.Setup();
+
+            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+
+            List<SuiTransactionArgument> coin = tx_block.AddSplitCoinsTx
+            (
+                tx_block.gas,
+                new SuiTransactionArgument[] { tx_block.AddPure(new U64(1)) }
+            );
+            tx_block.AddTransferObjectsTx(coin.ToArray(), this.Toolbox.DefaultRecipient);
 
             yield return this.ValidateTransaction
             (
