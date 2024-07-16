@@ -21,72 +21,86 @@ using Sui.Clients;
 using UnityEngine.TestTools;
 using Sui.Rpc.Models;
 using Newtonsoft.Json;
+using UnityEditor.VersionControl;
 
 namespace Sui.Tests
 {
     public class TXBuilderTest: MonoBehaviour
     {
-        string suiAddressHex = "0x0000000000000000000000000000000000000000000000000000000000000002";
+        TestToolbox Toolbox;
+        string PackageID;
+        string SharedObjectID;
+        string SuiClockObjectID = NormalizedTypeConverter.NormalizeSuiAddress("0x6");
 
-        //[UnityTest]
-        //public IEnumerator SimpleTransactionMoveCallBuildTest()
-        //{
-        //    AccountAddress sui_address = AccountAddress.FromHex(suiAddressHex);
+        [UnitySetUp]
+        public IEnumerator SetUp()
+        {
+            this.Toolbox = new TestToolbox();
+            yield return this.Toolbox.Setup();
 
-        //    TestToolbox toolbox = new TestToolbox();
-        //    yield return toolbox.Setup();
+            Task<PublishedPackage> task = this.Toolbox.PublishPackage("serializer");
+            yield return new WaitUntil(() => task.IsCompleted);
 
-        //    Task<PublishedPackage> publish_task = toolbox.PublishPackage("serializer");
-        //    yield return new WaitUntil(() => publish_task.IsCompleted);
+            this.PackageID = task.Result.PackageID;
 
-        //    PublishedPackage package_id = publish_task.Result;
+            List<SuiOwnedObjectRef> created_objects = task.Result.PublishedTX.Effects.Created;
+            List<SuiOwnedObjectRef> shared_object = created_objects.Where(obj => obj.Owner.Type == SuiOwnerType.Shared).ToList();
 
-        //    yield return toolbox.Setup();
+            this.SharedObjectID = shared_object[0].Reference.ObjectId;
+        }
 
-        //    Task<RpcResult<CoinPage>> coin_task = toolbox.GetCoins();
-        //    yield return new WaitUntil(() => coin_task.IsCompleted);
+        private IEnumerator ValidateTransaction
+        (
+            SuiClient client,
+            Account account,
+            Transactions.TransactionBlock tx_block
+        )
+        {
+            tx_block.SetSenderIfNotSet(account.SuiAddress());
 
-        //    CoinPage coins = coin_task.Result.Result;
-        //    CoinDetails coin_0 = coins.Data[0];
+            Task<RpcResult<string>> local_digest_task = tx_block.GetDigest(new BuildOptions(client));
+            yield return new WaitUntil(() => local_digest_task.IsCompleted);
 
-        //    var tx = new Sui.Transactions.TransactionBlock();
+            TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true);
 
-        //    tx.AddMoveCallTx(
-        //        new SuiMoveNormalizedStructType(new SuiStructTag(sui_address, "pay", "split", new SerializableTypeTag[0]), new SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
-        //        new SerializableTypeTag[] { new SerializableTypeTag(new StructTag(sui_address, "sui", "SUI", new ISerializableTag[0])) },
-        //        new SuiTransactionArgument[]
-        //        {
-        //                new SuiTransactionArgument(tx.AddObjectInput(coin_0.CoinObjectId)),
-        //                new SuiTransactionArgument(tx.AddInput(Types.Type.Pure, new U64((ulong)(toolbox.DefaultGasBudget * 2))))
-        //        }
-        //    );
+            Task<RpcResult<TransactionBlockResponse>> result_task = client.SignAndExecuteTransactionBlock
+            (
+                tx_block,
+                account,
+                options
+            );
+            yield return new WaitUntil(() => result_task.IsCompleted);
 
-        //    tx.SetSenderIfNotSet(toolbox.Account.AccountAddress);
-        //    Task<string> digest_task = tx.GetDigest(new BuildOptions(toolbox.Client));
-        //    yield return new WaitUntil(() => digest_task.IsCompleted);
+            Assert.IsTrue(local_digest_task.Result.Result == result_task.Result.Result.Digest);
 
-        //    string local_digest = digest_task.Result;
-        //    TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true);
-        //    Task<RpcResult<TransactionBlockResponse>> result_task = toolbox.Client.SignAndExecuteTransactionBlock(tx, toolbox.Account, options);
-        //    yield return new WaitUntil(() => result_task.IsCompleted);
-
-        //    //TransactionBlockResponse result = result_task.Result.Result;
-
-        //    //Task wait_task = toolbox.Client.WaitForTransaction(local_digest);
-        //    //yield return new WaitUntil(() => wait_task.IsCompleted);
-
-        //    //Assert.AreEqual(local_digest, result.Digest);
-        //    //Assert.IsTrue(result.Effects.Status.Status == ExecutionStatus.Success);
-        //}
+            if (result_task.Result.Result.Effects.Status.Status == ExecutionStatus.Failure)
+                Assert.Fail("Transaction Failed");
+        }
 
         [UnityTest]
-        public IEnumerator SimplePublishBuildTest()
+        public IEnumerator SplitCoinAndTransferTest()
         {
-            TestToolbox toolbox = new TestToolbox();
-            yield return toolbox.Setup();
+            yield return this.Toolbox.Setup();
 
-            Task task = toolbox.PublishPackage("serializer");
-            yield return new WaitUntil(() => task.IsCompleted);
+            Task<RpcResult<CoinPage>> coins_task = this.Toolbox.GetCoins();
+            yield return new WaitUntil(() => coins_task.IsCompleted);
+
+            CoinDetails coin_0 = coins_task.Result.Result.Data[0];
+            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+
+            List<SuiTransactionArgument> coin = tx_block.AddSplitCoinsTx
+            (
+                tx_block.AddObjectInput(coin_0.CoinObjectId),
+                new SuiTransactionArgument[] { tx_block.AddPure(new U64((ulong)(this.Toolbox.DefaultGasBudget * 2))) }
+            );
+            tx_block.AddTransferObjectsTx(coin.ToArray(), this.Toolbox.Address());
+
+            yield return this.ValidateTransaction
+            (
+                this.Toolbox.Client,
+                this.Toolbox.Account,
+                tx_block
+            );
         }
     }
 }

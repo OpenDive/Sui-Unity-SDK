@@ -4,13 +4,14 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenDive.BCS;
 using Sui.Rpc.Client;
+using UnityEngine;
 
 namespace Sui.Transactions.Types.Arguments
 {
     public enum TransactionArgumentKind
     {
         GasCoin,
-        Input, // TransactionBlockInput
+        Input,
         Result,
         NestedResult
     }
@@ -82,8 +83,29 @@ namespace Sui.Transactions.Types.Arguments
     [JsonConverter(typeof(TransactionArgumentConverter))]
     public class SuiTransactionArgument: ISerializable
     {
-        public TransactionArgumentKind Kind { get; set; }
-        public ITransactionArgument TransactionArgument;
+        public TransactionArgumentKind Kind { get; private set; }
+
+        private ITransactionArgument transaction_argument;
+
+        public ITransactionArgument TransactionArgument
+        {
+            get => this.transaction_argument;
+            set
+            {
+                if (value == null)
+                    this.Kind = TransactionArgumentKind.GasCoin;
+                else if (value.GetType() == typeof(TransactionBlockInput))
+                    this.Kind = TransactionArgumentKind.Input;
+                else if (value.GetType() == typeof(Result))
+                    this.Kind = TransactionArgumentKind.Result;
+                else if (value.GetType() == typeof(NestedResult))
+                    this.Kind = TransactionArgumentKind.NestedResult;
+                else
+                    throw new Exception("Unable to setup SuiTransactionArgument");
+
+                this.transaction_argument = value;
+            }
+        }
 
         public SuiTransactionArgument(TransactionArgumentKind kind, ITransactionArgument transactionArgument)
         {

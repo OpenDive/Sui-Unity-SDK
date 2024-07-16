@@ -106,7 +106,7 @@ namespace Sui.Transactions.Types
                         )
                     );
                 default:
-                    throw new NotImplementedException();
+                    return new SuiError(0, "Unable to convert JSON to SuiTransaction.", input);
             }
         }
 
@@ -125,8 +125,35 @@ namespace Sui.Transactions.Types
     [JsonConverter(typeof(TransactionConverter))]
     public class SuiTransaction: ISerializable
     {
-        public ITransaction Transaction;
-        public TransactionKind Kind { get; }
+        public TransactionKind Kind { get; private set; }
+
+        private ITransaction transaction;
+
+        public ITransaction Transaction
+        {
+            get => this.transaction;
+            set
+            {
+                if (value.GetType() == typeof(MoveCall))
+                    this.Kind = TransactionKind.MoveCall;
+                else if (value.GetType() == typeof(TransferObjects))
+                    this.Kind = TransactionKind.TransferObjects;
+                else if (value.GetType() == typeof(SplitCoins))
+                    this.Kind = TransactionKind.SplitCoins;
+                else if (value.GetType() == typeof(MergeCoins))
+                    this.Kind = TransactionKind.MergeCoins;
+                else if (value.GetType() == typeof(Publish))
+                    this.Kind = TransactionKind.Publish;
+                else if (value.GetType() == typeof(MakeMoveVec))
+                    this.Kind = TransactionKind.MakeMoveVec;
+                else if (value.GetType() == typeof(Upgrade))
+                    this.Kind = TransactionKind.Upgrade;
+                else
+                    throw new Exception("Unable to set Transaction");
+
+                this.transaction = value;
+            }
+        }
 
         public SuiTransaction(TransactionKind kind, ITransaction transaction)
         {

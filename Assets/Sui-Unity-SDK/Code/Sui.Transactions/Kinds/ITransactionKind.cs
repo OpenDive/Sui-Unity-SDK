@@ -31,8 +31,6 @@ namespace Sui.Transactions.Kinds
             JObject jsonObject = JObject.Load(reader);
             string kind = jsonObject["kind"].Value<string>();
 
-            Debug.Log($"MARCUS::: TRANSACTION KIND - {kind}");
-
             switch (kind)
             {
                 case "ProgrammableTransaction":
@@ -75,8 +73,29 @@ namespace Sui.Transactions.Kinds
     [JsonConverter(typeof(TransactionKindConverter))]
     public class TransactionBlockKind: ISerializable
     {
-        public SuiTransactionKindType Type { get; set; }
-        public ITransactionKind Transaction { get; set; }
+        public SuiTransactionKindType Type { get; private set; }
+
+        private ITransactionKind transaction;
+
+        public ITransactionKind Transaction
+        {
+            get => this.transaction;
+            set
+            {
+                if (value.GetType() == typeof(ProgrammableTransaction))
+                    this.Type = SuiTransactionKindType.ProgrammableTransaction;
+                else if (value.GetType() == typeof(SuiChangeEpoch))
+                    this.Type = SuiTransactionKindType.ChangeEpoch;
+                else if (value.GetType() == typeof(Genesis))
+                    this.Type = SuiTransactionKindType.Genesis;
+                else if (value.GetType() == typeof(SuiConsensusCommitPrologue))
+                    this.Type = SuiTransactionKindType.ConsensusCommitPrologue;
+                else
+                    throw new Exception("Unable to set Transaction Kind");
+
+                this.transaction = value;
+            }
+        }
 
         public TransactionBlockKind
         (

@@ -462,6 +462,17 @@ namespace Sui.Transactions
         }
 
         /// <summary> ✅
+        /// The the Sender, if it has not been set in the programmable transaction.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <returns></returns>
+        public void SetSenderIfNotSet(string sender)
+        {
+            if (this.BlockDataBuilder.Builder.Sender == null)
+                this.SetSender(AccountAddress.FromHex(sender));
+        }
+
+        /// <summary> ✅
         /// Set expiration for the programmable transaction.
         /// </summary>
         /// <param name="expiration"></param>
