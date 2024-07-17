@@ -9,6 +9,7 @@ using Sui.Accounts;
 using Sui.Transactions.Types.Arguments;
 using System.Collections.Generic;
 using OpenDive.BCS;
+using Newtonsoft.Json;
 
 namespace Sui.Tests
 {
@@ -28,7 +29,7 @@ namespace Sui.Tests
             Task<RpcResult<DevInspectResponse>> result_task = client.DevInspectTransactionBlock(signer, transaction_block);
             yield return new WaitUntil(() => result_task.IsCompleted);
 
-            if (status != result_task.Result.Result.Effects.Status.Status)
+            if (result_task.Result.Result == null || status != result_task.Result.Result.Effects.Status.Status)
                 Assert.Fail("Status does not match");
         }
 
@@ -78,7 +79,7 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { new SerializableTypeTag(SuiStructTag.FromStr("0x2::coin::Coin<0x2::sui::SUI>")) },
                 new SuiTransactionArgument[]
                 {
-                        tx_block.AddPure(new BString(coin_0.CoinObjectId))
+                        tx_block.AddObjectInput(coin_0.CoinObjectId)
                 }
             );
             tx_block.AddTransferObjectsTx(obj.ToArray(), this.Toolbox.Account.SuiAddress());

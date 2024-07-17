@@ -111,7 +111,7 @@ namespace Sui.Types
                 {
                     case CallArgumentType.Pure:
                         writer.WritePropertyName("value");
-                        writer.WriteValue(((PureCallArg)call_arg.CallArgument).Value);
+                        writer.WriteValue(String.Join(", ", ((PureCallArg)call_arg.CallArgument).Value));
                         break;
                     case CallArgumentType.Object:
                         ObjectArg object_arg = ((ObjectCallArg)call_arg.CallArgument).ObjectArg;

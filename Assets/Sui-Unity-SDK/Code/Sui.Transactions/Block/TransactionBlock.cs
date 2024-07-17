@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using Sui.Rpc.Client;
 using UnityEngine.Windows;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 
 namespace Sui.Transactions
 {
@@ -105,8 +106,13 @@ namespace Sui.Transactions
 
             if (only_transaction_kind != null && only_transaction_kind == true)
             {
+                Kinds.TransactionBlockKind tx_block_kind = new Kinds.TransactionBlockKind
+                (
+                    SuiTransactionKindType.ProgrammableTransaction,
+                    programmableTx
+                );
                 Serialization ser = new Serialization();
-                ser.Serialize(programmableTx);
+                ser.Serialize(tx_block_kind);
                 return new RpcResult<byte[]>(ser.GetBytes());
             }
 
@@ -942,14 +948,18 @@ namespace Sui.Transactions
 
             IEnumerable<CoinDetails> filtered_coins = coins.Result.Data.Where((coin) => {
                 return BlockDataBuilder.Builder.Inputs.Any((input) => {
-                    if (input.Value.GetType() == typeof(ObjectCallArg))
+                    if (input.Value.GetType() == typeof(CallArg))
                     {
-                        ObjectArg object_arg = ((ObjectCallArg)input.Value).ObjectArg;
-                        if (object_arg.Type == ObjectRefType.ImmOrOwned)
+                        CallArg call_arg = (CallArg)input.Value;
+                        if (call_arg.Type == CallArgumentType.Object)
                         {
-                            return
-                                coin.CoinObjectId ==
-                                ((Sui.Types.SuiObjectRef)object_arg.ObjectRef).ObjectID.ToHex();
+                            ObjectCallArg object_arg = (ObjectCallArg)call_arg.CallArgument;
+                            if (object_arg.ObjectArg.Type == ObjectRefType.ImmOrOwned)
+                            {
+                                return
+                                    coin.CoinObjectId ==
+                                    ((Sui.Types.SuiObjectRef)object_arg.ObjectArg.ObjectRef).ObjectID.ToHex();
+                            }
                         }
                     }
                     return false;
@@ -1411,7 +1421,7 @@ namespace Sui.Transactions
             if (prepare_transactions_error != null)
                 return prepare_transactions_error;
 
-            if (options.OnlyTransactionKind == null || (options.OnlyTransactionKind.HasValue && options.OnlyTransactionKind == false))
+            if (options.OnlyTransactionKind == null || (options.OnlyTransactionKind != null && options.OnlyTransactionKind == false))
             {
                 RpcError gas_payment_error = await this.PrepareGasPaymentAsync(options);
 

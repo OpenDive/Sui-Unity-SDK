@@ -66,6 +66,7 @@ namespace Sui.Rpc
                 return RpcResult<TransactionBlockResponse>.GetErrorResult(tx_bytes.Error.Message);
 
             SignatureBase signature = account.SignTransactionBlock(tx_bytes.Result);
+            Debug.Log($"MARCUS::: TX EXECUTE BYTES - {String.Join(", ", tx_bytes.Result)}");
             return await this.ExecuteTransactionBlock(tx_bytes.Result, account.ToSerializedSignature(signature), opts, request_type);
         }
 
@@ -439,7 +440,12 @@ namespace Sui.Rpc
         {
             string sender_address = sender.SuiAddress();
             transaction_block.SetSenderIfNotSet(AccountAddress.FromHex(sender_address));
+            Debug.Log($"MARCUS::: DEV INSPECT TX BLOCK BUILDER BEFORE - {JsonConvert.SerializeObject(transaction_block.BlockDataBuilder.Builder.Transactions)}");
             RpcResult<byte[]> tx_bytes = await transaction_block.Build(new BuildOptions(this, null, true));
+
+            Debug.Log($"MARCUS::: DEV INSPECT TX BLOCK BUILDER AFTER - {JsonConvert.SerializeObject(transaction_block.BlockDataBuilder.Builder.Transactions)}");
+
+            Debug.Log($"MARCUS::: DEV INSPECT TX BLOCK BUILDER BYTES - {String.Join(", ", tx_bytes.Result)}");
 
             if (tx_bytes.Error != null)
                 return RpcResult<DevInspectResponse>.GetErrorResult(tx_bytes.Error.Message);

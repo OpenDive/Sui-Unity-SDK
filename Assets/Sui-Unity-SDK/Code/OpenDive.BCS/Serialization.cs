@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Numerics;
 using System.Runtime.Serialization;
+using UnityEngine;
 
 namespace OpenDive.BCS
 {
@@ -334,6 +335,7 @@ namespace OpenDive.BCS
             byte byte6 = (byte)(num >> 40 & 0xFF);
             byte byte7 = (byte)(num >> 48 & 0xFF);
             byte byte8 = (byte)(num >> 56 & 0xFF);
+            Debug.Log($"MARCUS::: SERIALIZE U64 - {String.Join(", ", new[] { byte1, byte2, byte3, byte4, byte5, byte6, byte7, byte8 })}");
             output.Write(new[] { byte1, byte2, byte3, byte4, byte5, byte6, byte7, byte8 });
             return this;
         }
