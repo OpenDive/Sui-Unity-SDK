@@ -40,7 +40,7 @@ namespace Sui.Transactions.Types.Arguments
             serializer.SerializeU16((ushort)ResultIndex);
         }
 
-        public static NestedResult Deserialize(Deserialization deserializer)
+        public static ISerializable Deserialize(Deserialization deserializer)
         {
             return new NestedResult(
                 deserializer.DeserializeU16(),

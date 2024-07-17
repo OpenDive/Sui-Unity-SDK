@@ -122,25 +122,25 @@ namespace Sui.Transactions.Kinds
                     return new TransactionBlockKind
                     (
                         SuiTransactionKindType.ProgrammableTransaction,
-                        (ProgrammableTransaction)ISerializable.Deserialize(deserializer)
+                        (ProgrammableTransaction)ProgrammableTransaction.Deserialize(deserializer)
                     );
                 case 1:
                     return new TransactionBlockKind
                     (
                         SuiTransactionKindType.ChangeEpoch,
-                        (SuiChangeEpoch)ISerializable.Deserialize(deserializer)
+                        (SuiChangeEpoch)SuiChangeEpoch.Deserialize(deserializer)
                     );
                 case 2:
                     return new TransactionBlockKind
                     (
                         SuiTransactionKindType.Genesis,
-                        (Genesis)ISerializable.Deserialize(deserializer)
+                        (Genesis)Genesis.Deserialize(deserializer)
                     );
                 case 3:
                     return new TransactionBlockKind
                     (
                         SuiTransactionKindType.ConsensusCommitPrologue,
-                        (SuiConsensusCommitPrologue)ISerializable.Deserialize(deserializer)
+                        (SuiConsensusCommitPrologue)SuiConsensusCommitPrologue.Deserialize(deserializer)
                     );
                 default:
                     return new SuiError(0, "Unable to deserialize TransactionBlockKind", null);

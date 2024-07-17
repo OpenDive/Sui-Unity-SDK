@@ -21,6 +21,7 @@ using Sui.Transactions.Kinds;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using Sui.Rpc.Client;
+using UnityEngine.Windows;
 
 namespace Sui.Transactions
 {
@@ -43,9 +44,18 @@ namespace Sui.Transactions
         public TransactionBlockDataBuilderSerializer(byte[] bytes)
         {
             Deserialization der = new Deserialization(bytes);
-            Sui.Transactions.Builder.TransactionDataV1 tx_data =
-                Sui.Transactions.Builder.TransactionDataV1.Deserialize(der);
-            this.Builder = new TransactionBlockDataBuilder(tx_data);
+
+            TransactionData tx_data =
+                (TransactionData)TransactionData.Deserialize(der);
+
+            switch (tx_data.Type)
+            {
+                case TransactionType.V1:
+                    this.Builder = new TransactionBlockDataBuilder((Builder.TransactionDataV1)tx_data.Transaction);
+                    break;
+                default:
+                    throw new Exception("Unable to convert byte array to TransactionBlockDataBuilderSerializer");
+            }
         }
 
         public static string GetDigestFromBytes(byte[] bytes)
@@ -80,12 +90,12 @@ namespace Sui.Transactions
         {
             // Resolve inputs down to values:
             List<CallArg> inputs = this.Builder.Inputs
-                .Select<TransactionBlockInput, CallArg>((input) => {
+                .Select((input) => {
                     return input.Value.GetType() == typeof(PureCallArg) ?
                         new CallArg(CallArgumentType.Pure, (PureCallArg)input.Value) :
                         input.Value.GetType() == typeof(ObjectCallArg) ?
                             new CallArg(CallArgumentType.Object, (ObjectCallArg)input.Value) :
-                            null;
+                            input.Value.GetType() == typeof(CallArg) ? (CallArg)input.Value : null;
                 })
                 .Where(value => value != null)
                 .ToList();
@@ -100,7 +110,7 @@ namespace Sui.Transactions
                 return new RpcResult<byte[]>(ser.GetBytes());
             }
 
-            ITransactionExpiration Expiration;
+            TransactionExpiration Expiration;
             AccountAddress Sender;
             Builder.GasData GasConfig;
 
@@ -440,6 +450,11 @@ namespace Sui.Transactions
                 BlockDataBuilder = new TransactionBlockDataBuilderSerializer();
         }
 
+        public TransactionBlock(TransactionBlockDataBuilderSerializer serialized_tx_builder)
+        {
+            this.BlockDataBuilder = serialized_tx_builder;
+        }
+
         /// <summary> ✅
         /// Set the sender for the programmable transaction block.
         /// </summary>
@@ -448,6 +463,16 @@ namespace Sui.Transactions
         public void SetSender(AccountAddress sender)
         {
             this.BlockDataBuilder.Builder.Sender = sender;
+        }
+
+        /// <summary> ✅
+        /// Set the sender for the programmable transaction block.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <returns></returns>
+        public void SetSender(string sender)
+        {
+            this.BlockDataBuilder.Builder.Sender = AccountAddress.FromHex(sender);
         }
 
         /// <summary> ✅
@@ -477,7 +502,7 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="expiration"></param>
         /// <returns></returns>
-        public void SetExpiration(ITransactionExpiration expiration)
+        public void SetExpiration(TransactionExpiration expiration)
         {
             this.BlockDataBuilder.Builder.Expiration = expiration;
         }
@@ -628,7 +653,7 @@ namespace Sui.Transactions
         /// <returns></returns>
         public SuiTransactionArgument AddPure(ISerializable value)
         {
-            return AddInput(CallArgumentType.Pure, value);
+            return AddInput(CallArgumentType.Pure, new CallArg(CallArgumentType.Pure, new PureCallArg(value)));
         }
 
         /// <summary>
@@ -641,7 +666,7 @@ namespace Sui.Transactions
         /// <returns></returns>
         public SuiTransactionArgument AddPure(byte[] value)
         {
-            return AddInput(CallArgumentType.Pure, new Bytes(value));
+            return AddInput(CallArgumentType.Pure, new CallArg(CallArgumentType.Pure, new PureCallArg(value)));
         }
 
         /// <summary>
@@ -810,7 +835,7 @@ namespace Sui.Transactions
         /// <returns>A `SuiTransactionArgument` array representing the result of the transfer object operation.</returns>
         public List<SuiTransactionArgument> AddTransferObjectsTx(SuiTransactionArgument[] objects, string address)
         {
-            TransferObjects transfer_tx = new TransferObjects(objects, AddPure(AccountAddress.FromHex(address)));
+            TransferObjects transfer_tx = new TransferObjects(objects, this.AddPure(AccountAddress.FromHex(address)));
             return this.AddTransaction(new Types.SuiTransaction(Kind.TransferObjects, transfer_tx));
         }
 
@@ -995,11 +1020,12 @@ namespace Sui.Transactions
                 {
                     if (Regex.IsMatch(((BString)input.Value).value, @"^(0x)?[0-9a-fA-F]{32,64}$"))
                     {
-                        ObjectToResolve objectToResolve = new ObjectToResolve(
-                        ((BString)input.Value).value,
-                        input,
-                        null
-                    );
+                        ObjectToResolve objectToResolve = new ObjectToResolve
+                        (
+                            ((BString)input.Value).value,
+                            input,
+                            null
+                        );
                         objectsToResolve.Add(objectToResolve);
                     }
                 }
@@ -1022,14 +1048,12 @@ namespace Sui.Transactions
                         if (arg.Kind == TransactionArgumentKind.Input)
                         {
                             TransactionBlockInput argInput = (TransactionBlockInput)arg.TransactionArgument;
-                            int index = argInput.Index;
 
                             // Is it a PureCallArg or ObjectCallArg?
                             // If the argument is a `TransactionBlockInput`
-                            // and the value of the input at `index` is NOT a BuilderArg (`ICallArg`)
+                            // and the value of the input at `index` is NOT a BuilderArg (`CallArg`)
                             // then we need to resolve it.
-                            bool isBuilderCallArg = inputs[index].Value.GetType() != typeof(ICallArg);
-                            return isBuilderCallArg;
+                            return inputs[argInput.Index].Value.GetType() != typeof(CallArg);
                         }
                         return false;
                     });
@@ -1060,11 +1084,11 @@ namespace Sui.Transactions
 
                                             if
                                             (
-                                                outer_input.Value == inner_input.Value &&
+                                                outer_input.Value.Equals(inner_input.Value) &&
                                                 outer_input.Index != inner_input.Index
                                             )
                                             {
-                                                moveTx.Arguments[argument_outer.i] = move_call.Arguments[argument_inner.i];
+                                                moveTx.Arguments[argument_outer.i].Equals(move_call.Arguments[argument_inner.i]);
                                             }
                                         }
                                     }
@@ -1090,11 +1114,11 @@ namespace Sui.Transactions
                         TransactionBlockInput input = inputs[addressInput.Index];
 
                         // If the value of the input is not an object type then it must be a Pure
-                        if (input.Value.GetType() != typeof(ObjectCallArg))
+                        if (input.Value.GetType() != typeof(CallArg) && input.Value.GetType() != typeof(AccountAddress))
                         {
                             Serialization ser = new Serialization();
                             input.Value.Serialize(ser);
-                            this.BlockDataBuilder.Builder.Inputs[addressInput.Index].Value = new PureCallArg(ser.GetBytes());
+                            this.BlockDataBuilder.Builder.Inputs[addressInput.Index].Value = new CallArg(CallArgumentType.Pure, new PureCallArg(ser.GetBytes()));
                         }
                     }
                 }
@@ -1116,11 +1140,11 @@ namespace Sui.Transactions
                             TransactionBlockInput input = inputs[amountTxbInput.Index];
 
                             // If the value of the input is not an object type then it must be a Pure
-                            if(input.Value.GetType() != typeof(ObjectCallArg))
+                            if(input.Value.GetType() != typeof(CallArg) && input.Value.GetType() != typeof(AccountAddress))
                             {
                                 Serialization ser = new Serialization();
                                 input.Value.Serialize(ser);
-                                this.BlockDataBuilder.Builder.Inputs[amountTxbInput.Index].Value = new PureCallArg(ser.GetBytes());
+                                this.BlockDataBuilder.Builder.Inputs[amountTxbInput.Index].Value = new CallArg(CallArgumentType.Pure, new PureCallArg(ser.GetBytes()));
                             }
                         }
                     }
@@ -1134,9 +1158,9 @@ namespace Sui.Transactions
             {
                 foreach(MoveCall moveCall in moveModulesToResolve)
                 {
-                    string packageId = moveCall.Target.StructTag.address.ToHex();
-                    string moduleName = moveCall.Target.StructTag.module;
-                    string functionName = moveCall.Target.StructTag.name;
+                    string packageId = moveCall.Target.Address.ToHex();
+                    string moduleName = moveCall.Target.Module;
+                    string functionName = moveCall.Target.Name;
 
                     #region RPC Call GetNormalizedMoveFunction
                     RpcResult<NormalizedMoveFunctionResponse> result
@@ -1174,7 +1198,7 @@ namespace Sui.Transactions
                         TransactionBlockInput input = inputs[inputArg.Index];
 
                         //// Skip if the input is already resolved, aka if the input is a BuilderArg
-                        if (input.Value.GetType() == typeof(ICallArg)) continue;
+                        if (input.Value.GetType() == typeof(CallArg)) continue;
 
                         //// When we reach here, this means that the value could be a BString, a U8, etc.
                         //// We need to compare agains the RPC response params to know how to cast to a concrete type
@@ -1258,8 +1282,6 @@ namespace Sui.Transactions
                 {
                     ObjectDataResponse obj = objectsById[objectToResolve.Id];
 
-                    Debug.Log($"MARCUS::: INSIDE RESOLVE OBJECTS = {JsonConvert.SerializeObject(obj)}");
-
                     int? initialSharedVersion = obj.GetSharedObjectInitialVersion();
 
                     if (initialSharedVersion == null)
@@ -1269,7 +1291,7 @@ namespace Sui.Transactions
                         if (obj_ref == null)
                             continue;
 
-                        objectToResolve.Input.Value = new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, obj_ref));
+                        objectToResolve.Input.Value = new CallArg(CallArgumentType.Object, new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, obj_ref)));
                         if (resolved_objects.Count > objectToResolve.Input.Index)
                             resolved_objects[objectToResolve.Input.Index] = objectToResolve;
                         else
@@ -1287,39 +1309,47 @@ namespace Sui.Transactions
                         Serializer.ExtractMutableReference(objectToResolve.NormalizedType) != null
                     );
 
-                    objectToResolve.Input.Value = new ObjectCallArg
+                    objectToResolve.Input.Value = new CallArg
                     (
-                        new ObjectArg
+                        CallArgumentType.Object,
+                        new ObjectCallArg
                         (
-                            ObjectRefType.Shared,
-                            new SharedObjectRef
+                            new ObjectArg
                             (
-                                AccountAddress.FromHex(objectToResolve.Id),
-                                (int)initialSharedVersion,
-                                mutable
+                                ObjectRefType.Shared,
+                                new SharedObjectRef
+                                (
+                                    AccountAddress.FromHex(objectToResolve.Id),
+                                    (int)initialSharedVersion,
+                                    mutable
+                                )
                             )
                         )
                     );
 
                     if (resolved_objects.Count > objectToResolve.Input.Index)
                     {
-                        if (resolved_objects[objectToResolve.Input.Index].Input.Value.GetType() == typeof(ICallArg))
+                        if (resolved_objects[objectToResolve.Input.Index].Input.Value.GetType() == typeof(CallArg))
                         {
-                            ICallArg call_arg_resolved = (ICallArg)resolved_objects[objectToResolve.Input.Index].Input.Value;
-                            if (objectToResolve.Input.Value.GetType() == typeof(ICallArg))
+                            CallArg call_arg_resolved = (CallArg)resolved_objects[objectToResolve.Input.Index].Input.Value;
+                            if (objectToResolve.Input.Value.GetType() == typeof(CallArg))
                             {
-                                ICallArg call_arg_to_resolve = (ICallArg)objectToResolve.Input.Value;
+                                CallArg call_arg_to_resolve = (CallArg)objectToResolve.Input.Value;
                                 if
                                 (
-                                    call_arg_to_resolve.GetType() == typeof(ObjectCallArg) &&
-                                    ((ObjectCallArg)call_arg_to_resolve).ObjectArg.Type == ObjectRefType.Shared
+                                    call_arg_to_resolve.Type == CallArgumentType.Object &&
+                                    ((ObjectCallArg)call_arg_to_resolve.CallArgument).ObjectArg.Type == ObjectRefType.Shared
                                 )
                                 {
-                                    SharedObjectRef shared = (SharedObjectRef)((ObjectCallArg)call_arg_to_resolve).ObjectArg.ObjectRef;
+                                    SharedObjectRef shared = (SharedObjectRef)((ObjectCallArg)call_arg_to_resolve.CallArgument).ObjectArg.ObjectRef;
                                     shared.Mutable =
-                                        (call_arg_resolved.GetType() == typeof(ObjectCallArg) && ((ObjectCallArg)call_arg_resolved).IsMutableSharedObjectInput()) ||
+                                        (call_arg_resolved.Type == CallArgumentType.Object && ((ObjectCallArg)call_arg_resolved.CallArgument).IsMutableSharedObjectInput()) ||
                                         shared.Mutable;
-                                    objectToResolve.Input.Value = new ObjectCallArg(new ObjectArg(ObjectRefType.Shared, shared));
+                                    objectToResolve.Input.Value = new CallArg
+                                    (
+                                        CallArgumentType.Object,
+                                        new ObjectCallArg(new ObjectArg(ObjectRefType.Shared, shared))
+                                    );
                                 }
                             }
                         }

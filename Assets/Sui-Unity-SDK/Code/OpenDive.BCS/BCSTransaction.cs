@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Sui.Accounts;
 using Sui.Cryptography.Ed25519;
+using UnityEngine;
 
 namespace OpenDive.BCS
 {
@@ -317,28 +318,28 @@ namespace OpenDive.BCS
     /// <summary>
     /// Representation of a module bundle.
     /// </summary>
-    public class ModuleBundle : ISerializable
-    {
-        public void Deserialize(Serialization serializer)
-        {
-            throw new NotImplementedException();
-        }
+    //public class ModuleBundle : ISerializable
+    //{
+    //    public void Deserialize(Serialization serializer)
+    //    {
+    //        throw new NotImplementedException();
+    //    }
 
-        public void Serialize(Serialization serializer)
-        {
-            throw new NotImplementedException();
-        }
+    //    public void Serialize(Serialization serializer)
+    //    {
+    //        throw new NotImplementedException();
+    //    }
 
-        public static ISerializable Deserialize(Deserialization deserializer)
-        {
-            throw new NotImplementedException();
-        }
+    //    public static ISerializable Deserialize(Deserialization deserializer)
+    //    {
+    //        throw new NotImplementedException();
+    //    }
 
-        public object GetValue()
-        {
-            throw new NotSupportedException();
-        }
-    }
+    //    public object GetValue()
+    //    {
+    //        throw new NotSupportedException();
+    //    }
+    //}
 
     /// <summary>
     /// Representation of a script passed as bytes.
@@ -483,7 +484,7 @@ namespace OpenDive.BCS
             else if (variant == TypeTag.U256)
                 value = new U256(deserializer.DeserializeU256());
             else if (variant == TypeTag.ADDRESS)
-                value = AccountAddress.Deserialize(deserializer);
+                value = (AccountAddress)AccountAddress.Deserialize(deserializer);
             else if (variant == TypeTag.U8_VECTOR)
                 throw new NotSupportedException("U8 vectors are currently not supported in the SDK.");
             else if (variant == TypeTag.BOOL)
@@ -501,6 +502,7 @@ namespace OpenDive.BCS
 
         public override bool Equals(object other)
         {
+            Debug.Log("MARCUS::: NOT IMPLEMENTED EQUALS");
             if (other is not ScriptArgument)
                 throw new NotImplementedException();
 
@@ -671,7 +673,7 @@ namespace OpenDive.BCS
 
         public static ModuleId Deserialize(Deserialization deserializer)
         {
-            AccountAddress addr = AccountAddress.Deserialize(deserializer);
+            AccountAddress addr = (AccountAddress)AccountAddress.Deserialize(deserializer);
             string name = deserializer.DeserializeString();
 
             return new ModuleId(addr, name);

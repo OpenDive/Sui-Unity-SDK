@@ -43,9 +43,12 @@ namespace Sui.Transactions.Kinds
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
+            CallArg[] inputs = deserializer.DeserializeSequence(typeof(CallArg)).Cast<CallArg>().ToArray();
+            List<SuiTransaction> transactions = deserializer.DeserializeSequence(typeof(SuiTransaction)).Cast<SuiTransaction>().ToList();
+
             return new ProgrammableTransaction(
-                deserializer.DeserializeSequence(typeof(CallArg)).Cast<CallArg>().ToArray(),
-                deserializer.DeserializeSequence(typeof(SuiTransaction)).Cast<SuiTransaction>().ToList()
+                inputs,
+                transactions
             );
         }
     }

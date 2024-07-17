@@ -31,7 +31,7 @@ namespace Sui.Tests
             CallArg[] inputs = new CallArg[] { new CallArg(CallArgumentType.Object, new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef))) };
 
             MoveCall moveCallTransaction = new MoveCall(
-                new SuiMoveNormalizedStructType(new SuiStructTag(suiAddress, "display", "new", new SerializableTypeTag[0]), new Rpc.Models.SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
+                new SuiMoveNormalizedStructType(suiAddress, "display", "new", new Rpc.Models.SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
                 new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(suiAddress, "capy", "Capy", new SerializableTypeTag[0])) },
                 new SuiTransactionArgument[] { new SuiTransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(0)) } // TODO: We should not use this abstract, this should be a "pure" or an "object.
             );
@@ -48,7 +48,7 @@ namespace Sui.Tests
                 new Transactions.Builder.TransactionDataV1
                 (
                     AccountAddress.FromHex(test),
-                    new TransactionExpirationNone(),
+                    new TransactionExpiration(),
                     new Transactions.Builder.GasData(
                         "1000000",
                         "1",
@@ -82,7 +82,7 @@ namespace Sui.Tests
             string test = "0x0000000000000000000000000000000000000000000000000000000000000BAD";
 
             AccountAddress sender = AccountAddress.FromHex(test);
-            ITransactionExpiration expiration = new TransactionExpirationNone();
+            TransactionExpiration expiration = new TransactionExpiration();
 
             SuiObjectRef paymentRef = new SuiObjectRef(
                 AccountAddress.FromHex("0x1000000000000000000000000000000000000000000000000000000000000000"),
@@ -103,7 +103,7 @@ namespace Sui.Tests
             CallArg[] inputs = new CallArg[] { new CallArg(CallArgumentType.Object, new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef))) };
 
             MoveCall moveCallTransaction = new MoveCall(
-                new SuiMoveNormalizedStructType(new SuiStructTag(suiAddress, "display", "new", new SerializableTypeTag[0]), new Rpc.Models.SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
+                new SuiMoveNormalizedStructType(suiAddress, "display", "new", new Rpc.Models.SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
                 new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(suiAddress, "capy", "Capy", new SerializableTypeTag[0])) },
                 new SuiTransactionArgument[]
                 {

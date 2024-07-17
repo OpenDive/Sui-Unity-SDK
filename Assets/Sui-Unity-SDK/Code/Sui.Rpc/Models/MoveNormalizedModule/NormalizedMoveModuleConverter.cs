@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEditor.Build.Player;
 using static UnityEditor.Progress;
 using NUnit.Framework;
+using System.Linq;
 
 namespace Sui.Rpc.Models
 {
@@ -135,88 +136,84 @@ namespace Sui.Rpc.Models
                 //      ]
                 //    }
                 // }
-                foreach (JProperty typeObjectProp in typeObj.Properties())
+                string objType = typeObj.Properties().ToArray()[0].Name;
+                switch (objType)
                 {
-                    string objType = typeObjectProp.Name;
-                    switch (objType)
-                    {
-                        // SuiMoveNormalizedTypeParameterType
-                        case "TypeParameter":
-                            U16 typeParameter = new U16((uint)typeObj.GetValue(objType));
-                            normalziedType = new SuiMoveNormalziedTypeParameterType(typeParameter);
-                            type = SuiMoveNormalizedTypeSerializationType.TypeParameter;
-                            break;
-                        // SuiMoveNormalizedReferenceType
-                        case "Reference":
-                            JToken referenceTypeObj = (JToken)typeObj[objType];
-                            NormalizedTypeConverter referenceTypeConverter = new NormalizedTypeConverter();
-                            SuiMoveNormalizedType reference = referenceTypeConverter.ReadJson(
-                                referenceTypeObj.CreateReader(),
+                    // SuiMoveNormalizedTypeParameterType
+                    case "TypeParameter":
+                        normalziedType = new SuiMoveNormalziedTypeParameterType((ushort)typeObj.GetValue(objType));
+                        type = SuiMoveNormalizedTypeSerializationType.TypeParameter;
+                        break;
+                    // SuiMoveNormalizedReferenceType
+                    case "Reference":
+                        JToken referenceTypeObj = typeObj[objType];
+                        NormalizedTypeConverter referenceTypeConverter = new NormalizedTypeConverter();
+                        SuiMoveNormalizedType reference = referenceTypeConverter.ReadJson(
+                            referenceTypeObj.CreateReader(),
+                            typeof(SuiMoveNormalizedType),
+                            null,
+                            serializer
+                        ) as SuiMoveNormalizedType;
+                        normalziedType = new SuiMoveNormalizedTypeReference(reference);
+                        type = SuiMoveNormalizedTypeSerializationType.Reference;
+                        break;
+                    // SuiMoveNormalizedMutableReferenceType
+                    case "MutableReference":
+                        JToken mutableReferenceTypeObj = typeObj[objType];
+                        NormalizedTypeConverter mutableReferenceTypeConverter = new NormalizedTypeConverter();
+                        SuiMoveNormalizedType mutableReference = mutableReferenceTypeConverter.ReadJson(
+                            mutableReferenceTypeObj.CreateReader(),
+                            typeof(SuiMoveNormalizedType),
+                            null,
+                            serializer
+                        ) as SuiMoveNormalizedType;
+                        normalziedType = new SuiMoveNormalizedTypeMutableReference(mutableReference);
+                        type = SuiMoveNormalizedTypeSerializationType.MutableReference;
+                        break;
+                    // SuiMoveNormalizedVectorType
+                    case "Vector":
+                        JToken vectorTypeObj = typeObj[objType];
+                        NormalizedTypeConverter vectorTypeConverter = new NormalizedTypeConverter();
+                        SuiMoveNormalizedType vector = vectorTypeConverter.ReadJson(
+                            vectorTypeObj.CreateReader(),
+                            typeof(SuiMoveNormalizedType),
+                            null,
+                            serializer
+                        ) as SuiMoveNormalizedType;
+                        normalziedType = new SuiMoveNormalizedTypeVector(vector);
+                        type = SuiMoveNormalizedTypeSerializationType.Vector;
+                        break;
+                    // SuiMoveNormalizedStructType
+                    case "Struct":
+                        JObject structTypeObj = (JObject)typeObj[objType];
+                        AccountAddress address = AccountAddress.FromHex(NormalizeSuiAddress((string)structTypeObj["address"]));
+                        string module = (string)structTypeObj["module"];
+                        string name = (string)structTypeObj["name"];
+
+                        JArray arguments = (JArray)structTypeObj["typeArguments"];
+                        List<SuiMoveNormalizedType> argumentsTypes = new List<SuiMoveNormalizedType>();
+                        foreach (JToken argument in arguments)
+                        {
+                            NormalizedTypeConverter argumentsTypeConverter = new NormalizedTypeConverter();
+                            SuiMoveNormalizedType argumentType = argumentsTypeConverter.ReadJson(
+                                argument.CreateReader(),
                                 typeof(SuiMoveNormalizedType),
                                 null,
                                 serializer
                             ) as SuiMoveNormalizedType;
-                            normalziedType = new SuiMoveNormalizedTypeReference(reference);
-                            type = SuiMoveNormalizedTypeSerializationType.Reference;
-                            break;
-                        // SuiMoveNormalizedMutableReferenceType
-                        case "MutableReference":
-                            JToken mutableReferenceTypeObj = (JToken)typeObj[objType];
-                            NormalizedTypeConverter mutableReferenceTypeConverter = new NormalizedTypeConverter();
-                            SuiMoveNormalizedType mutableReference = mutableReferenceTypeConverter.ReadJson(
-                                mutableReferenceTypeObj.CreateReader(),
-                                typeof(SuiMoveNormalizedType),
-                                null,
-                                serializer
-                            ) as SuiMoveNormalizedType;
-                            normalziedType = new SuiMoveNormalizedTypeMutableReference(mutableReference);
-                            type = SuiMoveNormalizedTypeSerializationType.MutableReference;
-                            break;
-                        // SuiMoveNormalizedVectorType
-                        case "Vector":
-                            JToken vectorTypeObj = (JToken)typeObj[objType];
-                            NormalizedTypeConverter vectorTypeConverter = new NormalizedTypeConverter();
-                            SuiMoveNormalizedType vector = vectorTypeConverter.ReadJson(
-                                vectorTypeObj.CreateReader(),
-                                typeof(SuiMoveNormalizedType),
-                                null,
-                                serializer
-                            ) as SuiMoveNormalizedType;
-                            normalziedType = new SuiMoveNormalizedTypeVector(vector);
-                            type = SuiMoveNormalizedTypeSerializationType.Vector;
-                            break;
-                        // SuiMoveNormalizedStructType
-                        case "Struct":
-                            JObject structTypeObj = (JObject)typeObj[objType];
-                            AccountAddress address = AccountAddress.FromHex(NormalizeSuiAddress((string)structTypeObj["address"]));
-                            string module = (string)structTypeObj["module"];
-                            string name = (string)structTypeObj["name"];
+                            argumentsTypes.Add(argumentType);
+                        }
 
-                            JArray arguments = (JArray)structTypeObj["typeArguments"];
-                            List<SuiMoveNormalizedType> argumentsTypes = new List<SuiMoveNormalizedType>();
-                            foreach (JToken argument in arguments)
-                            {
-                                NormalizedTypeConverter argumentsTypeConverter = new NormalizedTypeConverter();
-                                SuiMoveNormalizedType argumentType = argumentsTypeConverter.ReadJson(
-                                    argument.CreateReader(),
-                                    typeof(SuiMoveNormalizedType),
-                                    null,
-                                    serializer
-                                ) as SuiMoveNormalizedType;
-                                argumentsTypes.Add(argumentType);
-                            }
-
-                            SuiMoveNormalizedStructType structTag = new SuiMoveNormalizedStructType(address, module, name, argumentsTypes.ToArray());
-                            normalziedType = new SuiMoveNormalziedTypeStruct(structTag);
-                            type = SuiMoveNormalizedTypeSerializationType.Struct;
-                            break;
-                        default:
-                            throw new ArgumentException();
-                    }
-
-                    if (normalziedType != null)
-                        return new SuiMoveNormalizedType(normalziedType, type);
+                        SuiMoveNormalizedStructType structTag = new SuiMoveNormalizedStructType(address, module, name, argumentsTypes.ToArray());
+                        normalziedType = new SuiMoveNormalziedTypeStruct(structTag);
+                        type = SuiMoveNormalizedTypeSerializationType.Struct;
+                        break;
+                    default:
+                        throw new ArgumentException();
                 }
+
+                if (normalziedType != null)
+                    return new SuiMoveNormalizedType(normalziedType, type);
             }
             catch
             {
@@ -229,7 +226,45 @@ namespace Sui.Rpc.Models
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            if (value == null)
+            {
+                writer.WriteNull();
+            }
+            else
+            {
+                SuiMoveNormalizedType normalized_type = (SuiMoveNormalizedType)value;
+
+                if (normalized_type.Type != SuiMoveNormalizedTypeSerializationType.String) writer.WriteStartObject();
+
+                switch (normalized_type.Type)
+                {
+                    case SuiMoveNormalizedTypeSerializationType.String:
+                        writer.WritePropertyName(((SuiMoveNormalizedTypeString)normalized_type.NormalizedType).Value);
+                        break;
+                    case SuiMoveNormalizedTypeSerializationType.TypeParameter:
+                        writer.WritePropertyName("TypeParameter");
+                        writer.WriteValue(((SuiMoveNormalziedTypeParameterType)normalized_type.NormalizedType).TypeParameter);
+                        break;
+                    case SuiMoveNormalizedTypeSerializationType.Reference:
+                        writer.WritePropertyName("Reference");
+                        writer.WriteRaw(JsonConvert.SerializeObject(((SuiMoveNormalizedTypeReference)normalized_type.NormalizedType).Reference));
+                        break;
+                    case SuiMoveNormalizedTypeSerializationType.MutableReference:
+                        writer.WritePropertyName("MutableReference");
+                        writer.WriteRaw(JsonConvert.SerializeObject(((SuiMoveNormalizedTypeMutableReference)normalized_type.NormalizedType).MutableReference));
+                        break;
+                    case SuiMoveNormalizedTypeSerializationType.Vector:
+                        writer.WritePropertyName("Vector");
+                        writer.WriteRaw(JsonConvert.SerializeObject(((SuiMoveNormalizedTypeVector)normalized_type.NormalizedType).Vector));
+                        break;
+                    case SuiMoveNormalizedTypeSerializationType.Struct:
+                        writer.WritePropertyName("Struct");
+                        writer.WriteRaw(JsonConvert.SerializeObject((SuiMoveNormalizedStructType)normalized_type.NormalizedType));
+                        break;
+                }
+
+                if (normalized_type.Type != SuiMoveNormalizedTypeSerializationType.String) writer.WriteEndObject();
+            }
         }
     }
 

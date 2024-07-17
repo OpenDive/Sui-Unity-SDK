@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using Newtonsoft.Json;
 using OpenDive.BCS;
 using Sui.Accounts;
+using Sui.Rpc.Client;
 using Sui.Utilities;
 
 namespace Sui.Types
@@ -35,7 +37,7 @@ namespace Sui.Types
             serializer.Serialize(ObjectRef);
         }
 
-        public static ObjectArg Deserialize(Deserialization deserializer)
+        public static ISerializable Deserialize(Deserialization deserializer)
         {
             byte type = deserializer.DeserializeU8();
 
@@ -48,7 +50,7 @@ namespace Sui.Types
                     SharedObjectRef sharedObjectRef = (SharedObjectRef)SharedObjectRef.Deserialize(deserializer);
                     return new ObjectArg(ObjectRefType.Shared, sharedObjectRef);
                 default:
-                    throw new NotImplementedException();
+                    return new SuiError(0, "Unable to deserialize ObjectArg", null);
             }
         }
     }
@@ -119,14 +121,16 @@ namespace Sui.Types
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            AccountAddress objectId = AccountAddress.Deserialize(deserializer);
+            AccountAddress objectId = (AccountAddress)AccountAddress.Deserialize(deserializer);
             U64 version = U64.Deserialize(deserializer);
-            BString digest = BString.Deserialize(deserializer);
+            byte[] digest = deserializer.ToBytes();
+
+            Base58Encoder decoder = new Base58Encoder();
 
             return new SuiObjectRef(
                 objectId,
-                (int)version.GetValue(),
-                (string)digest.GetValue()
+                (int)version.value,
+                decoder.EncodeData(digest)
             );
         }
     }
@@ -203,14 +207,14 @@ namespace Sui.Types
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            AccountAddress objectId = AccountAddress.Deserialize(deserializer);
+            AccountAddress objectId = (AccountAddress)AccountAddress.Deserialize(deserializer);
             U64 initialSharedVersion = U64.Deserialize(deserializer);
             Bool mutable = Bool.Deserialize(deserializer);
 
             return new SharedObjectRef(
                 objectId,
-                (int)initialSharedVersion.GetValue(),
-                (bool)mutable.GetValue()
+                (int)initialSharedVersion.value,
+                mutable.value
             );
         }
     }

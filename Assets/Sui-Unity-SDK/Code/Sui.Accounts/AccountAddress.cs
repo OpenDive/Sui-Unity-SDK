@@ -241,9 +241,14 @@ namespace Sui.Accounts
             serializer.SerializeFixedBytes(this.AddressBytes);
         }
 
-        public static AccountAddress Deserialize(Deserialization deserializer)
+        public static ISerializable Deserialize(Deserialization deserializer)
         {
-            throw new NotImplementedException();
+            if (deserializer.PeekByte() == Length)
+            {
+                byte[] data = deserializer.ToBytes();
+                return new AccountAddress(data);
+            }
+            return new AccountAddress(deserializer.FixedBytes(Length));
         }
 
         public TypeTag Variant()

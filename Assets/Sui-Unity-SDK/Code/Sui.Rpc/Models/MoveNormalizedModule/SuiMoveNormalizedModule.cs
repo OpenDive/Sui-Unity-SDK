@@ -4,6 +4,7 @@ using System.Numerics;
 using OpenDive.BCS;
 using Sui.Accounts;
 using System;
+using Sui.Rpc.Client;
 
 namespace Sui.Rpc.Models
 {
@@ -98,7 +99,7 @@ namespace Sui.Rpc.Models
         public SuiMoveNormalizedType Type { get; set; }
     }
 
-    public interface ISuiMoveNormalizedType { }
+    public interface ISuiMoveNormalizedType: ISerializable { }
 
     public enum SuiMoveNormalizedTypeSerializationType
     {
@@ -126,70 +127,119 @@ namespace Sui.Rpc.Models
             this.Type = type;
         }
 
+        public static SuiMoveNormalizedType FromStr(string value)
+        {
+            List<string> allowed_types = new List<string>() { "Address", "Bool", "U8", "U16", "U32", "U64", "U128", "U256", "Signer" };
+
+            if (allowed_types.Exists(str => str == value) == false)
+                return null;
+
+            return new SuiMoveNormalizedType
+            (
+                new SuiMoveNormalizedTypeString(value),
+                SuiMoveNormalizedTypeSerializationType.String
+            );
+        }
+
         public void Serialize(Serialization serializer)
         {
             switch(this.Type)
             {
                 case SuiMoveNormalizedTypeSerializationType.String:
-                    switch(((SuiMoveNormalizedTypeString)this.NormalizedType).Value)
-                    {
-                        case "Bool":
-                            serializer.SerializeU8(0);
-                            break;
-                        case "U8":
-                            serializer.SerializeU8(1);
-                            break;
-                        case "U16":
-                            serializer.SerializeU8(2);
-                            break;
-                        case "U32":
-                            serializer.SerializeU8(3);
-                            break;
-                        case "U64":
-                            serializer.SerializeU8(4);
-                            break;
-                        case "U128":
-                            serializer.SerializeU8(5);
-                            break;
-                        case "U256":
-                            serializer.SerializeU8(6);
-                            break;
-                        case "Address":
-                            serializer.SerializeU8(7);
-                            break;
-                        case "Signer":
-                            serializer.SerializeU8(8);
-                            break;
-                        default:
-                            throw new Exception($"Unable to serialize type - {((SuiMoveNormalizedTypeString)this.NormalizedType).Value}");
-                    }
+                    ((SuiMoveNormalizedTypeString)this.NormalizedType).Serialize(serializer);
                     break;
                 case SuiMoveNormalizedTypeSerializationType.TypeParameter:
-                    SuiMoveNormalziedTypeParameterType type_parameter = (SuiMoveNormalziedTypeParameterType)this.NormalizedType;
                     serializer.SerializeU8(9);
-                    serializer.SerializeU16((ushort)type_parameter.TypeParameter.value);
+                    serializer.Serialize((SuiMoveNormalziedTypeParameterType)this.NormalizedType);
                     break;
                 case SuiMoveNormalizedTypeSerializationType.Reference:
-                    SuiMoveNormalizedTypeReference reference = (SuiMoveNormalizedTypeReference)this.NormalizedType;
                     serializer.SerializeU8(10);
-                    serializer.Serialize(reference.Reference);
+                    serializer.Serialize((SuiMoveNormalizedTypeReference)this.NormalizedType);
                     break;
                 case SuiMoveNormalizedTypeSerializationType.MutableReference:
-                    SuiMoveNormalizedTypeMutableReference mutable_reference = (SuiMoveNormalizedTypeMutableReference)this.NormalizedType;
                     serializer.SerializeU8(11);
-                    serializer.Serialize(mutable_reference.MutableReference);
+                    serializer.Serialize((SuiMoveNormalizedTypeMutableReference)this.NormalizedType);
                     break;
                 case SuiMoveNormalizedTypeSerializationType.Vector:
-                    SuiMoveNormalizedTypeVector vector = (SuiMoveNormalizedTypeVector)this.NormalizedType;
                     serializer.SerializeU8(12);
-                    serializer.Serialize(vector.Vector);
+                    serializer.Serialize((SuiMoveNormalizedTypeVector)this.NormalizedType);
                     break;
                 case SuiMoveNormalizedTypeSerializationType.Struct:
-                    SuiMoveNormalziedTypeStruct type_struct = (SuiMoveNormalziedTypeStruct)this.NormalizedType;
                     serializer.SerializeU8(13);
-                    serializer.Serialize(type_struct.Struct);
+                    serializer.Serialize((SuiMoveNormalziedTypeStruct)this.NormalizedType);
                     break;
             }
+        }
+
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            byte type = deserializer.DeserializeU8();
+            ISuiMoveNormalizedType normalized_type;
+            SuiMoveNormalizedTypeSerializationType type_value;
+
+            switch (type)
+            {
+                case 0:
+                    type_value = SuiMoveNormalizedTypeSerializationType.String;
+                    normalized_type = new SuiMoveNormalizedTypeString("Bool");
+                    break;
+                case 1:
+                    type_value = SuiMoveNormalizedTypeSerializationType.String;
+                    normalized_type = new SuiMoveNormalizedTypeString("U8");
+                    break;
+                case 2:
+                    type_value = SuiMoveNormalizedTypeSerializationType.String;
+                    normalized_type = new SuiMoveNormalizedTypeString("U16");
+                    break;
+                case 3:
+                    type_value = SuiMoveNormalizedTypeSerializationType.String;
+                    normalized_type = new SuiMoveNormalizedTypeString("U32");
+                    break;
+                case 4:
+                    type_value = SuiMoveNormalizedTypeSerializationType.String;
+                    normalized_type = new SuiMoveNormalizedTypeString("U64");
+                    break;
+                case 5:
+                    type_value = SuiMoveNormalizedTypeSerializationType.String;
+                    normalized_type = new SuiMoveNormalizedTypeString("U128");
+                    break;
+                case 6:
+                    type_value = SuiMoveNormalizedTypeSerializationType.String;
+                    normalized_type = new SuiMoveNormalizedTypeString("U256");
+                    break;
+                case 7:
+                    type_value = SuiMoveNormalizedTypeSerializationType.String;
+                    normalized_type = new SuiMoveNormalizedTypeString("Address");
+                    break;
+                case 8:
+                    type_value = SuiMoveNormalizedTypeSerializationType.String;
+                    normalized_type = new SuiMoveNormalizedTypeString("Signer");
+                    break;
+                case 9:
+                    type_value = SuiMoveNormalizedTypeSerializationType.TypeParameter;
+                    normalized_type = (SuiMoveNormalziedTypeParameterType)SuiMoveNormalziedTypeParameterType.Deserialize(deserializer);
+                    break;
+                case 10:
+                    type_value = SuiMoveNormalizedTypeSerializationType.Reference;
+                    normalized_type = (SuiMoveNormalizedTypeReference)SuiMoveNormalizedTypeReference.Deserialize(deserializer);
+                    break;
+                case 11:
+                    type_value = SuiMoveNormalizedTypeSerializationType.MutableReference;
+                    normalized_type = (SuiMoveNormalizedTypeMutableReference)SuiMoveNormalizedTypeMutableReference.Deserialize(deserializer);
+                    break;
+                case 12:
+                    type_value = SuiMoveNormalizedTypeSerializationType.Vector;
+                    normalized_type = (SuiMoveNormalizedTypeVector)SuiMoveNormalizedTypeVector.Deserialize(deserializer);
+                    break;
+                case 13:
+                    type_value = SuiMoveNormalizedTypeSerializationType.Struct;
+                    normalized_type = (SuiMoveNormalziedTypeStruct)SuiMoveNormalziedTypeStruct.Deserialize(deserializer);
+                    break;
+                default:
+                    return new SuiError(0, "Unable to deserialize SuiMoveNormalizedType", null);
+            }
+
+            return new SuiMoveNormalizedType(normalized_type, type_value);
         }
     }
 
@@ -201,15 +251,61 @@ namespace Sui.Rpc.Models
         {
             this.Value = Value;
         }
+
+        public void Serialize(Serialization serializer)
+        {
+            switch (this.Value)
+            {
+                case "Bool":
+                    serializer.SerializeU8(0);
+                    break;
+                case "U8":
+                    serializer.SerializeU8(1);
+                    break;
+                case "U16":
+                    serializer.SerializeU8(2);
+                    break;
+                case "U32":
+                    serializer.SerializeU8(3);
+                    break;
+                case "U64":
+                    serializer.SerializeU8(4);
+                    break;
+                case "U128":
+                    serializer.SerializeU8(5);
+                    break;
+                case "U256":
+                    serializer.SerializeU8(6);
+                    break;
+                case "Address":
+                    serializer.SerializeU8(7);
+                    break;
+                case "Signer":
+                    serializer.SerializeU8(8);
+                    break;
+                default:
+                    throw new Exception($"Unable to serialize type - {this.Value}");
+            }
+        }
     }
 
     public class SuiMoveNormalziedTypeParameterType : ISuiMoveNormalizedType
     {
-        public U16 TypeParameter { get; set; }
+        public ushort TypeParameter { get; set; }
 
-        public SuiMoveNormalziedTypeParameterType(U16 TypeParameter)
+        public SuiMoveNormalziedTypeParameterType(ushort TypeParameter)
         {
             this.TypeParameter = TypeParameter;
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            serializer.SerializeU16(this.TypeParameter);
+        }
+
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            return new SuiMoveNormalziedTypeParameterType(deserializer.DeserializeU16());
         }
     }
 
@@ -221,15 +317,35 @@ namespace Sui.Rpc.Models
         {
             this.Struct = Struct;
         }
+
+        public void Serialize(Serialization serializer)
+        {
+            serializer.Serialize(this.Struct);
+        }
+
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            return new SuiMoveNormalziedTypeStruct((SuiMoveNormalizedStructType)SuiMoveNormalizedStructType.Deserialize(deserializer));
+        }
     }
 
     public class SuiMoveNormalizedTypeVector: ISuiMoveNormalizedType
     {
         public SuiMoveNormalizedType Vector { get; set; }
 
-        public SuiMoveNormalizedTypeVector(SuiMoveNormalizedType Vector)
+        public SuiMoveNormalizedTypeVector(SuiMoveNormalizedType vector)
         {
-            this.Vector = Vector;
+            this.Vector = vector;
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            serializer.Serialize(this.Vector);
+        }
+
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            return new SuiMoveNormalizedTypeVector((SuiMoveNormalizedType)SuiMoveNormalizedType.Deserialize(deserializer));
         }
     }
 
@@ -237,9 +353,19 @@ namespace Sui.Rpc.Models
     {
         public SuiMoveNormalizedType Reference { get; set; }
 
-        public SuiMoveNormalizedTypeReference(SuiMoveNormalizedType Reference)
+        public SuiMoveNormalizedTypeReference(SuiMoveNormalizedType reference)
         {
-            this.Reference = Reference;
+            this.Reference = reference;
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            serializer.Serialize(this.Reference);
+        }
+
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            return new SuiMoveNormalizedTypeVector((SuiMoveNormalizedType)SuiMoveNormalizedType.Deserialize(deserializer));
         }
     }
 
@@ -247,9 +373,19 @@ namespace Sui.Rpc.Models
     {
         public SuiMoveNormalizedType MutableReference { get; set; }
 
-        public SuiMoveNormalizedTypeMutableReference(SuiMoveNormalizedType MutableReference)
+        public SuiMoveNormalizedTypeMutableReference(SuiMoveNormalizedType mutable_reference)
         {
-            this.MutableReference = MutableReference;
+            this.MutableReference = mutable_reference;
+        }
+
+        public void Serialize(Serialization serializer)
+        {
+            serializer.Serialize(this.MutableReference);
+        }
+
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            return new SuiMoveNormalizedTypeMutableReference((SuiMoveNormalizedType)SuiMoveNormalizedType.Deserialize(deserializer));
         }
     }
 }

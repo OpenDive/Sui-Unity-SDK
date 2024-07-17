@@ -48,7 +48,44 @@ namespace Sui.Transactions.Builder
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            if (value == null)
+            {
+                writer.WriteNull();
+            }
+            else
+            {
+                writer.WriteStartObject();
+                GasData gas_data = (GasData)value;
+
+                writer.WritePropertyName("owner");
+                writer.WriteValue(gas_data.Owner.ToHex());
+
+                writer.WritePropertyName("price");
+                writer.WriteValue(gas_data.Price);
+
+                writer.WritePropertyName("budget");
+                writer.WriteValue(gas_data.Budget);
+
+                writer.WritePropertyName("payment");
+                writer.WriteStartArray();
+
+                foreach (Sui.Types.SuiObjectRef payment in gas_data.Payment)
+                {
+                    writer.WriteStartObject();
+                    writer.WritePropertyName("objectId");
+                    writer.WriteValue(payment.ObjectIDString);
+
+                    writer.WritePropertyName("version");
+                    writer.WriteValue(payment.Version);
+
+                    writer.WritePropertyName("digest");
+                    writer.WriteValue(payment.Digest);
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            }
         }
     }
 
@@ -100,11 +137,16 @@ namespace Sui.Transactions.Builder
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
+            Sui.Types.SuiObjectRef[] payment = deserializer.DeserializeSequence(typeof(Sui.Types.SuiObjectRef)).Cast<Sui.Types.SuiObjectRef>().ToArray();
+            AccountAddress owner = (AccountAddress)AccountAddress.Deserialize(deserializer);
+            U64 price = (U64)deserializer.DeserializeOptional(typeof(U64));
+            U64 budget = (U64)deserializer.DeserializeOptional(typeof(U64));
+
             return new GasData(
-                deserializer.DeserializeU64().ToString(),
-                deserializer.DeserializeU64().ToString(),
-                deserializer.DeserializeSequence(typeof(Sui.Types.SuiObjectRef)).Cast<Sui.Types.SuiObjectRef>().ToArray(),
-                AccountAddress.Deserialize(deserializer)
+                budget != null ? $"{budget.value}" : null,
+                price != null ? $"{price.value}" : null,
+                payment,
+                owner
             );
         }
     }

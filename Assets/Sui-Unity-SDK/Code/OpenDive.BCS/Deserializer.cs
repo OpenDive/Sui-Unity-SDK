@@ -6,6 +6,9 @@ namespace OpenDive.BCS
     using System.IO;
     using System.Numerics;
     using System.Reflection;
+    using Newtonsoft.Json;
+    using UnityEngine;
+
     public class Deserialization
     {
         int MAX_U8 = (int)(Math.Pow(2, 8) - 1);
@@ -155,7 +158,7 @@ namespace OpenDive.BCS
             return null;
         }
 
-        private int PeekByte()
+        public int PeekByte()
         {
             long originalPosition = this.input.Position;
 
@@ -180,7 +183,7 @@ namespace OpenDive.BCS
 
         public byte DeserializeU8()
         {
-            return (byte)this.ReadInt(1);
+            return (byte)this.ReadInt(1)[0];
         }
 
         public ushort DeserializeU16()
@@ -210,13 +213,13 @@ namespace OpenDive.BCS
 
         public int DeserializeUleb128()
         {
-            int value = 0;
+            uint value = 0;
             int shift = 0;
 
             while (value <= MAX_U32)
             {
-                byte byteRead = this.ReadInt(1);
-                value |= (byteRead & 0x7F) << shift;
+                byte byteRead = this.ReadInt(1)[0];
+                value |= ((uint)byteRead & 0x7F) << shift;
 
                 if ((byteRead & 0x80) == 0)
                     break;
@@ -228,7 +231,7 @@ namespace OpenDive.BCS
                 throw new Exception("Unexpectedly large uleb128 value");
             }
 
-            return value;
+            return (int)value;
         }
 
         public byte[] Read(int length)
@@ -242,9 +245,9 @@ namespace OpenDive.BCS
             return value;
         }
 
-        public byte ReadInt(int length)
+        public byte[] ReadInt(int length)
         {
-            return this.Read(length)[0];
+            return this.Read(length);
         }
 
         #endregion

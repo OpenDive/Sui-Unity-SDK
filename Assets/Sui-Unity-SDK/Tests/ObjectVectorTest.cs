@@ -49,7 +49,7 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"{this.PackageID}::entry_point_vector::mint"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::entry_point_vector::mint"),
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {
@@ -79,7 +79,7 @@ namespace Sui.Tests
             );
             tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"{this.PackageID}::entry_point_vector::two_obj_vec_destroy"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::entry_point_vector::two_obj_vec_destroy"),
                 new SerializableTypeTag[] { },
                 vec.ToArray()
             );
@@ -140,7 +140,7 @@ namespace Sui.Tests
             );
             tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr("0x2::pay::join_vec"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr("0x2::pay::join_vec"),
                 new SerializableTypeTag[] { new SerializableTypeTag(SuiStructTag.FromStr("0x2::sui::SUI")) },
                 new SuiTransactionArgument[]
                 {

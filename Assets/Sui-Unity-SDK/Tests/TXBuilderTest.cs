@@ -135,7 +135,7 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr("0x2::pay::split"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr("0x2::pay::split"),
                 new SerializableTypeTag[] { new SerializableTypeTag("0x2::sui::SUI") },
                 new SuiTransactionArgument[]
                 {
@@ -227,7 +227,7 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"{this.PackageID}::serializer_tests::value"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::value"),
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {
@@ -236,7 +236,7 @@ namespace Sui.Tests
             );
             tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"{this.PackageID}::serializer_tests::set_value"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::set_value"),
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {
@@ -260,7 +260,7 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"{this.PackageID}::serializer_tests::use_clock"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::use_clock"),
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {

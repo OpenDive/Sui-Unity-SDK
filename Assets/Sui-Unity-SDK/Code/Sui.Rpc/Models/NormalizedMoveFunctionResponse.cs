@@ -36,9 +36,9 @@ namespace Sui.Rpc.Models
                 return false;
 
             return
-                struct_tag.Struct.StructTag.address.ToHex() == NormalizedTypeConverter.NormalizeSuiAddress("0x2") &&
-                struct_tag.Struct.StructTag.module == "tx_context" &&
-                struct_tag.Struct.StructTag.name == "TxContext";
+                struct_tag.Struct.Address.ToHex() == NormalizedTypeConverter.NormalizeSuiAddress("0x2") &&
+                struct_tag.Struct.Module == "tx_context" &&
+                struct_tag.Struct.Name == "TxContext";
         }
     }
 

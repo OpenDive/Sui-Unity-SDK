@@ -66,7 +66,38 @@ namespace Sui.Transactions.Types.Arguments
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            if (value == null)
+            {
+                writer.WriteNull();
+            }
+            else
+            {
+                SuiTransactionArgument transaction_argument = (SuiTransactionArgument)value;
+
+                writer.WriteStartObject();
+
+                writer.WritePropertyName(transaction_argument.Kind.ToString());
+
+                switch (transaction_argument.Kind)
+                {
+                    case TransactionArgumentKind.GasCoin:
+                        break;
+                    case TransactionArgumentKind.Input:
+                        writer.WriteValue(((TransactionBlockInput)transaction_argument.TransactionArgument).Index);
+                        break;
+                    case TransactionArgumentKind.Result:
+                        writer.WriteValue(((Result)transaction_argument.TransactionArgument).Index);
+                        break;
+                    case TransactionArgumentKind.NestedResult:
+                        writer.WriteStartArray();
+                        writer.WriteValue(((NestedResult)transaction_argument.TransactionArgument).Index);
+                        writer.WriteValue(((NestedResult)transaction_argument.TransactionArgument).ResultIndex);
+                        writer.WriteEndArray();
+                        break;
+                }
+
+                writer.WriteEndObject();
+            }
         }
     }
 
@@ -118,16 +149,16 @@ namespace Sui.Transactions.Types.Arguments
             switch (this.Kind)
             {
                 case TransactionArgumentKind.GasCoin:
-                    serializer.SerializeU32AsUleb128(0);
+                    serializer.SerializeU8(0);
                     break;
                 case TransactionArgumentKind.Input:
-                    serializer.SerializeU32AsUleb128(1);
+                    serializer.SerializeU8(1);
                     break;
                 case TransactionArgumentKind.Result:
-                    serializer.SerializeU32AsUleb128(2);
+                    serializer.SerializeU8(2);
                     break;
                 case TransactionArgumentKind.NestedResult:
-                    serializer.SerializeU32AsUleb128(3);
+                    serializer.SerializeU8(3);
                     break;
             }
             if (this.TransactionArgument != null) serializer.Serialize(TransactionArgument);
@@ -135,7 +166,8 @@ namespace Sui.Transactions.Types.Arguments
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            var value = deserializer.DeserializeU8();
+            byte value = deserializer.DeserializeU8();
+            Debug.Log($"MARCUS::: SUI TRANSACTION ARGUMENT VALUE - {value}");
             switch (value)
             {
                 case 0:
@@ -147,17 +179,17 @@ namespace Sui.Transactions.Types.Arguments
                 case 1:
                     return new SuiTransactionArgument(
                         TransactionArgumentKind.Input,
-                        TransactionBlockInput.Deserialize(deserializer)
+                        (TransactionBlockInput)TransactionBlockInput.Deserialize(deserializer)
                     );
                 case 2:
                     return new SuiTransactionArgument(
                         TransactionArgumentKind.Result,
-                        Result.Deserialize(deserializer)
+                        (Result)Result.Deserialize(deserializer)
                     );
                 case 3:
                     return new SuiTransactionArgument(
                         TransactionArgumentKind.NestedResult,
-                        NestedResult.Deserialize(deserializer)
+                        (NestedResult)NestedResult.Deserialize(deserializer)
                     );
                 default:
                     return new SuiError(0, "Unable to deserialize TransactionArgument", null);

@@ -27,7 +27,7 @@ namespace Sui.Transactions.Builder
         /// <summary>
         /// Represents the expiration of the transaction. It is optional and defaults to `TransactionExpiration.none`.
         /// </summary>
-        public ITransactionExpiration Expiration;
+        public TransactionExpiration Expiration;
 
         /// <summary>
         /// Holds the configuration for gas in the transaction.
@@ -59,7 +59,7 @@ namespace Sui.Transactions.Builder
         (
             int version = 1,
             AccountAddress sender = null,
-            ITransactionExpiration expiration = null,
+            TransactionExpiration expiration = null,
             GasData gasConfig = null,
             List<TransactionBlockInput> inputs = null,
             List<SuiTransaction> transactions = null
@@ -67,7 +67,7 @@ namespace Sui.Transactions.Builder
         {
             this.Version = version;
             this.Sender = sender;
-            this.Expiration = expiration != null ? expiration : new TransactionExpirationNone();
+            this.Expiration = expiration != null ? expiration : new TransactionExpiration();
             this.GasConfig = gasConfig != null ? gasConfig : new GasData();
             this.Inputs = inputs != null ? inputs : new List<TransactionBlockInput>();
             this.Transactions = transactions != null ? transactions : new List<SuiTransaction>();
@@ -121,8 +121,8 @@ namespace Sui.Transactions.Builder
             return new TransactionBlockDataBuilder
             (
                 deserializer.DeserializeU8(),
-                AccountAddress.Deserialize(deserializer),
-                (ITransactionExpiration)Deserialize(deserializer),
+                (AccountAddress)AccountAddress.Deserialize(deserializer),
+                (TransactionExpiration)TransactionExpiration.Deserialize(deserializer),
                 (GasData)GasData.Deserialize(deserializer),
                 deserializer.DeserializeSequence(typeof(TransactionBlockInput)).Cast<TransactionBlockInput>().ToList(),
                 deserializer.DeserializeSequence(typeof(SuiTransaction)).Cast<SuiTransaction>().ToList()

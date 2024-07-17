@@ -74,7 +74,7 @@ namespace Sui.Tests
             CoinDetails coin_0 = coins.Data[0];
             List<SuiTransactionArgument> obj = tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"{this.PackageID}::serializer_tests::return_struct"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::return_struct"),
                 new SerializableTypeTag[] { new SerializableTypeTag(SuiStructTag.FromStr("0x2::coin::Coin<0x2::sui::SUI>")) },
                 new SuiTransactionArgument[]
                 {
@@ -98,7 +98,7 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"{this.PackageID}::serializer_tests::test_abort"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::test_abort"),
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[] { }
             );

@@ -240,9 +240,9 @@ namespace Sui.Transactions
         private static bool IsSameStruct(SuiMoveNormalziedTypeStruct lhs, StandardStruct rhs)
         {
             return
-                lhs.Struct.StructTag.address.AddressBytes.SequenceEqual(rhs.Address.AddressBytes) &&
-                lhs.Struct.StructTag.module == rhs.Module &&
-                lhs.Struct.StructTag.name == rhs.Name;
+                lhs.Struct.Address.AddressBytes.SequenceEqual(rhs.Address.AddressBytes) &&
+                lhs.Struct.Module == rhs.Module &&
+                lhs.Struct.Name == rhs.Name;
         }
     }
 }

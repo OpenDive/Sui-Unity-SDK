@@ -34,7 +34,7 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr(target), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr(target),
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {

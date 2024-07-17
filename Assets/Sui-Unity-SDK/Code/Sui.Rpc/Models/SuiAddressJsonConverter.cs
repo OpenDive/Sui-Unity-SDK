@@ -19,7 +19,7 @@ namespace Sui.Rpc.Models
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var address = (AccountAddress)value;
+            AccountAddress address = (AccountAddress)value;
             writer.WriteValue(address.ToHex());
         }
     }

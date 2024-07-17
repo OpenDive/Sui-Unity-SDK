@@ -95,7 +95,62 @@ namespace Sui.Types
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            if (value == null)
+            {
+                writer.WriteNull();
+            }
+            else
+            {
+                writer.WriteStartObject();
+                CallArg call_arg = (CallArg)value;
+
+                writer.WritePropertyName("type");
+                writer.WriteValue(call_arg.Type.ToString().ToLower());
+
+                switch(call_arg.Type)
+                {
+                    case CallArgumentType.Pure:
+                        writer.WritePropertyName("value");
+                        writer.WriteValue(((PureCallArg)call_arg.CallArgument).Value);
+                        break;
+                    case CallArgumentType.Object:
+                        ObjectArg object_arg = ((ObjectCallArg)call_arg.CallArgument).ObjectArg;
+                        switch (object_arg.Type)
+                        {
+                            case ObjectRefType.ImmOrOwned:
+                                writer.WritePropertyName("objectType");
+                                writer.WriteValue("immOrOwnedObject");
+
+                                writer.WritePropertyName("objectId");
+                                writer.WriteValue(((SuiObjectRef)object_arg.ObjectRef).ObjectIDString);
+
+                                writer.WritePropertyName("version");
+                                writer.WriteValue(((SuiObjectRef)object_arg.ObjectRef).Version);
+
+                                writer.WritePropertyName("digest");
+                                writer.WriteValue(((SuiObjectRef)object_arg.ObjectRef).Digest);
+                                break;
+                            case ObjectRefType.Shared:
+                                writer.WritePropertyName("objectType");
+                                writer.WriteValue("sharedObject");
+
+                                writer.WritePropertyName("objectId");
+                                writer.WriteValue(((SharedObjectRef)object_arg.ObjectRef).ObjectIDString);
+
+                                writer.WritePropertyName("initialSharedVersion");
+                                writer.WriteValue(((SharedObjectRef)object_arg.ObjectRef).InitialSharedVersion);
+
+                                writer.WritePropertyName("mutable");
+                                writer.WriteValue(((SharedObjectRef)object_arg.ObjectRef).Mutable);
+                                break;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                
+                writer.WriteEndObject();
+            }
         }
     }
 
@@ -130,6 +185,27 @@ namespace Sui.Types
             this.CallArgument = call_argument;
         }
 
+        public SharedObjectRef GetSharedObectInput()
+        {
+            return this.Type switch
+            {
+                CallArgumentType.Object => ((ObjectCallArg)this.CallArgument).ObjectArg.Type switch
+                {
+                    ObjectRefType.Shared => (SharedObjectRef)((ObjectCallArg)this.CallArgument).ObjectArg.ObjectRef,
+                    _ => null,
+                },
+                _ => null,
+            };
+        }
+
+        public bool IsMutableSharedObjectInput()
+        {
+            if (this.GetSharedObectInput() != null)
+                return this.GetSharedObectInput().Mutable;
+            else
+                return false;
+        }
+
         public void Serialize(Serialization serializer)
         {
             serializer.SerializeU8((byte)this.Type);
@@ -142,9 +218,9 @@ namespace Sui.Types
             switch (type)
             {
                 case 0:
-                    return new CallArg(CallArgumentType.Pure, (PureCallArg)ISerializable.Deserialize(deserializer));
+                    return new CallArg(CallArgumentType.Pure, (PureCallArg)PureCallArg.Deserialize(deserializer));
                 case 1:
-                    return new CallArg(CallArgumentType.Object, (ObjectCallArg)ISerializable.Deserialize(deserializer));
+                    return new CallArg(CallArgumentType.Object, (ObjectCallArg)ObjectCallArg.Deserialize(deserializer));
                 default:
                     return new SuiError(0, "Unable to deserialize Call Argument", null);
             }
@@ -217,7 +293,7 @@ namespace Sui.Types
         public static ISerializable Deserialize(Deserialization deserializer)
         {
             return new PureCallArg(
-                deserializer.DeserializeSequence(typeof(byte)).Cast<byte>().ToArray()
+                deserializer.ToBytes()
             );
         }
     }
@@ -265,7 +341,7 @@ namespace Sui.Types
         public static ISerializable Deserialize(Deserialization deserializer)
         {
             return new ObjectCallArg(
-                (ObjectArg)ISerializable.Deserialize(deserializer)
+                (ObjectArg)ObjectArg.Deserialize(deserializer)
             );
         }
     }

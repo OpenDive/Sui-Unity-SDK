@@ -6,6 +6,8 @@ using Newtonsoft.Json.Linq;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.Rpc.Client;
+using Sui.Rpc.Models;
+using Sui.Transactions.Builder;
 using Sui.Transactions.Types.Arguments;
 using Sui.Types;
 
@@ -112,7 +114,123 @@ namespace Sui.Transactions.Types
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            if (value == null)
+            {
+                writer.WriteNull();
+            }
+            else
+            {
+                SuiTransaction transaction = (SuiTransaction)value;
+
+                writer.WriteStartObject();
+
+                writer.WritePropertyName(transaction.Kind.ToString());
+
+                switch (transaction.Kind)
+                {
+                    case TransactionKind.MoveCall:
+                        MoveCall tx_move_call = (MoveCall)transaction.Transaction;
+
+                        writer.WriteStartObject();
+
+                        writer.WritePropertyName("package");
+                        writer.WriteValue(tx_move_call.Target.Address.ToHex());
+
+                        writer.WritePropertyName("module");
+                        writer.WriteValue(tx_move_call.Target.Module);
+
+                        writer.WritePropertyName("function");
+                        writer.WriteValue(tx_move_call.Target.Name);
+
+                        writer.WritePropertyName("arguments");
+                        writer.WriteStartArray();
+
+                        foreach (SuiTransactionArgument transaction_argument in tx_move_call.Arguments)
+                            writer.WriteRaw(JsonConvert.SerializeObject(transaction_argument));
+
+                        writer.WriteEndArray();
+
+                        writer.WriteEndObject();
+                        break;
+                    case TransactionKind.TransferObjects:
+                        TransferObjects tx_transfer_objects = (TransferObjects)transaction.Transaction;
+                        writer.WriteStartArray();
+
+                        writer.WriteStartArray();
+                        foreach (SuiTransactionArgument transaction_argument in tx_transfer_objects.Objects)
+                            writer.WriteRaw(JsonConvert.SerializeObject(transaction_argument));
+                        writer.WriteEndArray();
+
+                        writer.WriteRaw(JsonConvert.SerializeObject(tx_transfer_objects.Address));
+
+                        writer.WriteEndArray();
+                        break;
+                    case TransactionKind.SplitCoins:
+                        SplitCoins tx_split_coins = (SplitCoins)transaction.Transaction;
+
+                        writer.WriteStartArray();
+
+                        writer.WriteRaw(JsonConvert.SerializeObject(tx_split_coins.Coin));
+
+                        writer.WriteStartArray();
+                        foreach (SuiTransactionArgument transaction_argument in tx_split_coins.Amounts)
+                            writer.WriteRaw(JsonConvert.SerializeObject(transaction_argument));
+                        writer.WriteEndArray();
+
+                        writer.WriteEndArray();
+                        break;
+                    case TransactionKind.MergeCoins:
+                        MergeCoins tx_merge_coins = (MergeCoins)transaction.Transaction;
+
+                        writer.WriteStartArray();
+
+                        writer.WriteRaw(JsonConvert.SerializeObject(tx_merge_coins.Destination));
+
+                        writer.WriteStartArray();
+                        foreach (SuiTransactionArgument transaction_argument in tx_merge_coins.Sources)
+                            writer.WriteRaw(JsonConvert.SerializeObject(transaction_argument));
+                        writer.WriteEndArray();
+
+                        writer.WriteEndArray();
+                        break;
+                    case TransactionKind.Publish:
+                        Publish tx_publish = (Publish)transaction.Transaction;
+                        writer.WriteStartArray();
+
+                        writer.WriteValue(tx_publish.Modules);
+                        writer.WriteRaw(JsonConvert.SerializeObject(tx_publish.Dependencies));
+
+                        writer.WriteEndArray();
+                        break;
+                    case TransactionKind.MakeMoveVec:
+                        MakeMoveVec tx_make_move_vec = (MakeMoveVec)transaction.Transaction;
+
+                        writer.WriteStartArray();
+
+                        writer.WriteStartArray();
+                        foreach (SuiTransactionArgument transaction_argument in tx_make_move_vec.Objects)
+                            writer.WriteRaw(JsonConvert.SerializeObject(transaction_argument));
+                        writer.WriteEndArray();
+
+                        writer.WriteValue(tx_make_move_vec.Type.ToString());
+
+                        writer.WriteEndArray();
+                        break;
+                    case TransactionKind.Upgrade:
+                        Upgrade tx_upgrade = (Upgrade)transaction.Transaction;
+
+                        writer.WriteValue(tx_upgrade.Modules);
+
+                        writer.WriteRaw(JsonConvert.SerializeObject(tx_upgrade.Dependencies));
+
+                        writer.WriteValue(tx_upgrade.PackagID);
+
+                        writer.WriteRaw(JsonConvert.SerializeObject(tx_upgrade.Ticket));
+                        break;
+                }
+
+                writer.WriteEndObject();
+            }
         }
     }
 
@@ -187,12 +305,12 @@ namespace Sui.Transactions.Types
                     serializer.SerializeU8(6);
                     break;
             }
-            serializer.Serialize(Transaction);
+            serializer.Serialize(this.Transaction);
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            var value = deserializer.DeserializeU8();
+            byte value = deserializer.DeserializeU8();
             switch (value)
             {
                 case 0:

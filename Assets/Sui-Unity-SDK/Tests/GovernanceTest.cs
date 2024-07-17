@@ -44,7 +44,7 @@ namespace Sui.Tests
 
             tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"0x3::sui_system::request_add_stake"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr($"0x3::sui_system::request_add_stake"),
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {

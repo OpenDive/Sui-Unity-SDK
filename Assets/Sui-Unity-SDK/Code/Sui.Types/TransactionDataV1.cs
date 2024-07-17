@@ -1,5 +1,6 @@
 using System;
 using OpenDive.BCS;
+using Sui.Transactions.Builder;
 
 namespace Sui.Types
 {
@@ -18,9 +19,9 @@ namespace Sui.Types
     {
         public string sender;
         public GasData gasData;
-        public ITransactionExpiration expiration;
+        public TransactionExpiration expiration;
 
-        public TransactionDataV1(string sender, GasData gasData, ITransactionExpiration expiration)
+        public TransactionDataV1(string sender, GasData gasData, TransactionExpiration expiration)
         {
             this.sender = sender;
             this.gasData = gasData;

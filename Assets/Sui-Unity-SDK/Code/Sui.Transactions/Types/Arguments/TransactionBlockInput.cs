@@ -64,7 +64,7 @@ namespace Sui.Transactions.Types.Arguments
             serializer.SerializeU16((ushort)Index);
         }
 
-        public static TransactionBlockInput Deserialize(Deserialization deserializer)
+        public static ISerializable Deserialize(Deserialization deserializer)
         {
             return new TransactionBlockInput(deserializer.DeserializeU16());
         }

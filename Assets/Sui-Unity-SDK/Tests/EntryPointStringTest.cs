@@ -39,7 +39,7 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             List<SuiTransactionArgument> obj = tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"{this.PackageID}::entry_point_types::{func_name}"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::entry_point_types::{func_name}"),
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {
@@ -69,7 +69,7 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             List<SuiTransactionArgument> obj = tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"{this.PackageID}::entry_point_types::{func_name}"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::entry_point_types::{func_name}"),
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {

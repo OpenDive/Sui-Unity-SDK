@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenDive.BCS;
 using Sui.Accounts;
+using Sui.Rpc.Models;
 using Sui.Transactions.Types.Arguments;
 using Sui.Utilities;
 using UnityEngine;
@@ -38,19 +39,6 @@ namespace Sui.Transactions.Types
     /// </summary>
     public class MoveCall : ITransaction, ISerializable
     {
-        /// <summary>
-        /// The module id that contains the target function
-        /// Represents the following:
-        /// address_hex::module::name
-        /// new ModuleId(AccountAddress.FromHex("0x4"), "aptos_token"), "burn"
-        /// </summary>
-        public ModuleId ModuleId { get; private set; }
-
-        /// <summary>
-        /// The target function name
-        /// </summary>
-        public string Function { get; private set; }
-
         /// <summary>
         /// The target
         /// </summary>
@@ -100,18 +88,6 @@ namespace Sui.Transactions.Types
             this.Arguments = arguments.ToArray();
         }
 
-        // TODO: Full implementation is needed
-        public MoveCall(ModuleId moduleId, string function, ISerializableTag[] serializableTags, ISerializable[] serializables)
-        {
-            ModuleId = moduleId;
-            Function = function;
-        }
-
-        public string EncodeTransaction()
-        {
-            throw new System.NotImplementedException();
-        }
-
         public void Serialize(Serialization serializer)
         {
             serializer.Serialize(Target);
@@ -121,21 +97,14 @@ namespace Sui.Transactions.Types
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            BString target = BString.Deserialize(deserializer);
-            TagSequence typeArguments = TagSequence.Deserialize(deserializer);
-            Sequence arguments = Sequence.Deserialize(deserializer);
+            SuiMoveNormalizedStructType target = (SuiMoveNormalizedStructType)SuiMoveNormalizedStructType.Deserialize(deserializer);
+            SerializableTypeTag[] type_arguments = deserializer.DeserializeSequence(typeof(SerializableTypeTag)).Cast<SerializableTypeTag>().ToArray();
+            SuiTransactionArgument[] arguments = deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Cast<SuiTransactionArgument>().ToArray();
 
-            string targetStr = (string)target.GetValue();
-            string[] split = targetStr.Split("::");
-            ModuleId moduleId = new ModuleId(AccountAddress.FromHex(split[0]), split[1]);
-            string function = split[2];
-
-            // TODO: Full implementation is needed
             return new MoveCall(
-                moduleId,
-                function,
-                (ISerializableTag[])typeArguments.GetValue(),
-                (ISerializable[])arguments.GetValue()
+                target,
+                type_arguments,
+                arguments
             );
         }
     }

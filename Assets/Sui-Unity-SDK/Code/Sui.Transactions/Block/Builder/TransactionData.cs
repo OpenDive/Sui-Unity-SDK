@@ -46,7 +46,7 @@ namespace Sui.Transactions.Builder
                     return new TransactionData
                     (
                         TransactionType.V1,
-                        (TransactionDataV1)ISerializable.Deserialize(deserializer)
+                        (TransactionDataV1)TransactionDataV1.Deserialize(deserializer)
                     );
                 default:
                     return new SuiError(0, "Unable to deserialize Transaction Data", null);
@@ -57,14 +57,14 @@ namespace Sui.Transactions.Builder
     public class TransactionDataV1 : ITransactionData
     {
         public AccountAddress Sender { get; set; }
-        public ITransactionExpiration Expiration { get; set; }
+        public TransactionExpiration Expiration { get; set; }
         public GasData GasData { get; set; }
         public TransactionBlockKind Transaction { get; set; }
 
         public TransactionDataV1
         (
             AccountAddress sender,
-            ITransactionExpiration transactionExpiration,
+            TransactionExpiration transactionExpiration,
             GasData gasdata,
             TransactionBlockKind transaction
         )
@@ -83,13 +83,18 @@ namespace Sui.Transactions.Builder
             Expiration.Serialize(serializer);
         }
 
-        public static TransactionDataV1 Deserialize(Deserialization deserializer)
+        public static ISerializable Deserialize(Deserialization deserializer)
         {
+            TransactionBlockKind tx_block_kind = (TransactionBlockKind)TransactionBlockKind.Deserialize(deserializer);
+            AccountAddress sender = (AccountAddress)AccountAddress.Deserialize(deserializer);
+            GasData gas_data = (GasData)GasData.Deserialize(deserializer);
+            TransactionExpiration expiration = (TransactionExpiration)TransactionExpiration.Deserialize(deserializer);
+            
             return new TransactionDataV1(
-                AccountAddress.Deserialize(deserializer),
-                (ITransactionExpiration)ISerializable.Deserialize(deserializer),
-                (GasData)GasData.Deserialize(deserializer),
-                (TransactionBlockKind)ISerializable.Deserialize(deserializer)
+                sender,
+                expiration,
+                gas_data,
+                tx_block_kind
             );
         }
     }
