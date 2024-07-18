@@ -34,7 +34,7 @@ using System.Text;
 namespace OpenDive.BCS
 {
     /// <summary>
-    /// The Deserializer class used for converting from and to BCS bytes.
+    /// The Deserializer class used for converting from BCS bytes.
     /// </summary>
     public class Deserialization : ReturnBase
     {
@@ -72,7 +72,10 @@ namespace OpenDive.BCS
         /// Deserialize a `bool` value.
         /// </summary>
         /// <returns>The deserialized `bool` value.</returns>
-        public bool DeserializeBool() => BitConverter.ToBoolean(this.Read(1));
+        public bool DeserializeBool()
+            => this.PeekByte() > 1 ?
+            this.SetError<bool, SuiError>(false, "Unexcpected value.", this.PeekByte()) :
+            BitConverter.ToBoolean(this.Read(1));
 
         /// <summary>
         /// Deserializes a `byte` array with the length byte.
@@ -180,13 +183,13 @@ namespace OpenDive.BCS
         /// Deserializes a `U128` value.
         /// </summary>
         /// <returns>A deserialized `U128` object containing the `BigInteger` value.</returns>
-        public U128 DeserializeU128() => new U128(new BigInteger(this.Read(16)));
+        public U128 DeserializeU128() => new U128(new BigInteger(this.Read(16), isUnsigned: true, isBigEndian: false));
 
         /// <summary>
         /// Deserializes a `U256` value.
         /// </summary>
         /// <returns>A deserialized `U256` object containing the `BigInteger` value.</returns>
-        public U256 DeserializeU256() => new U256(new BigInteger(this.Read(32)));
+        public U256 DeserializeU256() => new U256(new BigInteger(this.Read(32), isUnsigned: true, isBigEndian: false));
 
         /// <summary>
         /// Deserializes an `int` value representing the Uleb128 serialized value.

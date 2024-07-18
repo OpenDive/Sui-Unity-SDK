@@ -298,8 +298,8 @@ namespace OpenDive.BCS
 
             ISerializable[] other_sequence;
 
-            if (other is Sequence)
-                other_sequence = ((Sequence)other).Values;
+            if (other is Sequence sequence)
+                other_sequence = sequence.Values;
             else
                 other_sequence = (ISerializable[])other;
 
@@ -376,8 +376,8 @@ namespace OpenDive.BCS
 
             byte[][] other_byte_sequence;
 
-            if (other is BytesSequence)
-                other_byte_sequence = ((BytesSequence)other).Values;
+            if (other is BytesSequence byte_sequence)
+                other_byte_sequence = byte_sequence.Values;
             else
                 other_byte_sequence = (byte[][])other;
 
@@ -495,8 +495,8 @@ namespace OpenDive.BCS
 
             Dictionary<ISerializable, ISerializable> other_map_sequence;
 
-            if (other is BCSMap)
-                other_map_sequence = ((BCSMap)other).Values;
+            if (other is BCSMap bcs_map)
+                other_map_sequence = bcs_map.Values;
             else
                 other_map_sequence = (Dictionary<ISerializable, ISerializable>)other;
 
@@ -554,8 +554,8 @@ namespace OpenDive.BCS
 
             string other_string;
 
-            if (other is BString)
-                other_string = ((BString)other).Value;
+            if (other is BString b_string)
+                other_string = b_string.Value;
             else
                 other_string = (string)other;
 
@@ -604,8 +604,8 @@ namespace OpenDive.BCS
 
             byte[] other_bytes;
 
-            if (other is Bytes)
-                other_bytes = ((Bytes)other).Values;
+            if (other is Bytes bytes)
+                other_bytes = bytes.Values;
             else
                 other_bytes = (byte[])other;
 
@@ -653,8 +653,8 @@ namespace OpenDive.BCS
 
             bool other_bool;
 
-            if (other is Bool)
-                other_bool = ((Bool)other).Value;
+            if (other is Bool value)
+                other_bool = value.Value;
             else
                 other_bool = (bool)other;
 
@@ -698,8 +698,8 @@ namespace OpenDive.BCS
 
             byte other_byte;
 
-            if (other is U8)
-                other_byte = ((U8)other).Value;
+            if (other is U8 u8)
+                other_byte = u8.Value;
             else
                 other_byte = (byte)other;
 
@@ -742,8 +742,8 @@ namespace OpenDive.BCS
 
             ushort other_ushort;
 
-            if (other is U16)
-                other_ushort = ((U16)other).Value;
+            if (other is U16 u16)
+                other_ushort = u16.Value;
             else
                 other_ushort = (ushort)other;
 
@@ -786,8 +786,8 @@ namespace OpenDive.BCS
 
             uint other_uint;
 
-            if (other is U32)
-                other_uint = ((U32)other).Value;
+            if (other is U32 u32)
+                other_uint = u32.Value;
             else
                 other_uint = (uint)other;
 
@@ -830,8 +830,8 @@ namespace OpenDive.BCS
 
             ulong other_ulong;
 
-            if (other is U64)
-                other_ulong = ((U64)other).Value;
+            if (other is U64 u64)
+                other_ulong = u64.Value;
             else
                 other_ulong = (ulong)other;
 
@@ -874,12 +874,12 @@ namespace OpenDive.BCS
 
             BigInteger other_u128_big_integer;
 
-            if (other is U128)
-                other_u128_big_integer = ((U128)other).Value;
+            if (other is U128 u128)
+                other_u128_big_integer = u128.Value;
             else
                 other_u128_big_integer = (BigInteger)other;
 
-            return this.Value == other_u128_big_integer;
+            return this.Value.Equals(other_u128_big_integer);
         }
 
         public override int GetHashCode() => base.GetHashCode();
@@ -918,12 +918,12 @@ namespace OpenDive.BCS
 
             BigInteger other_u256_big_integer;
 
-            if (other is U256)
-                other_u256_big_integer = ((U256)other).Value;
+            if (other is U256 u256)
+                other_u256_big_integer = u256.Value;
             else
                 other_u256_big_integer = (BigInteger)other;
 
-            return this.Value == other_u256_big_integer;
+            return this.Value.Equals(other_u256_big_integer);
         }
 
         public override int GetHashCode() => base.GetHashCode();
@@ -1044,11 +1044,8 @@ namespace OpenDive.BCS
             serializer.Serialize(this.Module);
             serializer.Serialize(this.Name);
 
-            if (this.TypeArguments.Count != 0)
-            {
-                Sequence type_arguments = new Sequence(this.TypeArguments.ToArray());
-                serializer.Serialize(type_arguments);
-            }
+            Sequence type_arguments = new Sequence(this.TypeArguments.ToArray());
+            serializer.Serialize(type_arguments);
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)

@@ -1,28 +1,81 @@
-﻿// An implementation of BCS in C#
+﻿//
+//  Serialization.cs
+//  Sui-Unity-SDK
+//
+//  Copyright (c) 2024 OpenDive
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
+using Sui.Rpc.Client;
 using System;
 using System.IO;
 using System.Numerics;
-using System.Runtime.Serialization;
-using UnityEngine;
+using System.Buffers.Binary;
 
 namespace OpenDive.BCS
 {
     /// <summary>
-    /// An implementation of BCS Serialization in C#
+    /// The serialization value to use with BigIntegers.
     /// </summary>
-    public class Serialization
+    public enum BigIntegerSerialization
     {
+        U128,
+        U256
+    }
+
+    /// <summary>
+    /// The Serializer class used for converting to BCS bytes.
+    /// </summary>
+    public class Serialization : ReturnBase
+    {
+        #region Integer Enum
+
+        /// <summary>
+        /// Used internally for determining serialization type.
+        /// </summary>
+        internal enum WriteIntegerCase
+        {
+            U8 = 1,
+            U16 = 2,
+            U32 = 4,
+            U64 = 8,
+            U128 = 16,
+            U256 = 32
+        }
+
+        #endregion
+
         #region Serialization
 
-        protected MemoryStream output;
+        /// <summary>
+        /// The output stream for the serialized stream.
+        /// </summary>
+        protected MemoryStream Output;
 
-        public Serialization() => output = new MemoryStream();
+        public Serialization() => Output = new MemoryStream();
 
         /// <summary>
         /// Return the serialization buffer as a byte array.
         /// </summary>
         /// <returns>Serialization buffer as a byte array.</returns>
-        public byte[] GetBytes() => output.ToArray();
+        public byte[] GetBytes() => Output.ToArray();
 
         /// <summary>
         /// Serialize a string value.
@@ -43,66 +96,44 @@ namespace OpenDive.BCS
         /// </summary>
         /// <param name="value">Boolean value to serialize.</param>
         /// <returns>The current Serialization object.</returns>
-        public Serialization Serialize(bool value)
-        {
-            SerializeBool(value);
-            return this;
-        }
+        public Serialization Serialize(bool value) => SerializeBool(value);
 
         /// <summary>
         /// Serialize a single byte
         /// </summary>
         /// <param name="num">Byte to serialize.</param>
         /// <returns>The current Serialization object.</returns>
-        public Serialization Serialize(byte num)
-        {
-            SerializeU8(num);
-            return this;
-        }
+        public Serialization Serialize(byte num) => SerializeU8(num);
 
         /// <summary>
         /// Serialize an unsigned short value.
         /// </summary>
         /// <param name="num">The number to serialize.</param>
         /// <returns>The current Serialization object.</returns>
-        public Serialization Serialize(ushort num)
-        {
-            SerializeU16(num);
-            return this;
-        }
+        public Serialization Serialize(ushort num) => SerializeU16(num);
 
         /// <summary>
         /// Serialize an unsigned integer value.
         /// </summary>
         /// <param name="num">The unsigned integer to serialize.</param>
         /// <returns>The current Serialization object.</returns>
-        public Serialization Serialize(uint num)
-        {
-            SerializeU32(num);
-            return this;
-        }
+        public Serialization Serialize(uint num) => SerializeU32(num);
 
         /// <summary>
         /// Serialize an unsigned long number.
         /// </summary>
         /// <param name="num">The unsigned long number to serialize.</param>
         /// <returns>The current Serialization object.</returns>
-        public Serialization Serialize(ulong num)
-        {
-            SerializeU64(num);
-            return this;
-        }
+        public Serialization Serialize(ulong num) => SerializeU64(num);
 
         /// <summary>
-        /// Serialize a big integer number.
+        /// Serialize a big integer number with either U128 or U256 serialization.
         /// </summary>
         /// <param name="num">The big integer number to serialize.</param>
+        /// <param name="method">Which serialization method to use, defaults to U128.</param>
         /// <returns>The current Serialization object.</returns>
-        public Serialization Serialize(BigInteger num)
-        {
-            SerializeU128(num);
-            return this;
-        }
+        public Serialization Serialize(BigInteger num, BigIntegerSerialization method = BigIntegerSerialization.U128)
+            => method == BigIntegerSerialization.U128 ? SerializeU128(num) : SerializeU256(num);
 
         /// <summary>
         /// Serializes an object using it's own serialization implementation.
@@ -123,31 +154,33 @@ namespace OpenDive.BCS
         public Serialization Serialize(Sequence args)
         {
             SerializeU32AsUleb128((uint)args.Length);
+
             foreach (ISerializable element in args.Values)
             {
-                Serialization s = new Serialization();
-                element.Serialize(s);
-                byte[] b = s.GetBytes();
-                SerializeFixedBytes(b);
+                Serialization ser = new Serialization();
+                element.Serialize(ser);
+                SerializeFixedBytes(ser.GetBytes());
             }
+
             return this;
         }
 
         /// <summary>
         /// Serializes an array of serializable elements
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
+        /// <param name="args">The `ISerializable` array of serializable values.</param>
+        /// <returns>The current Serialization object.</returns>
         public Serialization Serialize(ISerializable[] args)
         {
             SerializeU32AsUleb128((uint)args.Length);
+
             foreach (ISerializable element in args)
             {
-                Serialization s = new Serialization();
-                element.Serialize(s);
-                byte[] b = s.GetBytes();
-                SerializeFixedBytes(b);
+                Serialization ser = new Serialization();
+                element.Serialize(ser);
+                SerializeFixedBytes(ser.GetBytes());
             }
+
             return this;
         }
 
@@ -160,11 +193,7 @@ namespace OpenDive.BCS
         /// </summary>
         /// <param name="value">String value to serialize.</param>
         /// <returns>The current Serialization object.</returns>
-        public Serialization SerializeString(string value)
-        {
-            SerializeBytes(System.Text.Encoding.UTF8.GetBytes(value));
-            return this;
-        }
+        public Serialization SerializeString(string value) => SerializeBytes(System.Text.Encoding.UTF8.GetBytes(value));
 
         /// <summary>
         /// Serializes an array of bytes.
@@ -177,8 +206,10 @@ namespace OpenDive.BCS
         {
             // Write the length of the bytes array
             SerializeU32AsUleb128((uint)bytes.Length);
+
             // Copy the bytes to the rest of the array
-            output.Write(bytes);
+            Output.Write(bytes);
+
             return this;
         }
 
@@ -193,18 +224,9 @@ namespace OpenDive.BCS
         public Serialization SerializeFixedBytes(byte[] bytes)
         {
             // Copy the bytes to the rest of the array
-            output.Write(bytes);
-            return this;
-        }
+            Output.Write(bytes);
 
-        /// <summary>
-        /// Utility method to print a byte array.
-        /// </summary>
-        /// <param name="bytes">Byte array to turn into string.</param>
-        /// <returns>String representation of a byte array.</returns>
-        static public string ToReadableByteArray(byte[] bytes)
-        {
-            return string.Join(", ", bytes);
+            return this;
         }
 
         /// <summary>
@@ -212,9 +234,9 @@ namespace OpenDive.BCS
         /// </summary>
         /// <param name="bytes">Byte array to write to the serialization buffer.</param>
         /// <returns>The current Serialization object.</returns>
-        public Serialization WriteBytes(byte[] bytes)
+        public Serialization WriteByte(byte value)
         {
-            output.Write(bytes);
+            Output.WriteByte(value);
             return this;
         }
 
@@ -230,12 +252,12 @@ namespace OpenDive.BCS
             {
                 // Write 7 (lowest) bits of data and set the 8th bit to 1.
                 byte b = (byte)(value & 0x7f);
-                output.WriteByte((byte)(b | 0x80));
+                Output.WriteByte((byte)(b | 0x80));
                 value >>= 7;
             }
 
             // Write the remaining bits of data and set the highest bit to 0
-            output.WriteByte((byte)(value & 0x7f));
+            Output.WriteByte((byte)(value & 0x7f));
             return this;
         }
 
@@ -245,51 +267,23 @@ namespace OpenDive.BCS
         /// <param name="value">Boolean value to serialize.</param>
         /// <returns>The current Serialization object.</returns>
         public Serialization SerializeBool(bool value)
-        {
-            if (value)
-            {
-                output.WriteByte(0x01);
-            }
-            else
-            {
-                output.WriteByte(0x00);
-            }
-
-            return this;
-        }
+            => value == true ? this.WriteByte(0x01) : this.WriteByte(0x00);
 
         /// <summary>
-        /// Serialize a unsigned byte number.
+        /// Serialize an unsigned byte number.
         /// </summary>
         /// <param name="num">Byte to serialize.</param>
         /// <returns>The current Serialization object.</returns>
         public Serialization SerializeU8(byte num)
-        {
-            output.WriteByte(num);
-            return this;
-        }
+            => this.Write(num, WriteIntegerCase.U8);
 
         /// <summary>
-        /// Serialize unsigned short (U16).
+        /// Serialize an unsigned short number.
         /// </summary>
         /// <param name="num">Unsigned short number to serialize.</param>
         /// <returns>The current Serialization object.</returns>
         public Serialization SerializeU16(ushort num)
-        {
-            byte lower = (byte)(num & 0xFF);
-            byte upper = (byte)(num >> 8 & 0xFF);
-            byte[] bytes = new byte[] { upper, lower };
-            Array.Reverse(bytes); // We need to reverse the order for little endian
-            output.Write(bytes);
-            //output.Write(new[] { upper, lower });
-            return this;
-
-            //byte[] bytes = BitConverter.GetBytes(num);
-            //if (!BitConverter.IsLittleEndian)
-            //    Array.Reverse(bytes); //reverse it so we get big endian.
-            //output.Write(bytes);
-            //return this;
-        }
+            => this.Write(num, WriteIntegerCase.U16);
 
         /// <summary>
         /// Serialize an unsigned integer number.
@@ -297,14 +291,7 @@ namespace OpenDive.BCS
         /// <param name="num">Unsigned integer number.</param>
         /// <returns>The current Serialization object.</returns>
         public Serialization SerializeU32(uint num)
-        {
-            byte byte1 = (byte)(num & 0xFF);
-            byte byte2 = (byte)(num >> 8 & 0xFF);
-            byte byte3 = (byte)(num >> 16 & 0xFF);
-            byte byte4 = (byte)(num >> 24 & 0xFF);
-            output.Write(new[] { byte1, byte2, byte3, byte4 });
-            return this;
-        }
+            => this.Write(num, WriteIntegerCase.U32);
 
         /// <summary>
         /// Serialize an unsigned long number.
@@ -312,85 +299,95 @@ namespace OpenDive.BCS
         /// <param name="num">Unsigned long number to serialize.</param>
         /// <returns>The current Serialization object.</returns>
         public Serialization SerializeU64(ulong num)
+            => this.Write(num, WriteIntegerCase.U64);
+
+        /// <summary>
+        /// Serialize a unsigned 128 unsigned int (big integer) number.
+        /// </summary>
+        /// <param name="num">Big integer value to serialize.</param>
+        /// <returns>The current Serialization object.</returns>
+        public Serialization SerializeU128(BigInteger num)
+            => this.Write(num, WriteIntegerCase.U128);
+
+        /// <summary>
+        /// Serialize a unsigned 256 unsigned int (big integer) number.
+        /// </summary>
+        /// <param name="num">Big integer value to serialize.</param>
+        /// <returns>The current Serialization object.</returns>
+        public Serialization SerializeU256(BigInteger num)
+            => this.Write(num, WriteIntegerCase.U256);
+
+        /// <summary>
+        /// Writes in a given amount of bytes to the output memory stream.
+        /// </summary>
+        /// <param name="value">The given unsigned integer value to serialize.</param>
+        /// <param name="integer_type">
+        /// A `WriteIntegerCase` enum that represents the type value is and how long it should be.
+        /// </param>
+        /// <returns>The current Serialization object.</returns>
+        internal Serialization Write<U>(U value, WriteIntegerCase integer_type) where U : IComparable, IFormattable
         {
-            byte byte1 = (byte)(num & 0xFF);
-            byte byte2 = (byte)(num >> 8 & 0xFF);
-            byte byte3 = (byte)(num >> 16 & 0xFF);
-            byte byte4 = (byte)(num >> 24 & 0xFF);
-            byte byte5 = (byte)(num >> 32 & 0xFF);
-            byte byte6 = (byte)(num >> 40 & 0xFF);
-            byte byte7 = (byte)(num >> 48 & 0xFF);
-            byte byte8 = (byte)(num >> 56 & 0xFF);
-            output.Write(new[] { byte1, byte2, byte3, byte4, byte5, byte6, byte7, byte8 });
+            if (this.IsSignedType<U>())
+                return this.SetError<Serialization, SuiError>(this, "Value is a signed integer.", value);
+
+            if (value is BigInteger big_integer)
+            {
+                if (big_integer.Sign == -1)
+                    return this.SetError<Serialization, SuiError>(this, "Value cannot be negative.", value);
+
+                byte[] big_integer_bytes = big_integer.ToByteArray(isUnsigned: true, isBigEndian: false);
+
+                if (big_integer_bytes.Length > (int)integer_type)
+                    return this.SetError<Serialization, SuiError>(this, $"Value cannot be serialized because it is more than {(int)integer_type} bytes long.", value);
+
+                if (!(big_integer_bytes.Length <= (int)integer_type || big_integer_bytes[0] == 0))
+                    return this.SetError<Serialization, SuiError>(this, "Value cannot be serialized because it is a negative value.", value);
+
+                this.Output.Write(big_integer_bytes);
+
+                if (big_integer_bytes.Length != (int)integer_type)
+                    Output.Write(new byte[(int)integer_type - big_integer_bytes.Length]);
+
+                return this;
+            }
+
+            Span<byte> writer = new Span<byte>(new byte[(int)integer_type]);
+
+            switch (integer_type)
+            {
+                case WriteIntegerCase.U8:
+                    writer = new Span<byte>(new byte[] { Convert.ToByte(value) });
+                    break;
+                case WriteIntegerCase.U16:
+                    BinaryPrimitives.WriteUInt16LittleEndian(writer, Convert.ToUInt16(value));
+                    break;
+                case WriteIntegerCase.U32:
+                    BinaryPrimitives.WriteUInt32LittleEndian(writer, Convert.ToUInt32(value));
+                    break;
+                case WriteIntegerCase.U64:
+                    BinaryPrimitives.WriteUInt64LittleEndian(writer, Convert.ToUInt64(value));
+                    break;
+                default:
+                    return this.SetError<Serialization, SuiError>(this, "The integer_type is not a U8, U16, U32, nor a U64.", new Tuple<U, WriteIntegerCase>(value, integer_type));
+            }
+
+            this.Output.Write(writer);
+
             return this;
         }
 
         /// <summary>
-        /// Serialize a big integer value.
+        /// Determines whether the inputted T type is a signed type or not.
         /// </summary>
-        /// <param name="value">Big integer value to serialize.</param>
-        /// <returns>The current Serialization object.</returns>
-        public Serialization SerializeU128(BigInteger value)
+        /// <typeparam name="T">A generic type that represents a number</typeparam>
+        /// <returns>A `bool` that reflects whether T is signed or not.</returns>
+        internal bool IsSignedType<T>()
         {
-            // Ensure the BigInteger is unsigned
-            if (value.Sign == -1)
-            {
-                throw new SerializationException("Invalid value for an unsigned int128");
-            }
-
-            // This is already little-endian
-            byte[] content = value.ToByteArray(isUnsigned: true, isBigEndian: false);
-
-            // BigInteger.toByteArray() may add a most-significant zero
-            // byte for signing purpose: ignore it.
-            if (!(content.Length <= 16 || content[0] == 0))
-            {
-                throw new SerializationException("Invalid value for an unsigned int128");
-            }
-
-            // Ensure we're padded to 16
-            output.Write(content);
-
-            if (content.Length != 16)
-            {
-                output.Write(new byte[16 - content.Length]);
-            }
-
-            return this;
-        }
-
-        /// <summary>
-        /// Serialize a unsigned 256 int (big integer) value.
-        /// </summary>
-        /// <param name="value">Big integer value to serialize.</param>
-        /// <returns>The current Serialization object.</returns>
-        public Serialization SerializeU256(BigInteger value)
-        {
-            // Ensure the BigInteger is unsigned
-            if (value.Sign == -1)
-            {
-                throw new SerializationException("Invalid value for an unsigned int256");
-            }
-
-            // This is already little-endian
-            byte[] content = value.ToByteArray(isUnsigned: true, isBigEndian: false);
-
-            // BigInteger.toByteArray() may add a most-significant zero
-            // byte for signing purpose: ignore it.
-            if (!(content.Length <= 32 || content[0] == 0))
-            {
-                throw new SerializationException("Invalid value for an unsigned int256");
-            }
-
-            // Ensure we're padded to 32
-            output.Write(content);
-
-            if (content.Length != 32)
-            {
-                output.Write(new byte[32 - content.Length]);
-            }
-
-            return this;
+            return
+                typeof(T) == typeof(sbyte) ||
+                typeof(T) == typeof(short) ||
+                typeof(T) == typeof(int) ||
+                typeof(T) == typeof(long);
         }
 
         #endregion

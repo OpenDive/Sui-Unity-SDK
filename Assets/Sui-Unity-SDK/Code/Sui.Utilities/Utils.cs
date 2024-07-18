@@ -50,7 +50,7 @@ namespace Sui.Utilities
 
         public static string ByteArrayToString(this byte[] input)
         {
-            return string.Join(",", input);
+            return string.Join(", ", input);
         }
 
         /// <summary>

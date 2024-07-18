@@ -53,5 +53,13 @@ namespace Sui.Rpc.Client
 
             return item;
         }
+
+        internal void SetError<T>(string message, object data = null) where T : ErrorBase, new()
+        {
+            this.Error = new T();
+            this.Error.Code = 0;
+            this.Error.Message = message;
+            this.Error.Data = data;
+        }
     }
 }
