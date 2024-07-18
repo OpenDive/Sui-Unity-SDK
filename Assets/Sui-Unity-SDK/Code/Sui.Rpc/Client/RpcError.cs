@@ -1,3 +1,4 @@
+using System;
 using OpenDive.BCS;
 
 namespace Sui.Rpc.Client
@@ -16,20 +17,41 @@ namespace Sui.Rpc.Client
             this.Message = message;
             this.Data = data;
         }
+
+        protected ErrorBase() { }
     }
 
     public class RpcError : ErrorBase
     {
         public RpcError(int code, string message, object data) : base(code, message, data) { }
+
+        public RpcError() : base() { }
     }
 
     public class SuiError : ErrorBase, ISerializable
     {
         public SuiError(int code, string message, object data) : base(code, message, data) { }
 
-        public void Serialize(Serialization serializer)
+        public SuiError(): base() { }
+
+        public void Serialize(Serialization serializer) => throw new System.NotImplementedException();
+    }
+
+    public abstract class ReturnBase
+    {
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
+
+        internal T SetError<T, U>(T item, string message, object data = null) where U : ErrorBase, new()
         {
-            throw new System.NotImplementedException();
+            this.Error = new U();
+            this.Error.Code = 0;
+            this.Error.Message = message;
+            this.Error.Data = data;
+
+            return item;
         }
     }
 }

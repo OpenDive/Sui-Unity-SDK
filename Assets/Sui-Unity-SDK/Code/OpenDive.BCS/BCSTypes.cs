@@ -36,6 +36,28 @@ using System.Text;
 
 namespace OpenDive.BCS
 {
+    #region ISerializable Interface
+
+    public interface ISerializable
+    {
+        /// <summary>
+        /// Serializes an output instance using the given Serializer.
+        /// </summary>
+        /// <param name="serializer">The Serializer instance used to serialize the data.</param>
+        public void Serialize(Serialization serializer);
+
+        /// <summary>
+        /// Deserializes an output instance from a Deserializer.
+        /// </summary>
+        /// <param name="deserializer">The Deserializer instance used to deserialize the data.</param>
+        /// <returns>A new `ISerializable` object that was deserialized from the input.</returns>
+        public static ISerializable Deserialize(Deserialization deserializer) => new SuiError(0, "Deserialize is not implemented", null);
+    }
+
+    #endregion
+
+    #region TypeTag
+
     /// <summary>
     /// An enum value that represents a Move type.
     /// </summary>
@@ -52,22 +74,6 @@ namespace OpenDive.BCS
         U16,
         U32,
         U256
-    }
-
-    public interface ISerializable
-    {
-        /// <summary>
-        /// Serializes an output instance using the given Serializer.
-        /// </summary>
-        /// <param name="serializer">The Serializer instance used to serialize the data.</param>
-        public void Serialize(Serialization serializer);
-
-        /// <summary>
-        /// Deserializes an output instance from a Deserializer.
-        /// </summary>
-        /// <param name="deserializer">The Deserializer instance used to deserialize the data.</param>
-        /// <returns>A new `ISerializable` object that was deserialized from the input.</returns>
-        public static ISerializable Deserialize(Deserialization deserializer) => new SuiError(0, "Deserialize is not implemented", null);
     }
 
     /// <summary>
@@ -216,6 +222,10 @@ namespace OpenDive.BCS
             return new SerializableTypeTag(variant, ser_value);
         }
     }
+
+    #endregion
+
+    #region Serializable Types
 
     /// <summary>
     /// Representation of an `ISerializable` sequence / list.
@@ -400,21 +410,21 @@ namespace OpenDive.BCS
     }
 
     /// <summary>
-    /// Representation of a `Dictionary<BString, ISerializable>` in BCS.
+    /// Representation of a `Dictionary<ISerializable, ISerializable>` in BCS.
     /// </summary>
     public class BCSMap : ISerializable
     {
         /// <summary>
         /// The dictionary of values, with the `BString` being the key, and an `ISerializable` object being the value.
         /// </summary>
-        public Dictionary<BString, ISerializable> Values { get; set; }
+        public Dictionary<ISerializable, ISerializable> Values { get; set; }
 
         /// <summary>
         /// Won't be null if there were any errors thrown when utilizing the class.
         /// </summary>
         public ErrorBase Error { get; private set; }
 
-        public BCSMap(Dictionary<BString, ISerializable> values) => this.Values = values;
+        public BCSMap(Dictionary<ISerializable, ISerializable> values) => this.Values = values;
 
         /// <summary>
         /// The amount of items in the `Value` array.
@@ -433,9 +443,9 @@ namespace OpenDive.BCS
         public void Serialize(Serialization serializer)
         {
             Serialization map_serializer = new Serialization();
-            SortedDictionary<string, (byte[], byte[])> byte_map = new SortedDictionary<string, (byte[], byte[])>();
+            List<Tuple<byte[], byte[]>> encoded_values = new List<Tuple<byte[], byte[]>>();
 
-            foreach (KeyValuePair<BString, ISerializable> entry in this.Values)
+            foreach (KeyValuePair<ISerializable, ISerializable> entry in this.Values)
             {
                 Serialization key_serializer = new Serialization();
                 entry.Key.Serialize(key_serializer);
@@ -445,15 +455,17 @@ namespace OpenDive.BCS
                 entry.Value.Serialize(val_serializer);
                 byte[] b_value = val_serializer.GetBytes();
 
-                byte_map.Add(entry.Key.Value, (b_key, b_value));
+                encoded_values.Add(new Tuple<byte[], byte[]>(b_key, b_value));
             }
 
-            map_serializer.SerializeU32AsUleb128((uint)byte_map.Count);
+            encoded_values.Sort(ByteArrayComparer.CompareTuple);
 
-            foreach (KeyValuePair<string, (byte[], byte[])> entry in byte_map)
+            map_serializer.SerializeU32AsUleb128((uint)encoded_values.Count);
+
+            foreach (Tuple<byte[], byte[]> entry in encoded_values)
             {
-                map_serializer.SerializeFixedBytes(entry.Value.Item1);
-                map_serializer.SerializeFixedBytes(entry.Value.Item2);
+                map_serializer.SerializeFixedBytes(entry.Item1);
+                map_serializer.SerializeFixedBytes(entry.Item2);
             }
 
             serializer.SerializeFixedBytes(map_serializer.GetBytes());
@@ -475,18 +487,18 @@ namespace OpenDive.BCS
 
         public override bool Equals(object other)
         {
-            if (other is not BCSMap && other is not Dictionary<BString, ISerializable>)
+            if (other is not BCSMap && other is not Dictionary<ISerializable, ISerializable>)
             {
                 this.Error = new SuiError(0, "Compared object is not a BCSMap nor a Dictionary<BString, ISerializable>.", other);
                 return false;
             }
 
-            Dictionary<BString, ISerializable> other_map_sequence;
+            Dictionary<ISerializable, ISerializable> other_map_sequence;
 
             if (other is BCSMap)
                 other_map_sequence = ((BCSMap)other).Values;
             else
-                other_map_sequence = (Dictionary<BString, ISerializable>)other;
+                other_map_sequence = (Dictionary<ISerializable, ISerializable>)other;
 
             bool equal = true;
 
@@ -495,8 +507,8 @@ namespace OpenDive.BCS
 
             for (int i = 0; i < this.Length; i++)
                 equal = equal &&
-                    this.Values.Keys.ToArray()[i] == other_map_sequence.Keys.ToArray()[i] &&
-                    this.Values[this.Values.Keys.ToArray()[i]] == other_map_sequence[other_map_sequence.Keys.ToArray()[i]];
+                    this.Values.Keys.ToArray()[i].Equals(other_map_sequence.Keys.ToArray()[i]) &&
+                    this.Values[this.Values.Keys.ToArray()[i]].Equals(other_map_sequence[other_map_sequence.Keys.ToArray()[i]]);
 
             return equal;
         }
@@ -917,6 +929,10 @@ namespace OpenDive.BCS
         public override int GetHashCode() => base.GetHashCode();
     }
 
+    #endregion
+
+    #region Structure Tag
+
     /// <summary>
     /// Representation of a Struct Tag in BCS
     /// </summary>
@@ -1238,4 +1254,44 @@ namespace OpenDive.BCS
             );
         }
     }
+
+    #endregion
+
+    #region Byte Array Comparison
+
+    public static class ByteArrayComparer
+    {
+        public static int Compare(byte[] array1, byte[] array2)
+        {
+            if (array1 == null && array2 == null)
+                return 0;
+            if (array1 == null)
+                return -1;
+            if (array2 == null)
+                return 1;
+
+            int minLength = Math.Min(array1.Length, array2.Length);
+
+            for (int i = 0; i < minLength; i++)
+            {
+                if (array1[i] < array2[i])
+                    return -1;
+                if (array1[i] > array2[i])
+                    return 1;
+            }
+
+            // If all compared elements are equal, the longer array is greater
+            if (array1.Length < array2.Length)
+                return -1;
+            if (array1.Length > array2.Length)
+                return 1;
+
+            return 0; // Arrays are equal
+        }
+
+        public static int CompareTuple(Tuple<byte[], byte[]> tuple_1, Tuple<byte[], byte[]> tuple_2)
+            => ByteArrayComparer.Compare(tuple_1.Item1, tuple_2.Item1);
+    }
+
+    #endregion
 }
