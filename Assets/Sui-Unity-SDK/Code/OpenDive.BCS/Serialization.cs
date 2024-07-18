@@ -45,23 +45,6 @@ namespace OpenDive.BCS
     /// </summary>
     public class Serialization : ReturnBase
     {
-        #region Integer Enum
-
-        /// <summary>
-        /// Used internally for determining serialization type.
-        /// </summary>
-        internal enum WriteIntegerCase
-        {
-            U8 = 1,
-            U16 = 2,
-            U32 = 4,
-            U64 = 8,
-            U128 = 16,
-            U256 = 32
-        }
-
-        #endregion
-
         #region Serialization
 
         /// <summary>
@@ -225,7 +208,6 @@ namespace OpenDive.BCS
         {
             // Copy the bytes to the rest of the array
             Output.Write(bytes);
-
             return this;
         }
 
@@ -275,7 +257,7 @@ namespace OpenDive.BCS
         /// <param name="num">Byte to serialize.</param>
         /// <returns>The current Serialization object.</returns>
         public Serialization SerializeU8(byte num)
-            => this.Write(num, WriteIntegerCase.U8);
+            => this.Write(num, IntegerCase.U8);
 
         /// <summary>
         /// Serialize an unsigned short number.
@@ -283,7 +265,7 @@ namespace OpenDive.BCS
         /// <param name="num">Unsigned short number to serialize.</param>
         /// <returns>The current Serialization object.</returns>
         public Serialization SerializeU16(ushort num)
-            => this.Write(num, WriteIntegerCase.U16);
+            => this.Write(num, IntegerCase.U16);
 
         /// <summary>
         /// Serialize an unsigned integer number.
@@ -291,7 +273,7 @@ namespace OpenDive.BCS
         /// <param name="num">Unsigned integer number.</param>
         /// <returns>The current Serialization object.</returns>
         public Serialization SerializeU32(uint num)
-            => this.Write(num, WriteIntegerCase.U32);
+            => this.Write(num, IntegerCase.U32);
 
         /// <summary>
         /// Serialize an unsigned long number.
@@ -299,7 +281,7 @@ namespace OpenDive.BCS
         /// <param name="num">Unsigned long number to serialize.</param>
         /// <returns>The current Serialization object.</returns>
         public Serialization SerializeU64(ulong num)
-            => this.Write(num, WriteIntegerCase.U64);
+            => this.Write(num, IntegerCase.U64);
 
         /// <summary>
         /// Serialize a unsigned 128 unsigned int (big integer) number.
@@ -307,7 +289,7 @@ namespace OpenDive.BCS
         /// <param name="num">Big integer value to serialize.</param>
         /// <returns>The current Serialization object.</returns>
         public Serialization SerializeU128(BigInteger num)
-            => this.Write(num, WriteIntegerCase.U128);
+            => this.Write(num, IntegerCase.U128);
 
         /// <summary>
         /// Serialize a unsigned 256 unsigned int (big integer) number.
@@ -315,7 +297,7 @@ namespace OpenDive.BCS
         /// <param name="num">Big integer value to serialize.</param>
         /// <returns>The current Serialization object.</returns>
         public Serialization SerializeU256(BigInteger num)
-            => this.Write(num, WriteIntegerCase.U256);
+            => this.Write(num, IntegerCase.U256);
 
         /// <summary>
         /// Writes in a given amount of bytes to the output memory stream.
@@ -325,7 +307,7 @@ namespace OpenDive.BCS
         /// A `WriteIntegerCase` enum that represents the type value is and how long it should be.
         /// </param>
         /// <returns>The current Serialization object.</returns>
-        internal Serialization Write<U>(U value, WriteIntegerCase integer_type) where U : IComparable, IFormattable
+        internal Serialization Write<U>(U value, IntegerCase integer_type) where U : IComparable, IFormattable
         {
             if (this.IsSignedType<U>())
                 return this.SetError<Serialization, SuiError>(this, "Value is a signed integer.", value);
@@ -355,20 +337,20 @@ namespace OpenDive.BCS
 
             switch (integer_type)
             {
-                case WriteIntegerCase.U8:
+                case IntegerCase.U8:
                     writer = new Span<byte>(new byte[] { Convert.ToByte(value) });
                     break;
-                case WriteIntegerCase.U16:
+                case IntegerCase.U16:
                     BinaryPrimitives.WriteUInt16LittleEndian(writer, Convert.ToUInt16(value));
                     break;
-                case WriteIntegerCase.U32:
+                case IntegerCase.U32:
                     BinaryPrimitives.WriteUInt32LittleEndian(writer, Convert.ToUInt32(value));
                     break;
-                case WriteIntegerCase.U64:
+                case IntegerCase.U64:
                     BinaryPrimitives.WriteUInt64LittleEndian(writer, Convert.ToUInt64(value));
                     break;
                 default:
-                    return this.SetError<Serialization, SuiError>(this, "The integer_type is not a U8, U16, U32, nor a U64.", new Tuple<U, WriteIntegerCase>(value, integer_type));
+                    return this.SetError<Serialization, SuiError>(this, "The integer_type is not a U8, U16, U32, nor a U64.", new Tuple<U, IntegerCase>(value, integer_type));
             }
 
             this.Output.Write(writer);

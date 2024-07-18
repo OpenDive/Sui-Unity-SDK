@@ -30,6 +30,8 @@ using System.IO;
 using System.Numerics;
 using System.Reflection;
 using System.Text;
+using System.Buffers.Binary;
+using UnityEngine.UIElements;
 
 namespace OpenDive.BCS
 {
@@ -159,37 +161,37 @@ namespace OpenDive.BCS
         /// Deserializes a `U8` value.
         /// </summary>
         /// <returns>A deserialized `U8` object containing the `byte` value.</returns>
-        public U8 DeserializeU8() => new U8(this.Read(1)[0]);
+        public U8 DeserializeU8() => (U8)this.ReadInt(IntegerCase.U8);
 
         /// <summary>
         /// Deserializes a `U16` value.
         /// </summary>
         /// <returns>A deserialized `U16` object containing the `ushort` value.</returns>
-        public U16 DeserializeU16() => new U16(BitConverter.ToUInt16(this.Read(2)));
+        public U16 DeserializeU16() => (U16)this.ReadInt(IntegerCase.U16);
 
         /// <summary>
         /// Deserializes a `U32` value.
         /// </summary>
         /// <returns>A deserialized `U32` object containing the `uint` value.</returns>
-        public U32 DeserializeU32() => new U32(BitConverter.ToUInt32(this.Read(4)));
+        public U32 DeserializeU32() => (U32)this.ReadInt(IntegerCase.U32);
 
         /// <summary>
         /// Deserializes a `U64` value.
         /// </summary>
         /// <returns>A deserialized `U64` object containing the `ulong` value.</returns>
-        public U64 DeserializeU64() => new U64(BitConverter.ToUInt64(this.Read(8)));
+        public U64 DeserializeU64() => (U64)this.ReadInt(IntegerCase.U64);
 
         /// <summary>
         /// Deserializes a `U128` value.
         /// </summary>
         /// <returns>A deserialized `U128` object containing the `BigInteger` value.</returns>
-        public U128 DeserializeU128() => new U128(new BigInteger(this.Read(16), isUnsigned: true, isBigEndian: false));
+        public U128 DeserializeU128() => (U128)this.ReadInt(IntegerCase.U128);
 
         /// <summary>
         /// Deserializes a `U256` value.
         /// </summary>
         /// <returns>A deserialized `U256` object containing the `BigInteger` value.</returns>
-        public U256 DeserializeU256() => new U256(new BigInteger(this.Read(32), isUnsigned: true, isBigEndian: false));
+        public U256 DeserializeU256() => (U256)this.ReadInt(IntegerCase.U256);
 
         /// <summary>
         /// Deserializes an `int` value representing the Uleb128 serialized value.
@@ -234,6 +236,33 @@ namespace OpenDive.BCS
                 return this.SetError<byte[], SuiError>(new byte[] { }, $"Unexpected end of input. Requested: {length}, found: {total_read}");
 
             return value;
+        }
+
+        /// <summary>
+        /// Reads in an integer value from the input memory stream.
+        /// </summary>
+        /// <param name="integer_type">The type of integer that will be read and returned.</param>
+        /// <returns>An `ISerializable` object that represents an unsigned integer.</returns>
+        internal ISerializable ReadInt(IntegerCase integer_type)
+        {
+            byte[] value = this.Read((int)integer_type);
+            switch (integer_type)
+            {
+                case IntegerCase.U8:
+                    return new U8(value[0]);
+                case IntegerCase.U16:
+                    return new U16(BinaryPrimitives.ReadUInt16LittleEndian(value));
+                case IntegerCase.U32:
+                    return new U32(BinaryPrimitives.ReadUInt32LittleEndian(value));
+                case IntegerCase.U64:
+                    return new U64(BinaryPrimitives.ReadUInt64LittleEndian(value));
+                case IntegerCase.U128:
+                    return new U128(new BigInteger(value, isUnsigned: true, isBigEndian: false));
+                case IntegerCase.U256:
+                    return new U256(new BigInteger(value, isUnsigned: true, isBigEndian: false));
+                default:
+                    return this.SetError<ISerializable, SuiError>(null, "Unexpected value read from deserializer.");
+            }
         }
 
         /// <summary>

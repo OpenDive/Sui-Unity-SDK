@@ -36,6 +36,23 @@ using System.Text;
 
 namespace OpenDive.BCS
 {
+    #region Integer Enum
+
+    /// <summary>
+    /// Used internally for determining serialization and deserialization type.
+    /// </summary>
+    internal enum IntegerCase
+    {
+        U8 = 1,
+        U16 = 2,
+        U32 = 4,
+        U64 = 8,
+        U128 = 16,
+        U256 = 32
+    }
+
+    #endregion
+
     #region ISerializable Interface
 
     public interface ISerializable
