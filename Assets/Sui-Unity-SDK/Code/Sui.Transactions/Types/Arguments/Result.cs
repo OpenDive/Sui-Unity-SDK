@@ -104,7 +104,7 @@ namespace Sui.Transactions.Types.Arguments
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            return new Result(deserializer.DeserializeU16());
+            return new Result(deserializer.DeserializeU16().Value);
         }
     }
 }

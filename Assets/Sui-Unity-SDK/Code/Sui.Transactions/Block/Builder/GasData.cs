@@ -137,14 +137,14 @@ namespace Sui.Transactions.Builder
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            Sui.Types.SuiObjectRef[] payment = deserializer.DeserializeSequence(typeof(Sui.Types.SuiObjectRef)).Cast<Sui.Types.SuiObjectRef>().ToArray();
+            Sui.Types.SuiObjectRef[] payment = deserializer.DeserializeSequence(typeof(Sui.Types.SuiObjectRef)).Values.Cast<Sui.Types.SuiObjectRef>().ToArray();
             AccountAddress owner = (AccountAddress)AccountAddress.Deserialize(deserializer);
             U64 price = (U64)deserializer.DeserializeOptional(typeof(U64));
             U64 budget = (U64)deserializer.DeserializeOptional(typeof(U64));
 
             return new GasData(
-                budget != null ? $"{budget.value}" : null,
-                price != null ? $"{price.value}" : null,
+                budget != null ? $"{budget.Value}" : null,
+                price != null ? $"{price.Value}" : null,
                 payment,
                 owner
             );

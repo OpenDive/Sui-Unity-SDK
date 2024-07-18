@@ -21,8 +21,6 @@ using Sui.Transactions.Kinds;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using Sui.Rpc.Client;
-using UnityEngine.Windows;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 
 namespace Sui.Transactions
 {
@@ -591,7 +589,7 @@ namespace Sui.Transactions
             TransactionBlockInput[] inserted_arr = BlockDataBuilder.Builder.Inputs.Where((input) => {
                 if (input.Value == null || input.Value.GetType() != typeof(BString))
                     return false;
-                return id == NormalizedTypeConverter.NormalizeSuiAddress(((BString)input.Value).value);
+                return id == NormalizedTypeConverter.NormalizeSuiAddress(((BString)input.Value).Value);
             }).ToArray();
 
             if (inserted_arr.Count() != 0)
@@ -805,7 +803,7 @@ namespace Sui.Transactions
         /// Makes a move call with target, optional arguments, and optional type arguments.
         /// </summary> ✅
         /// <param name="target">A `SuiMoveNormalizedStructType` representing the target of the move call.</param>
-        /// <param name="typeArguments">An optional array of `ISerializableTag` representing the arguments of the move call.</param>
+        /// <param name="typeArguments">An optional array of `SerializableTypeTag` representing the arguments of the move call.</param>
         /// <param name="arguments">An optional array of `SuiTransactionArgument` representing the type arguments of the move call.</param>
         /// <param name="return_value_count">The number of return values, greater than 1, that are returned by the move call.</param>
         /// <returns>A `SuiTransactionArgument` array representing the result of the move call.</returns>
@@ -1028,11 +1026,11 @@ namespace Sui.Transactions
                 // The value is an ObjectID (AccountAddress) add it to the objects to resolve
                 if (input.Value.GetType() == typeof(BString))
                 {
-                    if (Regex.IsMatch(((BString)input.Value).value, @"^(0x)?[0-9a-fA-F]{32,64}$"))
+                    if (Regex.IsMatch(((BString)input.Value).Value, @"^(0x)?[0-9a-fA-F]{32,64}$"))
                     {
                         ObjectToResolve objectToResolve = new ObjectToResolve
                         (
-                            ((BString)input.Value).value,
+                            ((BString)input.Value).Value,
                             input,
                             null
                         );
@@ -1227,7 +1225,7 @@ namespace Sui.Transactions
 
                         if (inputValue.GetType() == typeof(BString))
                         {
-                            objectsToResolve.Add(new ObjectToResolve(((BString)inputValue).value, input, param_enumerated.Item2));
+                            objectsToResolve.Add(new ObjectToResolve(((BString)inputValue).Value, input, param_enumerated.Item2));
                             continue;
                         }
 

@@ -26,7 +26,7 @@ namespace Sui.Accounts
     /// https://docs.sui.io/learn/cryptography/sui-wallet-specs#address-format
     /// </summary>
     [JsonConverter(typeof(SuiAddressJsonConverter))]
-    public class AccountAddress : ISerializableTag
+    public class AccountAddress : ISerializable
     {
         public static readonly int OldLength = 20;
 

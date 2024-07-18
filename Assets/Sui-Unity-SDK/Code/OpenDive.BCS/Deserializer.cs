@@ -1,22 +1,20 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Numerics;
+using System.Reflection;
+using System.Text;
 
 namespace OpenDive.BCS
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Numerics;
-    using System.Reflection;
-    using Newtonsoft.Json;
-    using UnityEngine;
-
     public class Deserialization
     {
-        int MAX_U8 = (int)(Math.Pow(2, 8) - 1);
-        int MAX_U16 = (int)(Math.Pow(2, 16) - 1);
-        uint MAX_U32 = (uint)(Math.Pow(2, 32) - 1);
-        UInt64 MAX_U64 = (UInt64)(Math.Pow(2, 64) - 1);
-        BigInteger MAX_U128 = (BigInteger)(Math.Pow(2, 128) - 1); // System.UInt128
-        BigInteger MAX_U256 = (BigInteger)(Math.Pow(2, 256) - 1);
+        readonly int MAX_U8 = (int)(Math.Pow(2, 8) - 1);
+        readonly int MAX_U16 = (int)(Math.Pow(2, 16) - 1);
+        readonly uint MAX_U32 = (uint)(Math.Pow(2, 32) - 1);
+        readonly ulong MAX_U64 = (ulong)(Math.Pow(2, 64) - 1);
+        readonly BigInteger MAX_U128 = (BigInteger)(Math.Pow(2, 128) - 1);
+        readonly BigInteger MAX_U256 = (BigInteger)(Math.Pow(2, 256) - 1);
 
         #region Deserialization
 
@@ -54,26 +52,20 @@ namespace OpenDive.BCS
         public BCSMap DeserializeMap(Type keyType, Type valueType)
         {
             int length = DeserializeUleb128();
-            SortedDictionary<string, ISerializable> sortedMap = new SortedDictionary<string, ISerializable>();
+            Dictionary<BString, ISerializable> sorted_map = new Dictionary<BString, ISerializable>();
 
-            while (sortedMap.Count < length)
+            while (sorted_map.Count < length)
             {
-                string key = DeserializeString();
+                BString key = DeserializeString();
 
                 // Calls the "Deserialize" method from the give BCS type
                 MethodInfo method = valueType.GetMethod("Deserialize", new Type[] { typeof(Deserialization) });
                 ISerializable val = (ISerializable)method.Invoke(null, new[] { this });
 
-                sortedMap.Add(key, val);
+                sorted_map.Add(key, val);
             }
 
-            Dictionary<BString, ISerializable> value = new Dictionary<BString, ISerializable>();
-            foreach (KeyValuePair<string, ISerializable> entry in sortedMap)
-            {
-                value.Add(new BString(entry.Key), entry.Value);
-            }
-
-            return new BCSMap(value);
+            return new BCSMap(sorted_map);
         }
 
         /// <summary>
@@ -81,7 +73,7 @@ namespace OpenDive.BCS
         /// </summary>
         /// <param name="valueDecoderType"></param>
         /// <returns></returns>
-        public ISerializable[] DeserializeSequence(Type valueDecoderType)
+        public Sequence DeserializeSequence(Type valueDecoderType)
         {
             int length = DeserializeUleb128();
             List<ISerializable> values = new List<ISerializable>();
@@ -93,57 +85,10 @@ namespace OpenDive.BCS
                 values.Add(val);
             }
 
-            return values.ToArray();
+            return new Sequence(values.ToArray());
         }
 
-        public TagSequence DeserializeTagSequence()
-        {
-            int length = DeserializeUleb128();
-            List<ISerializableTag> values = new List<ISerializableTag>();
-
-            while (values.Count < length)
-            {
-                ISerializableTag val = ISerializableTag.DeserializeTag(this);
-                values.Add(val);
-            }
-
-            return new TagSequence(values.ToArray());
-        }
-
-        // TODO: CLEAN THIS
-        //public Sequence DeserializeScriptArgSequence()
-        //{
-        //    int length = DeserializeUleb128();
-        //    List<ScriptArgument> values = new List<ScriptArgument>();
-
-        //    while (values.Count < length)
-        //    {
-        //        ScriptArgument val = ScriptArgument.Deserialize(this);
-        //        values.Add(val);
-        //    }
-
-        //    return new Sequence(values.ToArray());
-        //}
-
-        public TagSequence DeserializeArgSequence(Type valueDecoderType)
-        {
-            int length = DeserializeUleb128();
-            List<ISerializableTag> values = new List<ISerializableTag>();
-
-            while (values.Count < length)
-            {
-                MethodInfo method = valueDecoderType.GetMethod("Deserialize", new Type[] { typeof(Deserialization) });
-                ISerializableTag val = (ISerializableTag)method.Invoke(null, new[] { this });
-                values.Add(val);
-            }
-
-            return new TagSequence(values.ToArray());
-        }
-
-        public string DeserializeString()
-        {
-            return BString.Deserialize(this.Read(this.DeserializeUleb128()));
-        }
+        public BString DeserializeString() => new BString(Encoding.UTF8.GetString(this.Read(this.DeserializeUleb128())));
 
         public ISerializable DeserializeOptional(Type valueDecoderType)
         {
@@ -158,7 +103,7 @@ namespace OpenDive.BCS
             return null;
         }
 
-        public int PeekByte()
+        internal int PeekByte()
         {
             long originalPosition = this.input.Position;
 
@@ -171,45 +116,25 @@ namespace OpenDive.BCS
             return nextByte;
         }
 
-        //public ISerializable Struct(ISerializable structObj )
-        public ISerializable Struct(Type structType)
+        public ISerializable DeserializeStruct(Type structType)
         {
-            //Type structType = structObj.GetType();
             MethodInfo method = structType.GetMethod("Deserialize", new Type[] { typeof(Deserialization) });
-            ISerializableTag val = (ISerializableTag)method.Invoke(null, new[] { this });
+            ISerializable val = (ISerializable)method.Invoke(null, new[] { this });
 
             return val;
         }
 
-        public byte DeserializeU8()
-        {
-            return (byte)this.ReadInt(1)[0];
-        }
+        public U8 DeserializeU8() => new U8((byte)this.ReadInt(1)[0]);
 
-        public ushort DeserializeU16()
-        {
-            return BCS.U16.Deserialize(this.Read(2));
-        }
+        public U16 DeserializeU16() => new U16(BitConverter.ToUInt16(this.ReadInt(2)));
 
-        public uint DeserializeU32()
-        {
-            return BCS.U32.Deserialize(this.Read(4));
-        }
+        public U32 DeserializeU32() => new U32(BitConverter.ToUInt32(this.Read(4)));
 
-        public ulong DeserializeU64()
-        {
-            return BCS.U64.Deserialize(this.Read(8));
-        }
+        public U64 DeserializeU64() => new U64(BitConverter.ToUInt64(this.Read(8)));
 
-        public BigInteger DeserializeU128()
-        {
-            return BCS.U128.Deserialize(this.Read(16));
-        }
+        public U128 DeserializeU128() => new U128(new BigInteger(this.Read(16)));
 
-        public BigInteger DeserializeU256()
-        {
-            return BCS.U256.Deserialize(this.Read(32));
-        }
+        public U256 DeserializeU256() => new U256(new BigInteger(this.Read(32)));
 
         public int DeserializeUleb128()
         {

@@ -53,14 +53,14 @@ namespace Sui.Types
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            byte type = deserializer.DeserializeU8();
+            byte type = deserializer.DeserializeU8().Value;
 
             switch (type)
             {
                 case 0:
                     return new TransactionExpiration();
                 case 1:
-                    return new TransactionExpiration((int)deserializer.DeserializeU64());
+                    return new TransactionExpiration((int)deserializer.DeserializeU64().Value);
                 default:
                     return new SuiError(0, "Unable to deserialize TransactionExpiration", null);
             }

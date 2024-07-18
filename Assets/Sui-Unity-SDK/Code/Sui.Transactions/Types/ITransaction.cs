@@ -310,7 +310,7 @@ namespace Sui.Transactions.Types
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            byte value = deserializer.DeserializeU8();
+            byte value = deserializer.DeserializeU8().Value;
             switch (value)
             {
                 case 0:

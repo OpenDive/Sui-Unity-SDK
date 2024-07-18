@@ -115,7 +115,7 @@ namespace Sui.Transactions.Kinds
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            byte type = deserializer.DeserializeU8();
+            byte type = deserializer.DeserializeU8().Value;
             switch (type)
             {
                 case 0:

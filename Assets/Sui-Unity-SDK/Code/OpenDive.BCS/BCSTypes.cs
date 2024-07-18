@@ -1,31 +1,54 @@
-﻿using Newtonsoft.Json;
+﻿//
+//  BCSTypes.cs
+//  Sui-Unity-SDK
+//
+//  Copyright (c) 2024 OpenDive
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sui.Accounts;
 using Sui.Rpc.Client;
 using Sui.Rpc.Models;
-using Sui.Transactions.Types;
-using Sui.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
-using UnityEditor.Build.Player;
-using UnityEngine;
 
 namespace OpenDive.BCS
 {
-    // See type_tag.py
+    /// <summary>
+    /// An enum value that represents a Move type.
+    /// </summary>
     public enum TypeTag
     {
-        BOOL, // int = 0
-        U8, // int = 1
-        U64, // int = 2
-        U128, // int = 3
-        ACCOUNT_ADDRESS, // int = 4
-        SIGNER, // int = 5
-        VECTOR, // int = 6
-        STRUCT, // int = 7
+        BOOL,
+        U8,
+        U64,
+        U128,
+        ACCOUNT_ADDRESS,
+        SIGNER,
+        VECTOR,
+        STRUCT,
         U16,
         U32,
         U256
@@ -33,14 +56,39 @@ namespace OpenDive.BCS
 
     public interface ISerializable
     {
+        /// <summary>
+        /// Serializes an output instance using the given Serializer.
+        /// </summary>
+        /// <param name="serializer">The Serializer instance used to serialize the data.</param>
         public void Serialize(Serialization serializer);
-        public static ISerializable Deserialize(Deserialization deserializer) => throw new NotImplementedException();
+
+        /// <summary>
+        /// Deserializes an output instance from a Deserializer.
+        /// </summary>
+        /// <param name="deserializer">The Deserializer instance used to deserialize the data.</param>
+        /// <returns>A new `ISerializable` object that was deserialized from the input.</returns>
+        public static ISerializable Deserialize(Deserialization deserializer) => new SuiError(0, "Deserialize is not implemented", null);
     }
 
+    /// <summary>
+    /// An object that contains the type tag associated with the BCS value.
+    /// </summary>
     public class SerializableTypeTag: ISerializable
     {
+        /// <summary>
+        /// The Move type of the value.
+        /// </summary>
         public TypeTag Type { get; set; }
+
+        /// <summary>
+        /// The serializable value.
+        /// </summary>
         public ISerializable Value { get; set; }
+
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public RpcError Error { get; private set; }
 
         public SerializableTypeTag(ISerializable value)
         {
@@ -51,10 +99,7 @@ namespace OpenDive.BCS
             else if (value.GetType() == typeof(AccountAddress))
                 this.Type = TypeTag.ACCOUNT_ADDRESS;
             else
-            {
-                Debug.Log("MARCUS::: NOT IMPLEMENTED TYPE TAG");
-                throw new NotImplementedException();
-            }
+                this.Error = new RpcError(0, "Unable to initialize SerializableTypeTag.", value);
         }
 
         public SerializableTypeTag(string string_value)
@@ -110,10 +155,7 @@ namespace OpenDive.BCS
                     this.Type = TypeTag.U256;
                 }
                 else
-                {
-                    Debug.Log("MARCUS::: NOT IMPLEMENTED FROM STRING");
-                    throw new NotImplementedException();
-                }
+                    this.Error = new RpcError(0, "Unable to initialize SerializableTypeTag.", string_value);
             }
         }
 
@@ -136,7 +178,7 @@ namespace OpenDive.BCS
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU8((byte)(int)this.Type);
+            serializer.SerializeU8((byte)this.Type);
             this.Value.Serialize(serializer);
         }
 
@@ -148,21 +190,22 @@ namespace OpenDive.BCS
             if (variant == TypeTag.BOOL)
                 ser_value = new Bool(deserializer.DeserializeBool());
             else if (variant == TypeTag.U8)
-                ser_value = new U8(deserializer.DeserializeU8());
+                ser_value = deserializer.DeserializeU8();
             else if (variant == TypeTag.U16)
-                ser_value = new U16(deserializer.DeserializeU16());
+                ser_value = deserializer.DeserializeU16();
             else if (variant == TypeTag.U32)
-                ser_value = new U32(deserializer.DeserializeU32());
+                ser_value = deserializer.DeserializeU32();
             else if (variant == TypeTag.U64)
-                ser_value = new U64(deserializer.DeserializeU64());
+                ser_value = deserializer.DeserializeU64();
             else if (variant == TypeTag.U128)
-                ser_value = new U128(deserializer.DeserializeU128());
+                ser_value = deserializer.DeserializeU128();
             else if (variant == TypeTag.U256)
-                ser_value = U256.Deserialize(deserializer);
+                ser_value = deserializer.DeserializeU256();
             else if (variant == TypeTag.ACCOUNT_ADDRESS)
                 ser_value = (AccountAddress)AccountAddress.Deserialize(deserializer);
             else if (variant == TypeTag.STRUCT)
-                ser_value = StructTag.Deserialize(deserializer);
+                ser_value = (SuiStructTag)SuiStructTag.Deserialize(deserializer);
+            // TODO: Implement below deserialization types.
             else if (variant == TypeTag.SIGNER)
                 return new SuiError(0, "Unable to deserialize SerialziableTypeTag for Signer", null);
             else if (variant == TypeTag.VECTOR)
@@ -174,240 +217,132 @@ namespace OpenDive.BCS
         }
     }
 
-    public interface ISerializableTag : ISerializable
-    {
-        public TypeTag Variant();
-
-        public object GetValue();
-
-        public void SerializeTag(Serialization serializer)
-        {
-            serializer.SerializeU32AsUleb128((uint)(int)this.Variant());
-            this.Serialize(serializer);
-        }
-
-        public static new ISerializableTag Deserialize(Deserialization deserializer) => throw new NotImplementedException();
-
-        public static ISerializableTag DeserializeTag(Deserialization deserializer)
-        {
-            TypeTag variant = (TypeTag)deserializer.DeserializeUleb128();
-
-            if (variant == TypeTag.BOOL)
-                return Bool.Deserialize(deserializer);
-            else if (variant == TypeTag.U8)
-                return U8.Deserialize(deserializer);
-            else if (variant == TypeTag.U16)
-                return U16.Deserialize(deserializer);
-            else if (variant == TypeTag.U32)
-                return U32.Deserialize(deserializer);
-            else if (variant == TypeTag.U64)
-                return U64.Deserialize(deserializer);
-            else if (variant == TypeTag.U128)
-                return U128.Deserialize(deserializer);
-            else if (variant == TypeTag.U256)
-                return U256.Deserialize(deserializer);
-            // TODO: Clean up
-            else if (variant == TypeTag.ACCOUNT_ADDRESS)
-                return (AccountAddress)AccountAddress.Deserialize(deserializer);
-            else if (variant == TypeTag.SIGNER)
-                throw new NotImplementedException();
-            else if (variant == TypeTag.VECTOR)
-                throw new NotImplementedException();
-            else if (variant == TypeTag.STRUCT)
-                return StructTag.Deserialize(deserializer);
-            //return ISerializableTag.Deserialize(deserializer);
-
-            throw new NotImplementedException();
-        }
-    }
-
     /// <summary>
-    /// Representation of a tag sequence.
-    /// </summary>
-    public class TagSequence : ISerializable
-    {
-        public ISerializableTag[] serializableTags;
-
-        public TagSequence(ISerializableTag[] serializableTags)
-        {
-            this.serializableTags = serializableTags;
-        }
-
-        public void Serialize(Serialization serializer)
-        {
-            serializer.SerializeU32AsUleb128((uint)this.serializableTags.Length);
-            foreach (ISerializableTag element in this.serializableTags)
-            {
-                element.SerializeTag(serializer);
-            }
-        }
-
-        public static TagSequence Deserialize(Deserialization deserializer)
-        {
-            int length = deserializer.DeserializeUleb128();
-
-            List<ISerializableTag> values = new List<ISerializableTag>();
-
-            while (values.Count < length)
-            {
-                ISerializableTag tag = ISerializableTag.DeserializeTag(deserializer);
-                values.Add(tag);
-            }
-
-            return new TagSequence(values.ToArray());
-        }
-
-        public object GetValue()
-        {
-            return serializableTags;
-        }
-
-        public override bool Equals(object other)
-        {
-            TagSequence otherTagSeq = (TagSequence)other;
-            return Enumerable.SequenceEqual((ISerializableTag[])this.GetValue(), (ISerializableTag[])otherTagSeq.GetValue());
-        }
-
-        public override string ToString()
-        {
-            StringBuilder result = new StringBuilder();
-            foreach (var tag in serializableTags)
-            {
-                result.Append(tag.ToString());
-            }
-
-            return result.ToString();
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-    }
-
-    /// <summary>
-    /// Representation of a Transaction Argument sequence / list.
-    /// NOTE: Transaction Arguments have different types hence they cannot be represented using a regular list.
-    /// NOTE: This class does not implement deserialization because the developer would know the types beforehand,
-    /// and hence would apply the appropriate deserialization based on the type.
-    /// 
-    /// Fixed and Variable Length Sequences
-    /// Sequences can be made of up of any BCS supported types(even complex structures) 
-    /// but all elements in the sequence must be of the same type.If the length of a sequence 
-    /// is fixed and well known then BCS represents this as just the concatenation of the 
-    /// serialized form of each individual element in the sequence. If the length of the sequence 
-    /// can be variable, then the serialized sequence is length prefixed with a ULEB128-encoded unsigned integer 
-    /// indicating the number of elements in the sequence. All variable length sequences must 
-    /// be MAX_SEQUENCE_LENGTH elements long or less.
+    /// Representation of an `ISerializable` sequence / list.
     /// </summary>
     public class Sequence : ISerializable
     {
-        public ISerializable[] values;
+        /// <summary>
+        /// The `ISerializable` value list.
+        /// </summary>
+        public ISerializable[] Values { get; set; }
 
-        public int Length
-        {
-            get
-            {
-                return values.Length;
-            }
-        }
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
 
-        public object GetValue()
-        {
-            return values;
-        }
+        public Sequence(ISerializable[] serializable) => this.Values = serializable;
 
-        public Sequence(ISerializable[] serializable)
-        {
-            this.values = serializable;
-        }
+        /// <summary>
+        /// The amount of items in the `Value` array.
+        /// </summary>
+        public int Length { get => this.Values.Length; }
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128((uint)this.values.Length);
+            serializer.SerializeU32AsUleb128((uint)this.Length);
 
-            // TODO: Check if adding this check prevent trying to iterate through empty sequences / arrays
-            //if(this.values.Length > 0)
-            //{
-                foreach (ISerializable element in this.values)
+            foreach (ISerializable element in this.Values)
+            {
+                Type elementType = element.GetType();
+                if (elementType == typeof(Sequence))
                 {
-                    Type elementType = element.GetType();
-                    if (elementType == typeof(Sequence))
-                    {
-                        Serialization seqSerializer = new Serialization();
-                        Sequence seq = (Sequence)element;
-                        seqSerializer.Serialize(seq);
+                    Serialization seqSerializer = new Serialization();
+                    Sequence seq = (Sequence)element;
+                    seqSerializer.Serialize(seq);
 
-                        byte[] elementsBytes = seqSerializer.GetBytes();
-                        int sequenceLen = elementsBytes.Length;
-                        serializer.SerializeU32AsUleb128((uint)sequenceLen);
-                        serializer.SerializeFixedBytes(elementsBytes);
-                    }
-                    else
-                    {
-                        Serialization s = new Serialization();
-                        element.Serialize(s);
-                        byte[] b = s.GetBytes();
-                        //serializer.SerializeBytes(b);
-                        serializer.SerializeFixedBytes(b);
-                    }
+                    byte[] elementsBytes = seqSerializer.GetBytes();
+                    int sequenceLen = elementsBytes.Length;
+                    serializer.SerializeU32AsUleb128((uint)sequenceLen);
+                    serializer.SerializeFixedBytes(elementsBytes);
                 }
-            //}
+                else
+                {
+                    Serialization s = new Serialization();
+                    element.Serialize(s);
+                    byte[] b = s.GetBytes();
+                    serializer.SerializeFixedBytes(b);
+                }
+            }
         }
 
-        public static Sequence Deserialize(Deserialization deser)
+        public static ISerializable Deserialize(Deserialization deser)
         {
             int length = deser.DeserializeUleb128();
             List<ISerializable> values = new List<ISerializable>();
 
             while (values.Count < length)
-            {
                 values.Add(new Bytes(deser.ToBytes()));
-            }
 
             return new Sequence(values.ToArray());
         }
 
         public override bool Equals(object other)
         {
-            Sequence otherSeq = (Sequence)other;
-            return Enumerable.SequenceEqual(this.values, otherSeq.values);
+            if (other is not Sequence && other is not ISerializable[])
+            {
+                this.Error = new SuiError(0, "Compared object is not a Sequence nor an ISerializable[].", other);
+                return false;
+            }
+
+            ISerializable[] other_sequence;
+
+            if (other is Sequence)
+                other_sequence = ((Sequence)other).Values;
+            else
+                other_sequence = (ISerializable[])other;
+
+            if (this.Length != other_sequence.Length)
+                return false;
+
+            return this.Values.SequenceEqual(other_sequence);
         }
 
         public override string ToString()
         {
             StringBuilder result = new StringBuilder();
-            foreach (var value in values)
+
+            foreach (var value in Values)
                 result.Append(value.ToString());
+
             return result.ToString();
         }
 
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
+        public override int GetHashCode() => base.GetHashCode();
     }
 
     /// <summary>
-    /// Representation of a byte sequence.
+    /// Representation of a `byte[]` sequence.
     /// </summary>
     public class BytesSequence : ISerializable
     {
-        public byte[][] values;
+        /// <summary>
+        /// The `bytes[]` array value.
+        /// </summary>
+        public byte[][] Values { get; set; }
 
-        public BytesSequence(byte[][] values)
-        {
-            this.values = values;
-        }
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
+
+        public BytesSequence(byte[][] values) => this.Values = values;
+
+        /// <summary>
+        /// The amount of items in the `Value` array.
+        /// </summary>
+        public int Length { get => this.Values.Length; }
 
         public void Serialize(Serialization serializer)
         {
-            serializer.SerializeU32AsUleb128((uint)this.values.Length);
-            foreach (byte[] element in this.values)
+            serializer.SerializeU32AsUleb128((uint)this.Values.Length);
+
+            foreach (byte[] element in this.Values)
                 serializer.SerializeBytes(element);
         }
 
-        public static BytesSequence Deserialize(Deserialization deserializer)
+        public static ISerializable Deserialize(Deserialization deserializer)
         {
             int length = deserializer.DeserializeUleb128();
             List<byte[]> bytesList = new List<byte[]>();
@@ -421,51 +356,70 @@ namespace OpenDive.BCS
             return new BytesSequence(bytesList.ToArray());
         }
 
-        public object GetValue()
-        {
-            return values;
-        }
-
         public override bool Equals(object other)
         {
-            BytesSequence otherSeq = (BytesSequence)other;
+            if (other is not BytesSequence && other is not byte[][])
+            {
+                this.Error = new SuiError(0, "Compared object is not a ByteSequence nor a byte[] array.", other);
+                return false;
+            }
+
+            byte[][] other_byte_sequence;
+
+            if (other is BytesSequence)
+                other_byte_sequence = ((BytesSequence)other).Values;
+            else
+                other_byte_sequence = (byte[][])other;
 
             bool equal = true;
-            for (int i = 0; i < this.values.Length; i++)
-                equal = equal && Enumerable.SequenceEqual(this.values[i], otherSeq.values[i]);
+
+            if (this.Length != other_byte_sequence.Length)
+                return false;
+
+            for (int i = 0; i < this.Values.Length; i++)
+                equal = equal && this.Values[i].SequenceEqual(other_byte_sequence[i]);
+
             return equal;
         }
 
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
+        public override int GetHashCode() => base.GetHashCode();
 
         public override string ToString()
         {
-            StringBuilder result = new StringBuilder();
-            foreach (byte[] value in values)
-                result.Append(value.ToString());
-            return result.ToString();
+            string result = "[";
+
+            for (int i = 0; i < this.Length; ++i)
+                result += i == (this.Length - 1) ?
+                    $"[{string.Join(", ", this.Values[i])}]" :
+                    $"[{string.Join(", ", this.Values[i])}], ";
+
+            result += "]";
+
+            return result;
         }
     }
 
     /// <summary>
-    /// Representation of a map in BCS.
+    /// Representation of a `Dictionary<BString, ISerializable>` in BCS.
     /// </summary>
     public class BCSMap : ISerializable
     {
-        public Dictionary<BString, ISerializable> values;
+        /// <summary>
+        /// The dictionary of values, with the `BString` being the key, and an `ISerializable` object being the value.
+        /// </summary>
+        public Dictionary<BString, ISerializable> Values { get; set; }
 
-        public BCSMap(Dictionary<BString, ISerializable> values)
-        {
-            this.values = values;
-        }
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
 
-        public object GetValue()
-        {
-            return values;
-        }
+        public BCSMap(Dictionary<BString, ISerializable> values) => this.Values = values;
+
+        /// <summary>
+        /// The amount of items in the `Value` array.
+        /// </summary>
+        public int Length { get => this.Values.Keys.Count(); }
 
         /// <summary>
         /// Maps (Key / Value Stores)
@@ -478,812 +432,641 @@ namespace OpenDive.BCS
         /// <param name="serializer"></param>
         public void Serialize(Serialization serializer)
         {
-            Serialization mapSerializer = new Serialization();
-            SortedDictionary<string, (byte[], byte[])> byteMap = new SortedDictionary<string, (byte[], byte[])>();
+            Serialization map_serializer = new Serialization();
+            SortedDictionary<string, (byte[], byte[])> byte_map = new SortedDictionary<string, (byte[], byte[])>();
 
-            foreach (KeyValuePair<BString, ISerializable> entry in this.values)
+            foreach (KeyValuePair<BString, ISerializable> entry in this.Values)
             {
-                Serialization keySerializer = new Serialization();
-                entry.Key.Serialize(keySerializer);
-                byte[] bKey = keySerializer.GetBytes();
+                Serialization key_serializer = new Serialization();
+                entry.Key.Serialize(key_serializer);
+                byte[] b_key = key_serializer.GetBytes();
 
-                Serialization valSerializer = new Serialization();
-                entry.Value.Serialize(valSerializer);
-                byte[] bValue = valSerializer.GetBytes();
+                Serialization val_serializer = new Serialization();
+                entry.Value.Serialize(val_serializer);
+                byte[] b_value = val_serializer.GetBytes();
 
-                byteMap.Add(entry.Key.value, (bKey, bValue));
-            }
-            mapSerializer.SerializeU32AsUleb128((uint)byteMap.Count);
-
-            foreach (KeyValuePair<string, (byte[], byte[])> entry in byteMap)
-            {
-                mapSerializer.SerializeFixedBytes(entry.Value.Item1);
-                mapSerializer.SerializeFixedBytes(entry.Value.Item2);
+                byte_map.Add(entry.Key.Value, (b_key, b_value));
             }
 
-            serializer.SerializeFixedBytes(mapSerializer.GetBytes());
+            map_serializer.SerializeU32AsUleb128((uint)byte_map.Count);
+
+            foreach (KeyValuePair<string, (byte[], byte[])> entry in byte_map)
+            {
+                map_serializer.SerializeFixedBytes(entry.Value.Item1);
+                map_serializer.SerializeFixedBytes(entry.Value.Item2);
+            }
+
+            serializer.SerializeFixedBytes(map_serializer.GetBytes());
         }
 
         public override string ToString()
         {
-            StringBuilder result = new StringBuilder();
-            foreach (KeyValuePair<BString, ISerializable> entry in values)
-                result.Append("(" + entry.Key.ToString() + ", " + entry.Value.ToString() + ")");
-            return result.ToString();
-        }
-    }
+            string result = "[";
 
-    /// <summary>
-    /// Representation of a string in BCS.
-    /// </summary>
-    public class BString : ISerializable
-    {
-        public string value;
+            for (int i = 0; i < this.Length; ++i)
+                result += i == (this.Length - 1) ?
+                    $"({this.Values.Keys.ToArray()[i]}, {this.Values[this.Values.Keys.ToArray()[i]]})" :
+                    $"({this.Values.Keys.ToArray()[i]}, {this.Values[this.Values.Keys.ToArray()[i]]}), ";
 
-        public BString(string value)
-        {
-            this.value = value;
-        }
+            result += "]";
 
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(value);
-        }
-
-        public static string Deserialize(byte[] data)
-        {
-            return Encoding.UTF8.GetString(data);
-        }
-
-        public static byte[] RemoveBOM(byte[] data)
-        {
-            var bom = Encoding.UTF8.GetPreamble();
-            if (data.Length > bom.Length)
-            {
-                for (int i = 0; i < bom.Length; i++)
-                {
-                    if (data[i] != bom[i])
-                        return data;
-                }
-            }
-            return data.Skip(3).ToArray();
-        }
-
-        private static string RemoveBOM(string xml)
-        {
-            // https://stackoverflow.com/questions/17795167/
-            // xml-loaddata-data-at-the-root-level-is-invalid-line-1-position-1
-            var preamble = Encoding.UTF8.GetPreamble();
-            string byteOrderMarkUtf8 = Encoding.UTF8.GetString(preamble);
-            if (xml.StartsWith(byteOrderMarkUtf8))
-            {
-                xml = xml.Remove(0, byteOrderMarkUtf8.Length);
-            }
-
-            return xml;
-        }
-
-        public static BString Deserialize(Deserialization deserializer)
-        {
-            string deserStr = deserializer.DeserializeString();
-            return new BString(deserStr);
-        }
-
-        public override string ToString()
-        {
-            return value;
+            return result;
         }
 
         public override bool Equals(object other)
         {
-            BString otherBString;
+            if (other is not BCSMap && other is not Dictionary<BString, ISerializable>)
+            {
+                this.Error = new SuiError(0, "Compared object is not a BCSMap nor a Dictionary<BString, ISerializable>.", other);
+                return false;
+            }
 
-            if (other is string)
-                otherBString = new BString((string) other);
-            else if (other is not BString)
-                throw new NotImplementedException();
-            else 
-                otherBString = (BString)other;
+            Dictionary<BString, ISerializable> other_map_sequence;
 
-            return this.value == otherBString.value;
-        }
+            if (other is BCSMap)
+                other_map_sequence = ((BCSMap)other).Values;
+            else
+                other_map_sequence = (Dictionary<BString, ISerializable>)other;
 
-        public override int GetHashCode() => this.value.GetHashCode();
+            bool equal = true;
 
-        public object GetValue()
-        {
-            return value;
-        }
-    }
+            if (this.Values.Keys.Count != other_map_sequence.Keys.Count)
+                return false;
 
-    /// <summary>
-    /// Representation of Bytes in BCS.
-    /// </summary>
-    public class Bytes : ISerializable
-    {
-        public byte[] values;
-
-        public Bytes(byte[] values)
-        {
-            this.values = values;
-        }
-
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(values);
-        }
-
-        public Bytes Deserialize(Deserialization deserializer)
-        {
-            return new Bytes(deserializer.ToBytes());
-        }
-
-        public byte[] GetValue()
-        {
-            return values;
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other is not Bytes)
-                throw new NotImplementedException();
-
-            Bytes otherBytes = (Bytes)other;
-            bool equal = Enumerable.SequenceEqual(this.values, otherBytes.values);
+            for (int i = 0; i < this.Length; i++)
+                equal = equal &&
+                    this.Values.Keys.ToArray()[i] == other_map_sequence.Keys.ToArray()[i] &&
+                    this.Values[this.Values.Keys.ToArray()[i]] == other_map_sequence[other_map_sequence.Keys.ToArray()[i]];
 
             return equal;
         }
 
-        public override string ToString()
-        {
-            StringBuilder result = new StringBuilder();
-            foreach (byte value in values)
-                result.Append(value.ToString());
-            return result.ToString();
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
+        public override int GetHashCode() => base.GetHashCode();
     }
 
     /// <summary>
-    /// Representation of a Boolean.
+    /// Representation of `string` in BCS.
     /// </summary>
-    public class Bool : ISerializableTag
+    public class BString : ISerializable
     {
-        public bool value;
+        /// <summary>
+        /// The `string` value.
+        /// </summary>
+        public string Value { get; set; }
 
-        public Bool(bool value)
-        {
-            this.value = value;
-        }
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
 
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(value);
-        }
+        public BString(string value) => this.Value = value;
 
-        public static bool Deserialize(byte[] data)
-        {
-            bool ret = BitConverter.ToBoolean(data);
-            return ret;
-        }
+        /// <summary>
+        /// The amount of items in the `Value` array.
+        /// </summary>
+        public int Length { get => this.Value.Length; }
 
-        public static Bool Deserialize(Deserialization deserializer)
-        {
-            return new Bool(deserializer.DeserializeBool());
-        }
+        public void Serialize(Serialization serializer) => serializer.SerializeString(this.Value);
 
-        public TypeTag Variant()
-        {
-            return TypeTag.BOOL;
-        }
+        public static ISerializable Deserialize(Deserialization deserializer) => deserializer.DeserializeString();
 
-        public override string ToString()
-        {
-            return value.ToString();
-        }
+        public override string ToString() => this.Value;
 
         public override bool Equals(object other)
         {
-            if (other is not Bool)
-                throw new NotImplementedException();
-
-            Bool otherBool = (Bool)other;
-
-            return this.value == otherBool.value;
-        }
-
-
-        public override int GetHashCode() => this.value.GetHashCode();
-
-        public object GetValue()
-        {
-            return value;
-        }
-    }
-
-    /// <summary>
-    /// Representation of U8.
-    /// </summary>
-    public class U8 : ISerializableTag
-    {
-        public byte value;
-
-        public U8(byte value)
-        {
-            this.value = value;
-        }
-
-        public TypeTag Variant()
-        {
-            return TypeTag.U8;
-        }
-
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(value);
-        }
-
-        public static int Deserialize(byte[] data)
-        {
-            return BitConverter.ToInt32(data);
-        }
-
-        public static U8 Deserialize(Deserialization deserializer)
-        {
-            return new U8(deserializer.ReadInt(1)[0]);
-        }
-
-        public object GetValue()
-        {
-            return value;
-        }
-
-        public override string ToString()
-        {
-            return this.value.ToString();
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other is not U8)
-                throw new NotImplementedException();
-
-            U8 otherU8 = (U8)other;
-
-            return this.value == otherU8.value;
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-    }
-
-    /// <summary>
-    /// Representation of a U16.
-    /// </summary>
-    public class U16 : ISerializableTag
-    {
-        public uint value;
-
-        public U16(uint value)
-        {
-            this.value = value;
-        }
-
-        public TypeTag Variant()
-        {
-            return TypeTag.U16;
-        }
-
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(value);
-        }
-
-        public static ushort Deserialize(byte[] data)
-        {
-            return BitConverter.ToUInt16(data);
-        }
-
-        public static U16 Deserialize(Deserialization deserializer)
-        {
-            return new U16(BitConverter.ToUInt16(deserializer.ReadInt(2)));
-        }
-
-        public override string ToString()
-        {
-            return value.ToString();
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other is not U16)
-                throw new NotImplementedException();
-
-            U16 otherU16 = (U16)other;
-
-            return this.value == otherU16.value;
-        }
-
-        public override int GetHashCode() => this.value.GetHashCode();
-
-        public object GetValue()
-        {
-            return value;
-        }
-    }
-
-    /// <summary>
-    /// Representation of a U32.
-    /// </summary>
-    public class U32 : ISerializableTag
-    {
-        public uint value;
-
-        public U32(uint value)
-        {
-            this.value = value;
-        }
-
-        public TypeTag Variant()
-        {
-            return TypeTag.U32;
-        }
-
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(value);
-        }
-
-        public static uint Deserialize(byte[] data)
-        {
-            return BitConverter.ToUInt32(data);
-        }
-
-        public static U32 Deserialize(Deserialization deserializer)
-        {
-            return new U32(BitConverter.ToUInt32(deserializer.ReadInt(4)));
-        }
-
-        public override string ToString()
-        {
-            return value.ToString();
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other is not U32)
-                throw new NotImplementedException();
-
-            U32 otherU8 = (U32)other;
-
-            return this.value == otherU8.value;
-        }
-
-        public override int GetHashCode() => this.value.GetHashCode();
-
-        public object GetValue()
-        {
-            return value;
-        }
-    }
-
-    /// <summary>
-    /// Representation of U64.
-    /// </summary>
-    public class U64 : ISerializableTag
-    {
-        public ulong value;
-
-        public U64(ulong value)
-        {
-            this.value = value;
-        }
-
-        public TypeTag Variant()
-        {
-            return TypeTag.U64;
-        }
-
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(value);
-        }
-
-        public static ulong Deserialize(byte[] data)
-        {
-            return BitConverter.ToUInt64(data);
-        }
-
-        public static U64 Deserialize(Deserialization deserializer)
-        {
-            return new U64(BitConverter.ToUInt64(deserializer.ReadInt(8)));
-        }
-
-        public object GetValue()
-        {
-            return value;
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other is not U64)
-                throw new NotImplementedException();
-
-            U64 otherU64 = (U64)other;
-
-            return this.value == (ulong)otherU64.GetValue();
-        }
-
-        public override string ToString()
-        {
-            return this.value.ToString();
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-    }
-
-    /// <summary>
-    /// Representation of a U128.
-    /// </summary>
-    public class U128 : ISerializableTag
-    {
-        public BigInteger value;
-
-        public U128(BigInteger value)
-        {
-            this.value = value;
-        }
-
-        public TypeTag Variant()
-        {
-            return TypeTag.U128;
-        }
-
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(value);
-        }
-
-        public static BigInteger Deserialize(byte[] data)
-        {
-            return new BigInteger(data);
-        }
-
-        public static U128 Deserialize(Deserialization deserializer)
-        {
-            return new U128(new BigInteger(deserializer.ReadInt(16)));
-        }
-
-        public object GetValue()
-        {
-            return value;
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other is not U128)
-                throw new NotImplementedException();
-
-            U128 otherU128 = (U128)other;
-
-            return this.value == otherU128.value;
-        }
-
-        public override string ToString()
-        {
-            return this.value.ToString();
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-    }
-
-    /// <summary>
-    /// Representation of a 256.
-    /// </summary>
-    public class U256 : ISerializableTag
-    {
-        public BigInteger value;
-
-        public U256(BigInteger value)
-        {
-            this.value = value;
-        }
-
-        public TypeTag Variant()
-        {
-            return TypeTag.U256;
-        }
-
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(value);
-        }
-
-        public static BigInteger Deserialize(byte[] data)
-        {
-            return new BigInteger(data);
-        }
-
-        public static U256 Deserialize(Deserialization deserializer)
-        {
-            return new U256(new BigInteger(deserializer.ReadInt(32)));
-        }
-
-        public object GetValue()
-        {
-            return value;
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other is not U256)
-                throw new NotImplementedException();
-
-            U256 otherU256 = (U256)other;
-
-            return this.value == otherU256.value;
-        }
-
-        public override string ToString()
-        {
-            return this.value.ToString();
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-    }
-
-    /// <summary>
-    /// Representation of a struct tag.
-    /// </summary>
-    public class StructTag : ISerializableTag
-    {
-        public AccountAddress address;
-        public string module;
-        public string name;
-        public ISerializableTag[] typeArgs;
-
-        public StructTag(AccountAddress address, string module, string name, ISerializableTag[] typeArgs)
-        {
-            this.address = address;
-            this.module = module;
-            this.name = name;
-            this.typeArgs = typeArgs;
-        }
-
-        public TypeTag Variant()
-        {
-            return TypeTag.STRUCT;
-        }
-
-        public void Serialize(Serialization serializer)
-        {
-            //serializer.SerializeU32AsUleb128((uint)this.Variant());
-            this.address.Serialize(serializer);
-            serializer.Serialize(this.module);
-            serializer.Serialize(this.name);
-            serializer.Serialize(this.typeArgs);
-        }
-
-        public static StructTag Deserialize(Deserialization deserializer)
-        {
-            AccountAddress address = (AccountAddress)AccountAddress.Deserialize(deserializer);
-            string module = deserializer.DeserializeString();
-            string name = deserializer.DeserializeString();
-
-            int length = deserializer.DeserializeUleb128();
-            List<ISerializableTag> typeArgsList = new List<ISerializableTag>();
-
-            while (typeArgsList.Count < length)
+            if (other is not BString && other is not string)
             {
-                ISerializableTag val = ISerializableTag.DeserializeTag(deserializer);
-                typeArgsList.Add(val);
+                this.Error = new SuiError(0, "Compared object is not a BString nor a string.", other);
+                return false;
             }
 
-            ISerializableTag[] typeArgsArr = typeArgsList.ToArray();
+            string other_string;
 
-            StructTag structTag = new StructTag(
-                address,
-                module,
-                name,
-                typeArgsArr
-            );
+            if (other is BString)
+                other_string = ((BString)other).Value;
+            else
+                other_string = (string)other;
 
-            return structTag;
+            if (this.Value.Length != other_string.Length)
+                return false;
+
+            return this.Value == other_string;
         }
 
-        public object GetValue()
-        {
-            throw new NotSupportedException();
-        }
+        public override int GetHashCode() => base.GetHashCode();
+    }
+
+    /// <summary>
+    /// Representation of `byte[]` in BCS.
+    /// </summary>
+    public class Bytes : ISerializable
+    {
+        /// <summary>
+        /// The `byte` array value.
+        /// </summary>
+        public byte[] Values { get; set; }
+
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
+
+        public Bytes(byte[] values) => this.Values = values;
+
+        /// <summary>
+        /// The amount of items in the `Value` array.
+        /// </summary>
+        public int Length { get => this.Values.Length; }
+
+        public void Serialize(Serialization serializer) => serializer.SerializeBytes(this.Values);
+
+        public ISerializable Deserialize(Deserialization deserializer) => new Bytes(deserializer.ToBytes());
 
         public override bool Equals(object other)
         {
-            if (other is not StructTag)
-                throw new NotImplementedException();
+            if (other is not Bytes && other is not byte[])
+            {
+                this.Error = new SuiError(0, "Compared object is not a Bytes nor a byte[].", other);
+                return false;
+            }
 
-            StructTag otherStructTag = (StructTag)other;
+            byte[] other_bytes;
 
-            return (
-                this.address.Equals(otherStructTag.address)
-                && this.module.Equals(otherStructTag.module)
-                && this.name.Equals(otherStructTag.name)
-                && Enumerable.SequenceEqual(this.typeArgs, otherStructTag.typeArgs)
-            ); ;
+            if (other is Bytes)
+                other_bytes = ((Bytes)other).Values;
+            else
+                other_bytes = (byte[])other;
+
+            if (this.Length != other_bytes.Length)
+                return false;
+
+            return this.Values.SequenceEqual(other_bytes);
         }
+
+        public override string ToString() => $"[{string.Join(", ", this.Values)}]";
+
+        public override int GetHashCode() => base.GetHashCode();
+    }
+
+    /// <summary>
+    /// Representation of `bool` in BCS.
+    /// </summary>
+    public class Bool : ISerializable
+    {
+        /// <summary>
+        /// The `bool` value.
+        /// </summary>
+        public bool Value { get; set; }
+
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
+
+        public Bool(bool value) => this.Value = value;
+
+        public void Serialize(Serialization serializer) => serializer.SerializeBool(this.Value);
+
+        public static Bool Deserialize(Deserialization deserializer) => new Bool(deserializer.DeserializeBool());
+
+        public override string ToString() => this.Value.ToString();
+
+        public override bool Equals(object other)
+        {
+            if (other is not Bool || other is not bool)
+            {
+                this.Error = new SuiError(0, "Compared object is not a Bool nor a bool.", other);
+                return false;
+            }
+
+            bool other_bool;
+
+            if (other is Bool)
+                other_bool = ((Bool)other).Value;
+            else
+                other_bool = (bool)other;
+
+            return this.Value == other_bool;
+        }
+
+
+        public override int GetHashCode() => base.GetHashCode();
+    }
+
+    /// <summary>
+    /// Representation of `byte` in BCS.
+    /// </summary>
+    public class U8 : ISerializable
+    {
+        /// <summary>
+        /// The `byte` value.
+        /// </summary>
+        public byte Value { get; set; }
+
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
+
+        public U8(byte value) => this.Value = value;
+
+        public void Serialize(Serialization serializer) => serializer.SerializeU8(this.Value);
+
+        public static ISerializable Deserialize(Deserialization deserializer) => deserializer.DeserializeU8();
+
+        public override string ToString() => this.Value.ToString();
+
+        public override bool Equals(object other)
+        {
+            if (other is not U8 && other is not byte)
+            {
+                this.Error = new SuiError(0, "Compared object is not a U8 nor a byte.", other);
+                return false;
+            }
+
+            byte other_byte;
+
+            if (other is U8)
+                other_byte = ((U8)other).Value;
+            else
+                other_byte = (byte)other;
+
+            return this.Value == other_byte;
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
+    }
+
+    /// <summary>
+    /// Representation of `ushort` in BCS.
+    /// </summary>
+    public class U16 : ISerializable
+    {
+        /// <summary>
+        /// A `ushort` value.
+        /// </summary>
+        public ushort Value { get; set; }
+
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
+
+        public U16(ushort value) => this.Value = value;
+
+        public void Serialize(Serialization serializer) => serializer.SerializeU16(this.Value);
+
+        public static ISerializable Deserialize(Deserialization deserializer) => deserializer.DeserializeU16();
+
+        public override string ToString() => this.Value.ToString();
+
+        public override bool Equals(object other)
+        {
+            if (other is not U16 && other is not ushort)
+            {
+                this.Error = new SuiError(0, "Compared object is not a U16 nor a ushort.", other);
+                return false;
+            }
+
+            ushort other_ushort;
+
+            if (other is U16)
+                other_ushort = ((U16)other).Value;
+            else
+                other_ushort = (ushort)other;
+
+            return this.Value == other_ushort;
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
+    }
+
+    /// <summary>
+    /// Representation of `uint` in BCS.
+    /// </summary>
+    public class U32 : ISerializable
+    {
+        /// <summary>
+        /// A `uint` value.
+        /// </summary>
+        public uint Value { get; set; }
+
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
+
+        public U32(uint value) => this.Value = value;
+
+        public void Serialize(Serialization serializer) => serializer.SerializeU32(this.Value);
+
+        public static ISerializable Deserialize(Deserialization deserializer) => deserializer.DeserializeU32();
+
+        public override string ToString() => this.Value.ToString();
+
+        public override bool Equals(object other)
+        {
+            if (other is not U32 && other is not uint)
+            {
+                this.Error = new SuiError(0, "Compared object is not a U32 nor a uint.", other);
+                return false;
+            }
+
+            uint other_uint;
+
+            if (other is U32)
+                other_uint = ((U32)other).Value;
+            else
+                other_uint = (uint)other;
+
+            return this.Value == other_uint;
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
+    }
+
+    /// <summary>
+    /// Representation of `ulong` in BCS.
+    /// </summary>
+    public class U64 : ISerializable
+    {
+        /// <summary>
+        /// A `ulong` value.
+        /// </summary>
+        public ulong Value { get; set; }
+
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
+
+        public U64(ulong value) => this.Value = value;
+
+        public void Serialize(Serialization serializer) => serializer.SerializeU64(this.Value);
+
+        public static ISerializable Deserialize(Deserialization deserializer) => deserializer.DeserializeU64();
+
+        public override string ToString() => this.Value.ToString();
+
+        public override bool Equals(object other)
+        {
+            if (other is not U64 && other is not ulong)
+            {
+                this.Error = new SuiError(0, "Compared object is not a U64 nor a ulong.", other);
+                return false;
+            }
+
+            ulong other_ulong;
+
+            if (other is U64)
+                other_ulong = ((U64)other).Value;
+            else
+                other_ulong = (ulong)other;
+
+            return this.Value == other_ulong;
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
+    }
+
+    /// <summary>
+    /// Representation of a U128 BigInteger in BCS.
+    /// </summary>
+    public class U128 : ISerializable
+    {
+        /// <summary>
+        /// A `BigInteger` unsigned 128-bit long integer value.
+        /// </summary>
+        public BigInteger Value { get; set; }
+
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
+
+        public U128(BigInteger value) => this.Value = value;
+
+        public void Serialize(Serialization serializer) => serializer.SerializeU128(this.Value);
+
+        public static ISerializable Deserialize(Deserialization deserializer) => deserializer.DeserializeU128();
+
+        public override string ToString() => this.Value.ToString();
+
+        public override bool Equals(object other)
+        {
+            if (other is not U128 && other is not BigInteger)
+            {
+                this.Error = new SuiError(0, "Compared object is not a U128 nor a BigInteger.", other);
+                return false;
+            }
+
+            BigInteger other_u128_big_integer;
+
+            if (other is U128)
+                other_u128_big_integer = ((U128)other).Value;
+            else
+                other_u128_big_integer = (BigInteger)other;
+
+            return this.Value == other_u128_big_integer;
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
+    }
+
+    /// <summary>
+    /// Representation of a U256 BigInteger in BCS.
+    /// </summary>
+    public class U256 : ISerializable
+    {
+        /// <summary>
+        /// A `BigInteger` unsigned 256-bit long integer value.
+        /// </summary>
+        public BigInteger Value { get; set; }
+
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; private set; }
+
+        public U256(BigInteger value) => this.Value = value;
+
+        public void Serialize(Serialization serializer) => serializer.SerializeU256(this.Value);
+
+        public static U256 Deserialize(Deserialization deserializer) => deserializer.DeserializeU256();
+
+        public override string ToString() => this.Value.ToString();
+
+        public override bool Equals(object other)
+        {
+            if (other is not U256 && other is not BigInteger)
+            {
+                this.Error = new SuiError(0, "Compared object is not a U256 nor a BigInteger.", other);
+                return false;
+            }
+
+            BigInteger other_u256_big_integer;
+
+            if (other is U256)
+                other_u256_big_integer = ((U256)other).Value;
+            else
+                other_u256_big_integer = (BigInteger)other;
+
+            return this.Value == other_u256_big_integer;
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
+    }
+
+    /// <summary>
+    /// Representation of a Struct Tag in BCS
+    /// </summary>
+    /// <typeparam name="T">Value of Type Arguments used</typeparam>
+    public abstract class StructTag<T>: ISerializable where T: ISerializable
+    {
+        /// <summary>
+        /// The address of the struct tag.
+        /// </summary>
+        public AccountAddress Address { get; set; }
+
+        /// <summary>
+        /// The name of the contract module.
+        /// </summary>
+        public string Module { get; set; }
+
+        /// <summary>
+        /// The name of the function called.
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// The type fields for the given struct.
+        /// </summary>
+        public List<T> TypeArguments { get; set; }
+
+        /// <summary>
+        /// Won't be null if there were any errors thrown when utilizing the class.
+        /// </summary>
+        public ErrorBase Error { get; internal set; }
+
+        internal static string[] FromStr_(string struct_tag) => struct_tag.Split("::");
+
+        public virtual void Serialize(Serialization serializer) => this.Error = new SuiError(0, "Serialize function not implemented", null);
 
         public override string ToString()
         {
             string value = string.Format(
                 "{0}::{1}::{2}",
-                this.address.ToString(),
-                this.module.ToString(),
-                this.name.ToString()
+                this.Address.ToHex(),
+                this.Module.ToString(),
+                this.Name.ToString()
             );
 
-            if (this.typeArgs.Length > 0)
+            if (this.TypeArguments != null && this.TypeArguments.Count > 0)
             {
-                value += string.Format("<{0}", this.typeArgs[0].ToString());
-                foreach (ISerializableTag typeArg in this.typeArgs[1..])
+                value += string.Format("<{0}", this.TypeArguments[0].ToString());
+
+                foreach (T typeArg in this.TypeArguments.ToArray()[1..])
                     value += string.Format(", {0}", typeArg.ToString());
+
                 value += ">";
             }
+
             return value;
         }
 
-        public static StructTag FromStr(string typeTag)
+        public override bool Equals(object other)
         {
-            string name = "";
-            int index = 0;
-            while (index < typeTag.Length)
+            if (other is not StructTag<T>)
             {
-                char letter = typeTag[index];
-                index += 1;
-
-                if (letter.Equals("<"))
-                    throw new NotImplementedException();
-                else
-                    name += letter;
+                this.Error = new SuiError(0, "Compared object is not a StructTag", other);
+                return false;
             }
 
-            string[] split = name.Split("::");
-            return new StructTag(
-                AccountAddress.FromHex(split[0]),
-                split[1],
-                split[2],
-                new ISerializableTag[] { }
-            );
+            StructTag<T> other_struct_tag = (StructTag<T>)other;
+
+            return this.Address.AddressBytes.SequenceEqual(other_struct_tag.Address.AddressBytes) &&
+                this.Module == other_struct_tag.Module &&
+                this.Name == other_struct_tag.Name &&
+                Enumerable.SequenceEqual(this.TypeArguments, other_struct_tag.TypeArguments);
         }
 
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
+        public override int GetHashCode() => base.GetHashCode();
     }
 
-    public class SuiStructTag : ISerializable
+    public class SuiStructTag : StructTag<SerializableTypeTag>
     {
-        public AccountAddress address;
-        public string module;
-        public string name;
-        public SerializableTypeTag[] typeArgs;
+        internal SuiStructTag(ErrorBase error) => this.Error = error;
 
-        public SuiStructTag(AccountAddress address, string module, string name, SerializableTypeTag[] typeArgs)
+        public SuiStructTag(AccountAddress address, string module, string name, List<SerializableTypeTag> type_arguments)
         {
-            this.address = address;
-            this.module = module;
-            this.name = name;
-            this.typeArgs = typeArgs;
+            this.Address = address;
+            this.Module = module;
+            this.Name = name;
+            this.TypeArguments = type_arguments;
+        }
+
+        public SuiStructTag(string address, string module, string name, List<SerializableTypeTag> type_arguments)
+        {
+            this.Address = AccountAddress.FromHex(address);
+            this.Module = module;
+            this.Name = name;
+            this.TypeArguments = type_arguments;
         }
 
         public SuiStructTag(string suiStructTag)
         {
-            SuiStructTag result = FromStr(suiStructTag);
-            this.address = result.address;
-            this.module = result.module;
-            this.name = result.name;
-            this.typeArgs = result.typeArgs;
+            SuiStructTag result = SuiStructTag.FromStr(suiStructTag);
+            this.Address = result.Address;
+            this.Module = result.Module;
+            this.Name = result.Name;
+            this.TypeArguments = result.TypeArguments;
         }
 
-        public void Serialize(Serialization serializer)
+        public override void Serialize(Serialization serializer)
         {
-            this.address.Serialize(serializer);
-            serializer.Serialize(this.module);
-            serializer.Serialize(this.name);
-            serializer.Serialize(this.typeArgs);
-        }
+            this.Address.Serialize(serializer);
+            serializer.Serialize(this.Module);
+            serializer.Serialize(this.Name);
 
-        public static SuiStructTag Deserialize(Deserialization deserializer)
-        {
-            AccountAddress address = (AccountAddress)AccountAddress.Deserialize(deserializer);
-            string module = deserializer.DeserializeString();
-            string name = deserializer.DeserializeString();
-
-            int length = deserializer.DeserializeUleb128();
-            // TODO: Implement deserializer for ISuiMoveNormalizedType
-            //List<ISerializableTag> typeArgsList = new List<ISuiMoveNormalizedType>();
-
-            //while (typeArgsList.Count < length)
-            //{
-            //    ISerializableTag val = ISerializableTag.DeserializeTag(deserializer);
-            //    typeArgsList.Add(val);
-            //}
-
-            //ISerializableTag[] typeArgsArr = typeArgsList.ToArray();
-
-            SuiStructTag structTag = new SuiStructTag(
-                address,
-                module,
-                name,
-                Array.Empty<SerializableTypeTag>()
-            );
-
-            return structTag;
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other is not SuiStructTag)
-                throw new NotImplementedException();
-
-            SuiStructTag otherStructTag = (SuiStructTag)other;
-
-            return 
-                this.address.AddressBytes.SequenceEqual(otherStructTag.address.AddressBytes)
-                && this.module == otherStructTag.module
-                && this.name == otherStructTag.name
-                && Enumerable.SequenceEqual(this.typeArgs, otherStructTag.typeArgs);
-        }
-
-        public override string ToString()
-        {
-            string value = string.Format(
-                "{0}::{1}::{2}",
-                this.address.ToHex(),
-                this.module.ToString(),
-                this.name.ToString()
-            );
-
-            if (this.typeArgs != null && this.typeArgs.Length > 0)
+            if (this.TypeArguments.Count != 0)
             {
-                value += string.Format("<{0}", this.typeArgs[0].ToString());
-                foreach (SerializableTypeTag typeArg in this.typeArgs[1..])
-                    value += string.Format(", {0}", typeArg.ToString());
-                value += ">";
+                Sequence type_arguments = new Sequence(this.TypeArguments.ToArray());
+                serializer.Serialize(type_arguments);
             }
-            return value;
         }
 
-        public static SuiStructTag FromStr(string typeTag)
+        public static ISerializable Deserialize(Deserialization deserializer)
+        {
+            return new SuiStructTag
+            (
+                (AccountAddress)AccountAddress.Deserialize(deserializer),
+                deserializer.DeserializeString().Value,
+                deserializer.DeserializeString().Value,
+                new List<SerializableTypeTag>()  // TODO: Implement Deserializer for TypeArguments
+            );
+        }
+
+        public static SuiStructTag FromStr(string type_tag)
         {
             try
             {
+                string[] struct_tag_components = SuiStructTag.FromStr_(type_tag);
+
                 string name = "";
                 int index = 0;
                 SerializableTypeTag nested_value = null;
 
-                while (index < typeTag.Length)
+                while (index < struct_tag_components[2].Length)
                 {
-                    char letter = typeTag[index];
+                    char letter = struct_tag_components[2][index];
                     index += 1;
 
                     if (letter == '<')
                     {
-                        nested_value = new SerializableTypeTag(typeTag[index..typeTag.Length]);
+                        nested_value = new SerializableTypeTag
+                        (
+                            struct_tag_components[2][index..struct_tag_components[2].Length]
+                        );
                         break;
                     }
                     else if (letter == '>')
@@ -1292,72 +1075,55 @@ namespace OpenDive.BCS
                         name += letter;
                 }
 
-                string[] split = name.Split("::");
-                AccountAddress address = AccountAddress.FromHex(split[0]);
+                AccountAddress address = AccountAddress.FromHex(struct_tag_components[0]);
 
                 return new SuiStructTag(
                     address,
-                    split[1],
-                    split[2],
+                    struct_tag_components[1],
+                    name,
                     nested_value != null ?
-                        new SerializableTypeTag[] { nested_value } :
-                        Array.Empty<SerializableTypeTag>()
+                        new List<SerializableTypeTag> { nested_value } :
+                        new List<SerializableTypeTag> { }
                 );
             }
             catch
             {
-                return null;
+                return new SuiStructTag(new SuiError(0, "Unable to initialize SuiStructTag from string", type_tag));
             }
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
         }
     }
 
     public class StructTypeConverter : JsonConverter
     {
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(SuiMoveNormalizedStructType);
-        }
+        public override bool CanConvert(Type objectType) => objectType == typeof(SuiMoveNormalizedStructType);
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.StartObject)
             {
                 JObject structTypeObj = (JObject)JToken.ReadFrom(reader);
-                AccountAddress address = AccountAddress.FromHex(NormalizedTypeConverter.NormalizeSuiAddress((string)structTypeObj["package"]));
+                AccountAddress address = AccountAddress.FromHex
+                (
+                    NormalizedTypeConverter.NormalizeSuiAddress(structTypeObj["package"].Value<string>())
+                );
                 string module = structTypeObj["module"].Value<string>();
                 string name = structTypeObj["function"].Value<string>();
 
                 List<SuiMoveNormalizedType> normalizedTypes = new List<SuiMoveNormalizedType>();
 
                 foreach (JToken typeObject in structTypeObj["typeArguments"])
-                {
-                    NormalizedTypeConverter jsonConverter = new NormalizedTypeConverter();
-                    SuiMoveNormalizedType normalizedType = jsonConverter.ReadJson(
-                        typeObject.CreateReader(),
-                        typeof(SuiMoveNormalizedType),
-                        null,
-                        serializer
-                    ) as SuiMoveNormalizedType;
-                    normalizedTypes.Add(normalizedType);
-                }
+                    normalizedTypes.Add(typeObject.ToObject<SuiMoveNormalizedType>());
 
-                return new SuiMoveNormalizedStructType(address, module, name, normalizedTypes.ToArray());
+                return new SuiMoveNormalizedStructType(address, module, name, normalizedTypes);
             }
 
-            throw new NotImplementedException();
+            return new SuiMoveNormalizedStructType(new SuiError(0, "Unable to convert JSON to SuiMoveNormalizedStructType.", reader));
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             if (value == null)
-            {
                 writer.WriteNull();
-            }
             else
             {
                 writer.WriteStartObject();
@@ -1385,14 +1151,11 @@ namespace OpenDive.BCS
     }
 
     [JsonConverter(typeof(StructTypeConverter))]
-    public class SuiMoveNormalizedStructType : ISerializable
+    public class SuiMoveNormalizedStructType : StructTag<SuiMoveNormalizedType>
     {
-        public AccountAddress Address;
-        public string Module;
-        public string Name;
-        public SuiMoveNormalizedType[] TypeArguments;
+        internal SuiMoveNormalizedStructType(ErrorBase error) => this.Error = error;
 
-        public SuiMoveNormalizedStructType(string address, string module, string name, SuiMoveNormalizedType[] type_arguments)
+        public SuiMoveNormalizedStructType(string address, string module, string name, List<SuiMoveNormalizedType> type_arguments)
         {
             this.Address = AccountAddress.FromHex(address);
             this.Module = module;
@@ -1400,7 +1163,7 @@ namespace OpenDive.BCS
             this.TypeArguments = type_arguments;
         }
 
-        public SuiMoveNormalizedStructType(AccountAddress address, string module, string name, SuiMoveNormalizedType[] type_arguments)
+        public SuiMoveNormalizedStructType(AccountAddress address, string module, string name, List<SuiMoveNormalizedType> type_arguments)
         {
             this.Address = address;
             this.Module = module;
@@ -1408,22 +1171,24 @@ namespace OpenDive.BCS
             this.TypeArguments = type_arguments;
         }
 
-        public static SuiMoveNormalizedStructType FromStr(string typeTag)
+        public static SuiMoveNormalizedStructType FromStr(string type_tag)
         {
             try
             {
+                string[] struct_tag_components = SuiMoveNormalizedStructType.FromStr_(type_tag);
+
                 string name = "";
                 int index = 0;
                 SuiMoveNormalizedType nested_value = null;
 
-                while (index < typeTag.Length)
+                while (index < struct_tag_components[2].Length)
                 {
-                    char letter = typeTag[index];
+                    char letter = struct_tag_components[2][index];
                     index += 1;
 
                     if (letter == '<')
                     {
-                        nested_value = SuiMoveNormalizedType.FromStr(typeTag[index..typeTag.Length]);
+                        nested_value = SuiMoveNormalizedType.FromStr(struct_tag_components[2][index..struct_tag_components[2].Length]);
                         break;
                     }
                     else if (letter == '>')
@@ -1432,85 +1197,44 @@ namespace OpenDive.BCS
                         name += letter;
                 }
 
-                string[] split = name.Split("::");
-                AccountAddress address = AccountAddress.FromHex(split[0]);
+                AccountAddress address = AccountAddress.FromHex(struct_tag_components[0]);
 
                 return new SuiMoveNormalizedStructType(
                     address,
-                    split[1],
-                    split[2],
+                    struct_tag_components[1],
+                    name,
                     nested_value != null ?
-                        new SuiMoveNormalizedType[] { nested_value } :
-                        Array.Empty<SuiMoveNormalizedType>()
+                        new List<SuiMoveNormalizedType> { nested_value } :
+                        new List<SuiMoveNormalizedType> { }
                 );
             }
             catch
             {
-                return null;
+                return new SuiMoveNormalizedStructType(new SuiError(0, "Unable to initialize SuiMoveNormalizedStructType from string", type_tag));
             }
         }
 
-        public override bool Equals(object other)
-        {
-            if (other is not SuiMoveNormalizedStructType)
-                return false;
-
-            SuiMoveNormalizedStructType otherStructTag = (SuiMoveNormalizedStructType)other;
-
-            return
-                this.Address.AddressBytes.SequenceEqual(otherStructTag.Address.AddressBytes)
-                && this.Module == otherStructTag.Module
-                && this.Name == otherStructTag.Name
-                && Enumerable.SequenceEqual(this.TypeArguments, otherStructTag.TypeArguments);
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            string value = string.Format(
-                "{0}::{1}::{2}",
-                this.Address.ToHex(),
-                this.Module.ToString(),
-                this.Name.ToString()
-            );
-
-            if (this.TypeArguments != null && this.TypeArguments.Length > 0)
-            {
-                value += string.Format("<{0}", this.TypeArguments[0].ToString());
-                foreach (SuiMoveNormalizedType typeArg in this.TypeArguments[1..])
-                    value += string.Format(", {0}", typeArg.ToString());
-                value += ">";
-            }
-            return value;
-        }
-
-        public void Serialize(Serialization serializer)
+        public override void Serialize(Serialization serializer)
         {
             serializer.Serialize(this.Address);
             serializer.Serialize(this.Module);
             serializer.Serialize(this.Name);
 
-            if (this.TypeArguments.Length != 0)
-                serializer.Serialize(this.TypeArguments);
+            if (this.TypeArguments.Count != 0)
+            {
+                Sequence type_arguments = new Sequence(this.TypeArguments.ToArray());
+                serializer.Serialize(type_arguments);
+            }
         }
 
-        // TODO: Implement deserializer for fetching Type Arguments.
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            AccountAddress address = (AccountAddress)AccountAddress.Deserialize(deserializer);
-            string module = deserializer.DeserializeString();
-            string name = deserializer.DeserializeString();
-
             return new SuiMoveNormalizedStructType
             (
-                address,
-                module,
-                name,
-                new SuiMoveNormalizedType[] { }
+                (AccountAddress)AccountAddress.Deserialize(deserializer),
+                deserializer.DeserializeString().Value,
+                deserializer.DeserializeString().Value,
+                new List<SuiMoveNormalizedType> { }  // TODO: Implement deserializer for fetching Type Arguments.
             );
         }
     }

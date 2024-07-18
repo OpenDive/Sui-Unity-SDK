@@ -43,8 +43,8 @@ namespace Sui.Transactions.Types.Arguments
         public static ISerializable Deserialize(Deserialization deserializer)
         {
             return new NestedResult(
-                deserializer.DeserializeU16(),
-                deserializer.DeserializeU16()
+                deserializer.DeserializeU16().Value,
+                deserializer.DeserializeU16().Value
             );
         }
     }

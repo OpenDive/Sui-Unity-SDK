@@ -16,41 +16,27 @@ namespace OpenDive.BCS
 
         protected MemoryStream output;
 
-        public Serialization()
-        {
-            output = new MemoryStream();
-        }
+        public Serialization() => output = new MemoryStream();
 
         /// <summary>
         /// Return the serialization buffer as a byte array.
         /// </summary>
         /// <returns>Serialization buffer as a byte array.</returns>
-        public byte[] GetBytes()
-        {
-            return output.ToArray();
-        }
+        public byte[] GetBytes() => output.ToArray();
 
         /// <summary>
         /// Serialize a string value.
         /// </summary>
         /// <param name="value">String value to serialize.</param>
         /// <returns>The current Serialization object.</returns>
-        public Serialization Serialize(string value)
-        {
-            SerializeString(value);
-            return this;
-        }
+        public Serialization Serialize(string value) => SerializeString(value);
 
         /// <summary>
         /// Serialize a byte array.
         /// </summary>
         /// <param name="value">Byte array to serialize.</param>
         /// <returns>The current Serialization object.</returns>
-        public Serialization Serialize(byte[] value)
-        {
-            SerializeBytes(value);
-            return this;
-        }
+        public Serialization Serialize(byte[] value) => SerializeBytes(value);
 
         /// <summary>
         /// Serialize a boolean value.
@@ -137,7 +123,7 @@ namespace OpenDive.BCS
         public Serialization Serialize(Sequence args)
         {
             SerializeU32AsUleb128((uint)args.Length);
-            foreach (ISerializable element in (ISerializable[])args.GetValue())
+            foreach (ISerializable element in args.Values)
             {
                 Serialization s = new Serialization();
                 element.Serialize(s);
@@ -335,7 +321,6 @@ namespace OpenDive.BCS
             byte byte6 = (byte)(num >> 40 & 0xFF);
             byte byte7 = (byte)(num >> 48 & 0xFF);
             byte byte8 = (byte)(num >> 56 & 0xFF);
-            Debug.Log($"MARCUS::: SERIALIZE U64 - {String.Join(", ", new[] { byte1, byte2, byte3, byte4, byte5, byte6, byte7, byte8 })}");
             output.Write(new[] { byte1, byte2, byte3, byte4, byte5, byte6, byte7, byte8 });
             return this;
         }

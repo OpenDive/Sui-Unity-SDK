@@ -40,7 +40,7 @@ namespace Sui.Transactions.Types
 
             return new Publish(
                 modules.ToArray(),
-                deserializer.DeserializeSequence(typeof(AccountAddress)).Cast<AccountAddress>().ToArray()
+                deserializer.DeserializeSequence(typeof(AccountAddress)).Values.Cast<AccountAddress>().ToArray()
             );
         }
     }

@@ -120,12 +120,12 @@ namespace Sui.Transactions.Builder
         {
             return new TransactionBlockDataBuilder
             (
-                deserializer.DeserializeU8(),
+                deserializer.DeserializeU8().Value,
                 (AccountAddress)AccountAddress.Deserialize(deserializer),
                 (TransactionExpiration)TransactionExpiration.Deserialize(deserializer),
                 (GasData)GasData.Deserialize(deserializer),
-                deserializer.DeserializeSequence(typeof(TransactionBlockInput)).Cast<TransactionBlockInput>().ToList(),
-                deserializer.DeserializeSequence(typeof(SuiTransaction)).Cast<SuiTransaction>().ToList()
+                deserializer.DeserializeSequence(typeof(TransactionBlockInput)).Values.Cast<TransactionBlockInput>().ToList(),
+                deserializer.DeserializeSequence(typeof(SuiTransaction)).Values.Cast<SuiTransaction>().ToList()
             );
         }
     }

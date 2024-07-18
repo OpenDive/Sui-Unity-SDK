@@ -31,8 +31,8 @@ namespace Sui.Tests
             CallArg[] inputs = new CallArg[] { new CallArg(CallArgumentType.Object, new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef))) };
 
             MoveCall moveCallTransaction = new MoveCall(
-                new SuiMoveNormalizedStructType(suiAddress, "display", "new", new Rpc.Models.SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
-                new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(suiAddress, "capy", "Capy", new SerializableTypeTag[0])) },
+                new SuiMoveNormalizedStructType(suiAddress, "display", "new", new List<Rpc.Models.SuiMoveNormalizedType>()), // TODO: THIS IS A NORMALIZED STRUCT
+                new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(suiAddress, "capy", "Capy", new List<SerializableTypeTag>())) },
                 new SuiTransactionArgument[] { new SuiTransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(0)) } // TODO: We should not use this abstract, this should be a "pure" or an "object.
             );
 
@@ -103,8 +103,8 @@ namespace Sui.Tests
             CallArg[] inputs = new CallArg[] { new CallArg(CallArgumentType.Object, new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef))) };
 
             MoveCall moveCallTransaction = new MoveCall(
-                new SuiMoveNormalizedStructType(suiAddress, "display", "new", new Rpc.Models.SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
-                new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(suiAddress, "capy", "Capy", new SerializableTypeTag[0])) },
+                new SuiMoveNormalizedStructType(suiAddress, "display", "new", new List<Rpc.Models.SuiMoveNormalizedType>()), // TODO: THIS IS A NORMALIZED STRUCT
+                new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(suiAddress, "capy", "Capy", new List<SerializableTypeTag>())) },
                 new SuiTransactionArgument[]
                 {
                     new SuiTransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(0)),

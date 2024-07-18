@@ -204,7 +204,7 @@ namespace Sui.Rpc.Models
                             argumentsTypes.Add(argumentType);
                         }
 
-                        SuiMoveNormalizedStructType structTag = new SuiMoveNormalizedStructType(address, module, name, argumentsTypes.ToArray());
+                        SuiMoveNormalizedStructType structTag = new SuiMoveNormalizedStructType(address, module, name, argumentsTypes);
                         normalziedType = new SuiMoveNormalziedTypeStruct(structTag);
                         type = SuiMoveNormalizedTypeSerializationType.Struct;
                         break;

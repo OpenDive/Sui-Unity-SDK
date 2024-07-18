@@ -39,7 +39,7 @@ namespace Sui.Transactions.Builder
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            byte type = deserializer.DeserializeU8();
+            byte type = deserializer.DeserializeU8().Value;
             switch (type)
             {
                 case 0:

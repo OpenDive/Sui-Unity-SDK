@@ -31,8 +31,8 @@ namespace Sui.Transactions.Types
         {
             deserializer.DeserializeU8();
             return new MakeMoveVec(
-                deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Cast<SuiTransactionArgument>().ToArray(),
-                SuiStructTag.Deserialize(deserializer)
+                deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Values.Cast<SuiTransactionArgument>().ToArray(),
+                (SuiStructTag)SuiStructTag.Deserialize(deserializer)
             );
         }
     }

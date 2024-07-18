@@ -32,9 +32,7 @@ namespace Sui.Transactions.Types.Arguments
         /// <summary>
         /// The value of this transaction input.
         /// </summary>
-        /// TODO: Look into this
-        //public ICallArg Value { get; set; } // An object ref, or a core type like address or u8
-        public ISerializable? Value { get; set; } // An object ref, or a core type like address or u8
+        public ISerializable? Value { get; set; }
 
         /// <summary>
         /// The type of Input being used.
@@ -46,7 +44,6 @@ namespace Sui.Transactions.Types.Arguments
         /// </summary>
         /// <param name="index"></param>
         /// <param name="value"></param>
-        //public TransactionBlockInput(int index, ICallArg value) TODO: Look into this
         public TransactionBlockInput(int index, ISerializable? value, CallArgumentType? type)
         {
             this.Index = index;
@@ -66,7 +63,7 @@ namespace Sui.Transactions.Types.Arguments
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            return new TransactionBlockInput(deserializer.DeserializeU16());
+            return new TransactionBlockInput(deserializer.DeserializeU16().Value);
         }
     }
 }

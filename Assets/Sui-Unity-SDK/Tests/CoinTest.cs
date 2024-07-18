@@ -7,7 +7,7 @@ using Sui.Rpc;
 using Sui.Rpc.Models;
 using OpenDive.BCS;
 using Sui.Accounts;
-using System;
+using System.Collections.Generic;
 
 namespace Sui.Tests
 {
@@ -35,7 +35,7 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator CoinStructTagTest()
         {
-            SuiStructTag sui_struct_tag = new SuiStructTag(AccountAddress.FromHex("0x2"), "sui", "SUI", Array.Empty<SerializableTypeTag>());
+            SuiStructTag sui_struct_tag = new SuiStructTag(AccountAddress.FromHex("0x2"), "sui", "SUI", new List<SerializableTypeTag>());
             Task<RpcResult<CoinPage>> coins_task = this.Toolbox.GetCoins();
             yield return new WaitUntil(() => coins_task.IsCompleted);
             CoinPage coins = coins_task.Result.Result;

@@ -1,13 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using OpenDive.BCS;
 using Sui.Transactions.Types;
 using Sui.Types;
-using Sui.Utilities;
-using UnityEngine;
-using UnityEngine.Windows;
 
 namespace Sui.Transactions.Kinds
 {
@@ -43,12 +39,9 @@ namespace Sui.Transactions.Kinds
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            CallArg[] inputs = deserializer.DeserializeSequence(typeof(CallArg)).Cast<CallArg>().ToArray();
-            List<SuiTransaction> transactions = deserializer.DeserializeSequence(typeof(SuiTransaction)).Cast<SuiTransaction>().ToList();
-
             return new ProgrammableTransaction(
-                inputs,
-                transactions
+                deserializer.DeserializeSequence(typeof(CallArg)).Values.Cast<CallArg>().ToArray(),
+                deserializer.DeserializeSequence(typeof(SuiTransaction)).Values.Cast<SuiTransaction>().ToList()
             );
         }
     }
@@ -90,9 +83,9 @@ namespace Sui.Transactions.Kinds
         {
             SuiConsensusCommitPrologue commit = new SuiConsensusCommitPrologue();
 
-            commit.Epoch = deserializer.DeserializeString();
-            commit.Round = deserializer.DeserializeString();
-            commit.CommitTimestampMs = deserializer.DeserializeString();
+            commit.Epoch = deserializer.DeserializeString().Value;
+            commit.Round = deserializer.DeserializeString().Value;
+            commit.CommitTimestampMs = deserializer.DeserializeString().Value;
 
             return commit;
         }
@@ -118,7 +111,7 @@ namespace Sui.Transactions.Kinds
         public static ISerializable Deserialize(Deserialization deserializer)
         {
             return new Genesis(
-                deserializer.DeserializeSequence(typeof(BString)).Cast<BString>().Select((obj) => obj.value).ToList()
+                deserializer.DeserializeSequence(typeof(BString)).Values.Cast<BString>().Select((obj) => obj.Value).ToList()
             );
         }
     }
@@ -173,11 +166,11 @@ namespace Sui.Transactions.Kinds
         {
             SuiChangeEpoch result = new SuiChangeEpoch();
 
-            result.Epoch = deserializer.DeserializeString();
-            result.StorageCharge = deserializer.DeserializeString();
-            result.ComputationCharge = deserializer.DeserializeString();
-            result.StorageRebate = deserializer.DeserializeString();
-            result.EpochStartTimestampMs = ((BString)deserializer.DeserializeOptional(typeof(BString))).value;
+            result.Epoch = deserializer.DeserializeString().Value;
+            result.StorageCharge = deserializer.DeserializeString().Value;
+            result.ComputationCharge = deserializer.DeserializeString().Value;
+            result.StorageRebate = deserializer.DeserializeString().Value;
+            result.EpochStartTimestampMs = ((BString)deserializer.DeserializeOptional(typeof(BString))).Value;
 
             return result;
         }

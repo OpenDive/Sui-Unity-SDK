@@ -166,8 +166,7 @@ namespace Sui.Transactions.Types.Arguments
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            byte value = deserializer.DeserializeU8();
-            Debug.Log($"MARCUS::: SUI TRANSACTION ARGUMENT VALUE - {value}");
+            byte value = deserializer.DeserializeU8().Value;
             switch (value)
             {
                 case 0:

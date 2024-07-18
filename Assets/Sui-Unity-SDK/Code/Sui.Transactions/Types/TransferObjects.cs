@@ -58,7 +58,7 @@ public class TransferObjects : ITransaction
         public static ISerializable Deserialize(Deserialization deserializer)
         {
             return new TransferObjects(
-                deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Cast<SuiTransactionArgument>().ToArray(),
+                deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Values.Cast<SuiTransactionArgument>().ToArray(),
                 (SuiTransactionArgument)ISerializable.Deserialize(deserializer)
             );
         }

@@ -56,7 +56,7 @@ namespace Sui.Transactions.Types
         {
             return new SplitCoins(
                 (SuiTransactionArgument)SuiTransactionArgument.Deserialize(deserializer),
-                deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Cast<SuiTransactionArgument>().ToArray()
+                deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Values.Cast<SuiTransactionArgument>().ToArray()
             );
         }
     }

@@ -43,15 +43,15 @@ namespace Sui.Transactions.Types
         public static ISerializable Deserialize(Deserialization deserializer)
         {
             List<byte[]> modules = new List<byte[]>();
-            ulong length = deserializer.DeserializeU64();
+            ulong length = deserializer.DeserializeU64().Value;
+
             for (ulong i = 0; i < length; ++i)
-            {
                 modules.Add(deserializer.ToBytes());
-            }
+
             return new Upgrade(
                 modules.ToArray(),
-                deserializer.DeserializeSequence(typeof(AccountAddress)).Cast<AccountAddress>().ToArray(),
-                deserializer.DeserializeString(),
+                deserializer.DeserializeSequence(typeof(AccountAddress)).Values.Cast<AccountAddress>().ToArray(),
+                deserializer.DeserializeString().Value,
                 (SuiTransactionArgument)SuiTransactionArgument.Deserialize(deserializer)
             );
         }

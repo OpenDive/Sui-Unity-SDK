@@ -24,8 +24,8 @@ namespace Sui.Tests
             AccountAddress capyAddress = AccountAddress.FromHex(capy);
 
             MoveCall moveCallTransaction = new MoveCall(
-                new SuiMoveNormalizedStructType(suiAddress, "display", "new", new Rpc.Models.SuiMoveNormalizedType[0]), // TODO: THIS IS A NORMALIZED STRUCT
-                new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(capyAddress, "capy", "Capy", new SerializableTypeTag[0])) },
+                new SuiMoveNormalizedStructType(suiAddress, "display", "new", new System.Collections.Generic.List<Rpc.Models.SuiMoveNormalizedType>()), // TODO: THIS IS A NORMALIZED STRUCT
+                new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(capyAddress, "capy", "Capy", new System.Collections.Generic.List<SerializableTypeTag>())) },
                 new SuiTransactionArgument[]
                 {
                     new SuiTransactionArgument(TransactionArgumentKind.GasCoin, null),

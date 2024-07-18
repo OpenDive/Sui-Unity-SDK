@@ -173,7 +173,7 @@ namespace Sui.Rpc.Models
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            byte type = deserializer.DeserializeU8();
+            byte type = deserializer.DeserializeU8().Value;
             ISuiMoveNormalizedType normalized_type;
             SuiMoveNormalizedTypeSerializationType type_value;
 
@@ -305,7 +305,7 @@ namespace Sui.Rpc.Models
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            return new SuiMoveNormalziedTypeParameterType(deserializer.DeserializeU16());
+            return new SuiMoveNormalziedTypeParameterType(deserializer.DeserializeU16().Value);
         }
     }
 

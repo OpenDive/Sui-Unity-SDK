@@ -10,8 +10,8 @@ namespace Sui.Types
 {
     public enum ObjectRefType
     {
-        ImmOrOwned = 0,     // SuiObjectRef
-        Shared = 1          // SharedObjectRef
+        ImmOrOwned,
+        Shared
     }
 
     public interface IObjectRef : ISerializable
@@ -22,8 +22,8 @@ namespace Sui.Types
 
     public class ObjectArg : ISerializable
     {
-        public ObjectRefType Type;
-        public IObjectRef ObjectRef;
+        public ObjectRefType Type { get; set; }
+        public IObjectRef ObjectRef { get; set; }
 
         public ObjectArg(ObjectRefType type, IObjectRef object_ref)
         {
@@ -39,7 +39,7 @@ namespace Sui.Types
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            byte type = deserializer.DeserializeU8();
+            byte type = deserializer.DeserializeU8().Value;
 
             switch(type)
             {
@@ -121,16 +121,12 @@ namespace Sui.Types
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            AccountAddress objectId = (AccountAddress)AccountAddress.Deserialize(deserializer);
-            U64 version = U64.Deserialize(deserializer);
-            byte[] digest = deserializer.ToBytes();
-
             Base58Encoder decoder = new Base58Encoder();
-
-            return new SuiObjectRef(
-                objectId,
-                (int)version.value,
-                decoder.EncodeData(digest)
+            return new SuiObjectRef
+            (
+                (AccountAddress)AccountAddress.Deserialize(deserializer),
+                (int)deserializer.DeserializeU64().Value,
+                decoder.EncodeData(deserializer.ToBytes())
             );
         }
     }
@@ -207,14 +203,11 @@ namespace Sui.Types
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            AccountAddress objectId = (AccountAddress)AccountAddress.Deserialize(deserializer);
-            U64 initialSharedVersion = U64.Deserialize(deserializer);
-            Bool mutable = Bool.Deserialize(deserializer);
-
-            return new SharedObjectRef(
-                objectId,
-                (int)initialSharedVersion.value,
-                mutable.value
+            return new SharedObjectRef
+            (
+                (AccountAddress)AccountAddress.Deserialize(deserializer),
+                (int)deserializer.DeserializeU64().Value,
+                Bool.Deserialize(deserializer).Value
             );
         }
     }

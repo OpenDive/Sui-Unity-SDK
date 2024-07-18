@@ -98,8 +98,8 @@ namespace Sui.Transactions.Types
         public static ISerializable Deserialize(Deserialization deserializer)
         {
             SuiMoveNormalizedStructType target = (SuiMoveNormalizedStructType)SuiMoveNormalizedStructType.Deserialize(deserializer);
-            SerializableTypeTag[] type_arguments = deserializer.DeserializeSequence(typeof(SerializableTypeTag)).Cast<SerializableTypeTag>().ToArray();
-            SuiTransactionArgument[] arguments = deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Cast<SuiTransactionArgument>().ToArray();
+            SerializableTypeTag[] type_arguments = deserializer.DeserializeSequence(typeof(SerializableTypeTag)).Values.Cast<SerializableTypeTag>().ToArray();
+            SuiTransactionArgument[] arguments = deserializer.DeserializeSequence(typeof(SuiTransactionArgument)).Values.Cast<SuiTransactionArgument>().ToArray();
 
             return new MoveCall(
                 target,

@@ -145,8 +145,9 @@ namespace Sui.Transactions
                     }
                     else if (IsSameStruct(structType, resolvedStdOption))
                     {
-                        if (structType.Struct.TypeArguments.Length == 0)
+                        if (structType.Struct.TypeArguments.Count == 0)
                             throw new Exception("Unable to unwrap Struct");
+
                         SuiMoveNormalizedTypeVector option_to_vec = new SuiMoveNormalizedTypeVector(structType.Struct.TypeArguments[0]);
                         return GetPureNormalizedTypeType(new SuiMoveNormalizedType(option_to_vec, SuiMoveNormalizedTypeSerializationType.Vector), argVal);
                     }
@@ -222,7 +223,7 @@ namespace Sui.Transactions
 
                     if (IsSameStruct(structType, resolvedStdOption))
                     {
-                        if (structType.Struct.TypeArguments.Length == 0)
+                        if (structType.Struct.TypeArguments.Count == 0)
                             throw new Exception("Type argument is empty");
 
                         SuiMoveNormalizedTypeVector option_to_vec = new SuiMoveNormalizedTypeVector(structType.Struct.TypeArguments[0]);
