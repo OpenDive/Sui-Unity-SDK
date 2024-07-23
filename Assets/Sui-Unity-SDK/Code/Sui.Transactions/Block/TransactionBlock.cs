@@ -997,7 +997,7 @@ namespace Sui.Transactions
             RpcResult<ulong> gas_price = await options.Provider.GetReferenceGasPriceAsync();
 
             if (gas_price.Error != null)
-                return gas_price.Error;
+                return (RpcError)gas_price.Error;
 
             SetGasPrice(gas_price.Result);
 
@@ -1440,16 +1440,15 @@ namespace Sui.Transactions
                     RpcResult<byte[]> build_result = tx_block_data_builder.Build(new TransactionBlockDataBuilderSerializer(new TransactionBlockDataBuilder(gasConfig: gas_config)));
 
                     if (build_result.Error != null)
-                        return build_result.Error;
+                        return (RpcError)build_result.Error;
 
-                    Debug.Log($"MARCUS::: SENDER BYTES - [{String.Join(", ", BlockDataBuilder.Builder.Sender.AddressBytes)}]");
-                    Debug.Log($"MARCUS::: BUILD RESULT - [{String.Join(", ", build_result.Result)}]");
-                    RpcResult<TransactionBlockResponse> dry_run_result = await options.Provider.DryRunTransactionBlock(
+                    RpcResult<TransactionBlockResponse> dry_run_result = await options.Provider.DryRunTransactionBlock
+                    (
                         Convert.ToBase64String(build_result.Result)
                     );
 
                     if (dry_run_result.Error != null || dry_run_result.Result.Effects.Status.Status == ExecutionStatus.Failure)
-                        return dry_run_result.Error ??= new RpcError(-1, $"Transaction failed with message - {dry_run_result.Result.Effects.Status.Error}", null);
+                        return (RpcError)dry_run_result.Error ?? new RpcError(-1, $"Transaction failed with message - {dry_run_result.Result.Effects.Status.Error}", null);
 
                     int safe_overhead =
                         (int)TransactionConstants.gasSafeOverhead *

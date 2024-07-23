@@ -1,21 +1,17 @@
 using Sui.Rpc.Client;
+using Sui.Utilities;
 
 namespace Sui.Rpc
 {
-    public class RpcResult<T> : RpcObjectBase
+    public class RpcResult<T> : ResultBase<T>
     {
-        public T Result { get; set; }
-        public RpcError Error { get; set; }
+        public string Jsonrpc { get => "2.0"; }
 
-        public RpcResult(T result, RpcError error = null)
-        {
-            this.Result = result;
-            this.Error = error;
-        }
+        public int Id { get; set; }
+
+        public RpcResult(T result, RpcError error = null) : base(result, error) { }
 
         public static RpcResult<T> GetErrorResult(string message)
-        {
-            return new RpcResult<T>(default, new RpcError(-1, message, null));
-        }
+            => new RpcResult<T>(default, new RpcError(-1, message, null));
     }
 }

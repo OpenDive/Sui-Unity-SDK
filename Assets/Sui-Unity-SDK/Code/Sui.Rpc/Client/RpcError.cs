@@ -42,9 +42,9 @@ namespace Sui.Rpc.Client
         /// <summary>
         /// Won't be null if there were any errors thrown when utilizing the class.
         /// </summary>
-        public ErrorBase Error { get; private set; }
+        public ErrorBase Error { get; protected internal set; }
 
-        internal T SetError<T, U>(T item, string message, object data = null) where U : ErrorBase, new()
+        protected internal T SetError<T, U>(T item, string message, object data = null) where U : ErrorBase, new()
         {
             this.Error = new U();
             this.Error.Code = 0;
@@ -54,7 +54,7 @@ namespace Sui.Rpc.Client
             return item;
         }
 
-        internal void SetError<T>(string message, object data = null) where T : ErrorBase, new()
+        protected internal void SetError<T>(string message, object data = null) where T : ErrorBase, new()
         {
             this.Error = new T();
             this.Error.Code = 0;

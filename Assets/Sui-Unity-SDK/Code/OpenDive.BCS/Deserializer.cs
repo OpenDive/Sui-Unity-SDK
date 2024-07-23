@@ -31,7 +31,6 @@ using System.Numerics;
 using System.Reflection;
 using System.Text;
 using System.Buffers.Binary;
-using UnityEngine.UIElements;
 
 namespace OpenDive.BCS
 {
@@ -238,6 +237,7 @@ namespace OpenDive.BCS
             return value;
         }
 
+        // TODO: Look into further benchmarking testing BinaryPrimitive vs low level bit shifting
         /// <summary>
         /// Reads in an integer value from the input memory stream.
         /// </summary>

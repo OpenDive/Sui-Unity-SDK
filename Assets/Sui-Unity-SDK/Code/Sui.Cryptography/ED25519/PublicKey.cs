@@ -1,104 +1,48 @@
-using System;
-using Org.BouncyCastle.Crypto.Digests;
+//
+//  PublicKey.cs
+//  Sui-Unity-SDK
+//
+//  Copyright (c) 2024 OpenDive
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
 using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Cryptography.Ed25519
 {
     /// <summary>
-    /// Implements an ED25519 public key functionality 
+    /// Implements an ED25519 public key functionality.
     /// </summary>
-    public class PublicKey : PublicKeyBase
+    public class PublicKey : SuiPublicKeyBase
     {
-        /// <summary>
-        /// Defines signature scheme to be ED25519
-        /// </summary>
         public override SignatureScheme SignatureScheme { get => SignatureScheme.ED25519; }
 
-        /// <summary>
-        /// The length of an ED25519 public key - 32
-        /// </summary>
         public override int KeyLength { get => SignatureSchemeToSize.ED25519; }
 
-        /// <summary>
-        /// Creates an ED25519 PublicKey object from a byte array that represents a public key
-        /// </summary>
-        /// <param name="publicKey">ED25519 public key as a byte array buffer</param>
-        public PublicKey(byte[] publicKey) : base(publicKey) { }
+        public PublicKey(byte[] public_key) : base(public_key) { }
 
-        /// <summary>
-        /// Creates an ED25519 PublicKey object from a base64 or hex string that represents a public key
-        /// </summary>
-        /// <param name="publicKey">A hex or base64 string that represents a ED25519 public key</param>
-        public PublicKey(string publicKey) : base(publicKey) { }
+        public PublicKey(string public_key) : base(public_key) { }
 
-        /// <summary>
-        /// Return the Sui address associated with this Ed25519 public key
-        /// </summary>
-        /// <returns></returns>
         public override byte Flag() => SignatureSchemeToFlag.ED25519;
 
-        /// <summary>
-        /// Verifies a signature from a Signature object.
-        /// </summary>
-        /// <param name="message">The message that was signed by the private key.</param>
-        /// <param name="signature">The serialized signature to verify.</param>
-        /// <returns></returns>
-        public override bool Verify(byte[] message, SignatureBase signature)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public bool VerifyWithIntent(byte[] bytes, SignatureBase signature, IntentScope intent)
-        {
-            byte[] intentMessage = CreateMessageWithIntent(intent, bytes);
-
-            // BLAKE2b hash
-            byte[] digest = new byte[32];
-            Blake2bDigest blake2b = new(256);
-            blake2b.BlockUpdate(intentMessage, 0, intentMessage.Length);
-            blake2b.DoFinal(digest, 0);
-
-            return VerifyRaw(digest, signature.Data());
-        }
-
-        public override bool VerifyTransactionBlock(byte[] transaction_block, SignatureBase signature)
-        {
-            return VerifyWithIntent(transaction_block, signature, IntentScope.TransactionData);
-        }
-
-        /// <summary>
-        /// Verifies a signatures that has been serialized as hex string.
-        /// </summary>
-        /// <param name="message">The message that was signed by the private key.</param>
-        /// <param name="serializedSignature">The serialized signature to verify.</param>
-        /// <returns></returns>
-        public override bool Verify(byte[] message, string serializedSignature)
-        {
-            ParsedSignatureOutput parsedSignature
-                = SignatureBase.ParseSerializedSignature(serializedSignature);
-
-            SignatureScheme signatureScheme = parsedSignature.SignatureScheme;
-            if (signatureScheme != SignatureScheme.ED25519)
-                throw new Exception("Invalid signature scheme.");
-
-            byte[] publicKey = parsedSignature.PublicKey; // TODO: Think about whether we need to have this as a byte array or just string
-            if (ToRawBytes().Equals(publicKey))
-                throw new Exception("Signature does not match public key.");
-
-            byte[] signature = parsedSignature.Signature;
-
-            return VerifyRaw(message, signature);
-        }
-
-        /// <summary>
-        /// Verifies a signature passed as a raw set of bytes.
-        /// </summary>
-        /// <param name="message">The message that was signed by the private key.</param>
-        /// <param name="signature">The signature to verify.</param>
-        /// <returns></returns>
-        public override bool VerifyRaw(byte[] message, byte[] signature)
-        {
-            return Chaos.NaCl.Ed25519.Verify(signature, message, ToRawBytes());
-        }
+        public override bool Verify(byte[] message, byte[] signature)
+            => Chaos.NaCl.Ed25519.Verify(signature, message, this._key_bytes);
     }
 }

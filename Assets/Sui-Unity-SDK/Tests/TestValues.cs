@@ -35,6 +35,8 @@ namespace Sui.Tests
 
         public const string PrivateKeyHex = "0x64f57603b58af16907c18a866123286e1cbce89790613558dc1775abb3fc5c8c";
 
+        public const string ValidSecretKeyBase64 = "mdqVWeFekT7pqy5T49+tV12jO0m+ESW7ki4zSU9JiCg=";
+
         public static readonly byte[] PrivateKeySerializedOutput =
         {
             32, 100, 245, 118, 3, 181, 138, 241,

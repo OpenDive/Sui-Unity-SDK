@@ -11,7 +11,7 @@ namespace Sui.Tests.Cryptography
         public void IsValidEd25519HexKey()
         {
             string validPkHex = "0x99da9559e15e913ee9ab2e53e3dfad575da33b49be1125bb922e33494f498828";
-            bool isValidHex = Utilities.Utils.IsValidEd25519HexKey(validPkHex);
+            bool isValidHex = Utilities.Utils.IsValidHexKey(validPkHex);
             //bool isInvalidBase64 = Utilities.Utils.IsBase64String(invalidPkHex);
 
             Assert.AreEqual(true, isValidHex);
@@ -24,9 +24,9 @@ namespace Sui.Tests.Cryptography
             //string pkBase64 = "mdqVWeFekT7pqy5T49+tV12jO0m+ESW7ki4zSU9JiCg=";
             string invalidPkHex2 = "0x99da9559e15e913ee9ab2e53e3dfad5!5da33b49be1125bb922e33494f498828";
 
-            bool isValidHex1 = Utilities.Utils.IsValidEd25519HexKey(invalidPkHex1);
+            bool isValidHex1 = Utilities.Utils.IsValidHexKey(invalidPkHex1);
             Assert.AreEqual(false, isValidHex1);
-            bool isValidHex2 = Utilities.Utils.IsValidEd25519HexKey(invalidPkHex2);
+            bool isValidHex2 = Utilities.Utils.IsValidHexKey(invalidPkHex2);
             Assert.AreEqual(false, isValidHex2);
         }
 

@@ -299,6 +299,7 @@ namespace OpenDive.BCS
         public Serialization SerializeU256(BigInteger num)
             => this.Write(num, IntegerCase.U256);
 
+        // TODO: Look into further benchmarking testing BinaryPrimitive vs low level bit shifting
         /// <summary>
         /// Writes in a given amount of bytes to the output memory stream.
         /// </summary>

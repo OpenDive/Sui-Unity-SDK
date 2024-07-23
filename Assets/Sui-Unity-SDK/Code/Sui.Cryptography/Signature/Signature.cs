@@ -1,5 +1,5 @@
-//
-//  FixedAmountRequest.cs
+﻿//
+//  Signature.cs
 //  Sui-Unity-SDK
 //
 //  Copyright (c) 2024 OpenDive
@@ -23,14 +23,12 @@
 //  THE SOFTWARE.
 //
 
-using Newtonsoft.Json;
-
-namespace Sui.Clients.Faucet.Request
+namespace Sui.Cryptography
 {
-    [JsonObject]
-    public class FixedAmountRequest
+    public class Signature : Sui.Cryptography.SignatureBase
     {
-        [JsonProperty("recipient")]
-        public string Recipient { get; set; }
+        public Signature(string signature) : base(signature) { }
+
+        public Signature(byte[] signature) : base(signature) { }
     }
 }

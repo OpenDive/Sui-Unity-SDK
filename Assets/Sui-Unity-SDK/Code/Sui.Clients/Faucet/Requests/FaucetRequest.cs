@@ -1,5 +1,5 @@
-//
-//  FixedAmountRequest.cs
+﻿//
+//  FaucetRequest.cs
 //  Sui-Unity-SDK
 //
 //  Copyright (c) 2024 OpenDive
@@ -27,10 +27,16 @@ using Newtonsoft.Json;
 
 namespace Sui.Clients.Faucet.Request
 {
-    [JsonObject]
-    public class FixedAmountRequest
+    public class FaucetRequest
     {
-        [JsonProperty("recipient")]
-        public string Recipient { get; set; }
+        [JsonProperty("FixedAmountRequest")]
+        public FixedAmountRequest FixedAmountRequest { get; set; }
+
+        public FaucetRequest(string recipient)
+        {
+            FixedAmountRequest = new FixedAmountRequest();
+            FixedAmountRequest.Recipient = recipient;
+        }
     }
 }
+

@@ -1017,7 +1017,7 @@ namespace OpenDive.BCS
 
             StructTag<T> other_struct_tag = (StructTag<T>)other;
 
-            return this.Address.AddressBytes.SequenceEqual(other_struct_tag.Address.AddressBytes) &&
+            return this.Address.KeyBytes.SequenceEqual(other_struct_tag.Address.KeyBytes) &&
                 this.Module == other_struct_tag.Module &&
                 this.Name == other_struct_tag.Name &&
                 Enumerable.SequenceEqual(this.TypeArguments, other_struct_tag.TypeArguments);

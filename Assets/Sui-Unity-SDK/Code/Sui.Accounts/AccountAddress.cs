@@ -1,16 +1,35 @@
-using System;
+//
+//  AccountAddress.cs
+//  Sui-Unity-SDK
+//
+//  Copyright (c) 2024 OpenDive
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
 using OpenDive.BCS;
-using Chaos.NaCl;
 using Org.BouncyCastle.Crypto.Digests;
 using Sui.Cryptography;
-using Sui.Utilities;
-using static Sui.Cryptography.SignatureUtils;
 using Newtonsoft.Json;
 using Sui.Rpc.Models;
-using UnityEngine;
-using System.Text;
-using static Sui.Rpc.Models.Stakes;
-using System.Linq;
+using Sui.Rpc.Client;
+using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Accounts
 {
@@ -26,239 +45,82 @@ namespace Sui.Accounts
     /// https://docs.sui.io/learn/cryptography/sui-wallet-specs#address-format
     /// </summary>
     [JsonConverter(typeof(SuiAddressJsonConverter))]
-    public class AccountAddress : ISerializable
+    public class AccountAddress : AccountAddressBase
     {
-        public static readonly int OldLength = 20;
+        public override int KeyLength { get => 32; }
 
         /// <summary>
-        /// Length of a Sui account address.
+        /// Signature scheme of the account address.
         /// </summary>
-        public static readonly int Length = 32;
+        protected SignatureScheme _signature_scheme;
 
-
-        private byte[] _addressBytes;
+        // TODO: Look into how to check if an enum property is set
         /// <summary>
-        /// Sui address in byte array format.
-        /// </summary>
-        public byte[] AddressBytes
-        {
-            get => _addressBytes;
-            set => _addressBytes = value;
-        }
-
-        private SignatureScheme _signatureScheme;
-        /// <summary>
-        /// Return the signature scheme.
-        /// If the AccountAddress object was initialized with a sui address byte representation,
-        /// then we get the first byte from that byte array -- this represents the
-        /// signature scheme flat.
+        /// Signature scheme of the account address.
         /// </summary>
         public SignatureScheme SignatureScheme
         {
             get
             {
-                // TODO: Look into how to check if an enum property is set
-                if (_signatureScheme <= 0)
-                {
-                    byte flag = AddressBytes[0];
-                    _signatureScheme = SignatureFlagToScheme.GetScheme(flag);
-                }
-                return _signatureScheme;
+                if (this._signature_scheme <= 0)
+                    this._signature_scheme = this.Flag();
+
+                return this._signature_scheme;
             }
-
-            set => _signatureScheme = value;
+            set => this._signature_scheme = value;
         }
 
-        /// <summary>
-        /// Create an AccountAddress object using a PublicKey object.
-        /// </summary>
-        /// <param name="publicKey"></param>
-        public AccountAddress(PublicKeyBase publicKey)
-        {
-            new AccountAddress(publicKey.KeyBytes, publicKey.SignatureScheme);
-        }
+        public AccountAddress(byte[] account_address) : base(account_address) { }
 
-        /// <summary>
-        /// Cerate an AccountAddress object using a public key and a signature scheme.
-        /// </summary>
-        /// <param name="publicKey"></param>
-        /// <param name="signatureScheme"></param>
-        public AccountAddress(byte[] publicKey, SignatureScheme signatureScheme)
+        public AccountAddress(string account_address) : base(account_address) { }
+
+        public AccountAddress() : base() { }
+
+        public AccountAddress(ErrorBase error) : base(error) { }
+
+        public AccountAddress(SuiPublicKeyBase public_key) : base(public_key.KeyBytes)
         {
-            SignatureScheme = signatureScheme;
-            byte[] suiBytes = PublicKeyBase.ToSuiBytes(signatureScheme, publicKey);
+            this.SignatureScheme = public_key.SignatureScheme;
+
+            byte[] sui_bytes = public_key.ToSuiBytes();
 
             // BLAKE2b hash
-            byte[] result = new byte[64];
-            Blake2bDigest blake2b = new(256);
-            blake2b.BlockUpdate(suiBytes, 0, suiBytes.Length);
+            byte[] result = new byte[public_key.KeyLength * 2];
+            Blake2bDigest blake2b = new Blake2bDigest(256);
+            blake2b.BlockUpdate(sui_bytes, 0, sui_bytes.Length);
             blake2b.DoFinal(result, 0);
 
-            new AccountAddress(result);
+            this._key_bytes = result;
         }
 
-        /// <summary>
-        /// Create an AccountAddress object from a byte array representation.
-        /// Sui hashes the signature scheme flag 1-byte concatenated with public key bytes.
-        /// </summary>
-        /// <param name="address"></param>
-        public AccountAddress(byte[] suiAddress)
+        public static AccountAddress FromHex(string sui_address)
         {
-            Debug.Log("IRVIN::: bytes length: " + suiAddress.Length);
-            if (suiAddress.Length != OldLength && suiAddress.Length != Length)
-                throw new ArgumentException("Invalid address length. It must be " + Length + " bytes");
-            Debug.Log("IRVIN::: bytes assigning ...");
-            AddressBytes = suiAddress;
-            Debug.Log("IRVIN::: bytes assigning ...");
-        }
+            string address = NormalizedTypeConverter.NormalizeSuiAddress(sui_address);
 
-        /// <summary>
-        /// Create an AccountAddress object from a given public key and signature scheme.
-        /// </summary>
-        /// <param name="publicKey"></param>
-        /// <param name="signatureScheme"></param>
-        /// <returns></returns>
-        public static AccountAddress FromKey(byte[] publicKey, SignatureScheme signatureScheme)
-        {
-            return new AccountAddress(publicKey, signatureScheme);
-        }
+            if (address == null)
+                return new AccountAddress(new SuiError(0, "Address string is too long.", sui_address));
 
-        /// <summary>
-        /// Create an AccountAddress object from a hex string representation of a Sui address
-        /// </summary>
-        /// <param name="suiAddress"></param>
-        /// <returns></returns>
-        public static AccountAddress FromHex(string suiAddress)
-        {
-            try
-            {
-                //byte[] suiAddressBytes = suiAddress.HexStringToByteArray();
-                //return new AccountAddress(suiAddressBytes);
+            address = address[2..];
 
-                if (string.IsNullOrWhiteSpace(suiAddress))
-                    throw new ArgumentException("Address string is empty.");
-
-                //if (suiAddress.Contains("0x") && suiAddress.Length == 3)
-                //{
-                //    suiAddress = "0x" + suiAddress;
-                //}
-
-                string addr = suiAddress;
-
-                if (suiAddress[0..2].Equals("0x"))
-                {
-                    addr = suiAddress[2..];
-                }
-
-                // TODO: Document that Sui changed their address length from 20 to 32, hence some old addresses are shorter
-                if (addr.Length < AccountAddress.Length * 2)
-                {
-                    string pad = new string('0', AccountAddress.Length * 2 - addr.Length);
-                    addr = pad + addr;
-                }
-
-                Debug.Log("MARCUS:::HEX STRING - " + addr.HexStringToByteArray().ByteArrayToString());
-
-                return new AccountAddress(addr.HexStringToByteArray());
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is not AccountAddress)
-                throw new NotImplementedException();
-
-            AccountAddress other_addr = (AccountAddress)obj;
-
-            return this.AddressBytes.SequenceEqual(other_addr.AddressBytes);
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-
-        /// <summary>
-        /// Create an AccountAddress object from a base64 string representation of a Sui address
-        /// </summary>
-        /// <param name="suiAddress"></param>
-        /// <returns></returns>
-        public static AccountAddress FromBase64(string suiAddress)
-        {
-            byte[] suiAddressBytes = Convert.FromBase64String(suiAddress);
-            return new AccountAddress(suiAddressBytes);
-        }
-
-        public static AccountAddress FromBase58(string suiAddress)
-        {
-            byte[] bytes = Encoding.ASCII.GetBytes(suiAddress);
-            Base58Encoder base58Encoder = new Base58Encoder();
-            if (Base58Encoder.IsValidEncoding(suiAddress) == false)
-                throw new ArgumentException("Not a valid Base58 string - " + suiAddress);
-
-            Debug.Log(suiAddress);
-            byte[] suiAddressBytes = base58Encoder.DecodeData(suiAddress);
-            return new AccountAddress(suiAddressBytes);
-        }
-
-        /// <summary>
-        /// Returns a hex string representation of a Sui address.
-        /// </summary>
-        /// <returns></returns>
-        public string ToHex()
-        {
-            string addressHex = BitConverter.ToString(AddressBytes); // Turn into hexadecimal string
-            addressHex = addressHex.Replace("-", "").ToLowerInvariant(); // Remove '-' characters from hex string hash
-            //addressHex = "0x" + addressHex.Substring(0, 64); // TODO: Address this
-            addressHex = "0x" + addressHex.Substring(0, AddressBytes.Length * 2); // It is assumed that at this stage the bytes are valid, so it's either 20 or 32 bytes
-            return addressHex;
-        }
-
-        /// <summary>
-        /// Returns a base64 string representation of a Sui address.
-        /// </summary>
-        /// <returns></returns>
-        public string ToBase64()
-        {
-            return CryptoBytes.ToBase64String(AddressBytes);
-        }
-
-        /// <summary>
-        /// Returns a base64 string representation of a Sui address.
-        /// </summary>
-        /// <returns></returns>
-        public override string ToString()
-        {
-            return ToHex();
-        }
-
-        public void Serialize(Serialization serializer)
-        {
-            serializer.SerializeFixedBytes(this.AddressBytes);
+            return new AccountAddress(address);
         }
 
         public static ISerializable Deserialize(Deserialization deserializer)
         {
-            if (deserializer.PeekByte() == Length)
+            AccountAddress account_address = new AccountAddress();
+            if (deserializer.PeekByte() == account_address.KeyLength)
             {
-                byte[] data = deserializer.ToBytes();
-                return new AccountAddress(data);
+                account_address.KeyBytes = deserializer.ToBytes();
+                return account_address;
             }
-            return new AccountAddress(deserializer.FixedBytes(Length));
+            account_address.KeyBytes = deserializer.FixedBytes(32);
+            return account_address;
         }
 
-        public TypeTag Variant()
-        {
-            throw new NotImplementedException();
-        }
-
-        public object GetValue()
-        {
-            throw new NotImplementedException();
-        }
+        /// <summary>
+        /// Return the byte representation of the signature scheme.
+        /// </summary>
+        /// <returns>A byte value corresponding to the signature scheme.</returns>
+        public SignatureScheme Flag() => SignatureFlagToScheme.GetScheme(this.KeyBytes[0]);
     }
 }

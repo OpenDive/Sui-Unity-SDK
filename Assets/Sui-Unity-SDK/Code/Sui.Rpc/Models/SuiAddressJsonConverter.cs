@@ -6,10 +6,7 @@ namespace Sui.Rpc.Models
 {
     public class SuiAddressJsonConverter : JsonConverter
     {
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(AccountAddress);
-        }
+        public override bool CanConvert(Type object_type) => object_type == typeof(AccountAddress);
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {

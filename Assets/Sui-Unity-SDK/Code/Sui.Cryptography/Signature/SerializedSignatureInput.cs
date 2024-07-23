@@ -1,5 +1,5 @@
-//
-//  FixedAmountRequest.cs
+﻿//
+//  SerializedSignatureInput.cs
 //  Sui-Unity-SDK
 //
 //  Copyright (c) 2024 OpenDive
@@ -23,14 +23,41 @@
 //  THE SOFTWARE.
 //
 
-using Newtonsoft.Json;
+using static Sui.Cryptography.SignatureUtils;
 
-namespace Sui.Clients.Faucet.Request
+namespace Sui.Cryptography
 {
-    [JsonObject]
-    public class FixedAmountRequest
+    /// <summary>
+    /// Represents a Sui signature
+    /// https://docs.sui.io/learn/cryptography/sui-signatures#user-signature
+    /// </summary>
+    public class SerializeSignatureInput
     {
-        [JsonProperty("recipient")]
-        public string Recipient { get; set; }
+        /// <summary>
+        /// The signature scheme of the input.
+        /// </summary>
+        public SignatureScheme SignatureScheme { get; set; }
+
+        /// <summary>
+        /// The signature as a byte array.
+        /// </summary>
+        public byte[] Signature { get; set; }
+
+        /// <summary>
+        /// The public key associated with the signature.
+        /// </summary>
+        public SuiPublicKeyBase PublicKey { get; set; }
+
+        public SerializeSignatureInput
+        (
+            SignatureScheme signature_scheme,
+            byte[] signature,
+            SuiPublicKeyBase public_key
+        )
+        {
+            this.SignatureScheme = signature_scheme;
+            this.Signature = signature;
+            this.PublicKey = public_key;
+        }
     }
 }

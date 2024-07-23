@@ -17,6 +17,8 @@ using UnityEngine.Windows;
 using static UnityEngine.UI.GridLayoutGroup;
 using NBitcoin.DataEncoders;
 using Codice.CM.Common.Serialization.Replication;
+using Sui.Utilities;
+using UnityEditor.VersionControl;
 
 namespace Sui.Rpc
 {
@@ -66,8 +68,13 @@ namespace Sui.Rpc
                 return RpcResult<TransactionBlockResponse>.GetErrorResult(tx_bytes.Error.Message);
 
             SignatureBase signature = account.SignTransactionBlock(tx_bytes.Result);
-            Debug.Log($"MARCUS::: TX EXECUTE BYTES - {String.Join(", ", tx_bytes.Result)}");
-            return await this.ExecuteTransactionBlock(tx_bytes.Result, account.ToSerializedSignature(signature), opts, request_type);
+
+            SuiResult<string> signature_result = account.ToSerializedSignature(signature);
+
+            if (signature_result.Error != null)
+                return RpcResult<TransactionBlockResponse>.GetErrorResult(signature_result.Error.Message);
+
+            return await this.ExecuteTransactionBlock(tx_bytes.Result, signature_result.Result, opts, request_type);
         }
 
         public async Task<RpcResult<TransactionBlockResponse>> ExecuteTransactionBlock
@@ -79,7 +86,6 @@ namespace Sui.Rpc
         )
         {
             TransactionBlockResponseOptions opts = options != null ? options : new TransactionBlockResponseOptions();
-            Debug.Log($"MARCUS::: EXECUTE TRANSACTION BLOCK - {JsonConvert.SerializeObject(ArgumentBuilder.BuildArguments(transaction_block, new string[] { signature }, opts))}");
             return await SendRpcRequestAsync<TransactionBlockResponse>(
                 Methods.sui_executeTransactionBlock.ToString(),
                 ArgumentBuilder.BuildArguments
@@ -102,7 +108,7 @@ namespace Sui.Rpc
                 if (count >= 60)
                     return RpcResult<TransactionBlockResponse>.GetErrorResult("Transaction Timed Out");
 
-                await Task.Delay(TimeSpan.FromSeconds(1f));
+                await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(1f));
                 count += 1;
                 is_done = await this.IsValidTransactionBlock(transaction);
             }
@@ -594,8 +600,8 @@ namespace Sui.Rpc
             if (Utilities.Base58Encoder.IsValidEncoding(digest) == false)
                 return false;
 
-            Base58Encoder base58Encoder = new Base58Encoder();
-            byte[] digest_data = base58Encoder.DecodeData(digest);
+            NBitcoin.DataEncoders.Base58Encoder base58_encoder = new NBitcoin.DataEncoders.Base58Encoder();
+            byte[] digest_data = base58_encoder.DecodeData(digest);
 
             return digest_data.Count() == 32;
         }

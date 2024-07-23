@@ -68,7 +68,7 @@ namespace Sui.Utilities
         //    return rg.IsMatch(walletAddress);
         //}
 
-        public static bool IsValidEd25519HexKey(string privateKey)
+        public static bool IsValidHexKey(string privateKey)
         {
             if (privateKey[0..2].Equals("0x"))
                 privateKey = privateKey[2..];

@@ -241,7 +241,7 @@ namespace Sui.Transactions
         private static bool IsSameStruct(SuiMoveNormalziedTypeStruct lhs, StandardStruct rhs)
         {
             return
-                lhs.Struct.Address.AddressBytes.SequenceEqual(rhs.Address.AddressBytes) &&
+                lhs.Struct.Address.KeyBytes.SequenceEqual(rhs.Address.KeyBytes) &&
                 lhs.Struct.Module == rhs.Module &&
                 lhs.Struct.Name == rhs.Name;
         }

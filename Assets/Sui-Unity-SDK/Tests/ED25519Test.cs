@@ -2,12 +2,11 @@ using NUnit.Framework;
 using System;
 using Sui.Utilities;
 using Sui.Cryptography.Ed25519;
-using UnityEngine;
 using Sui.Accounts;
-using Sui.Transactions;
 using Sui.Rpc;
-using Sui.Cryptography;
-using System.Threading.Tasks;
+using UnityEngine.TestTools;
+using System.Collections;
+using UnityEngine;
 
 namespace Sui.Tests.Cryptography
 {
@@ -22,7 +21,7 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PrivateKeyRandom()
         {
-            PrivateKey privateKey = (PrivateKey)PrivateKey.Random();
+            PrivateKey privateKey = new PrivateKey();
             byte[] keyBytes = privateKey.KeyBytes;
             Assert.AreEqual(32, keyBytes.Length);
         }
@@ -43,8 +42,8 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PrivateKeyFromBytesInvalidLength()
         {
-            var ex = Assert.Throws<ArgumentException>(() => new PrivateKey(privateKeyBytesInvalid));
-            Assert.AreEqual("Invalid key length: \nParameter name: privateKey", ex.Message);
+            PrivateKey invalid_key = new PrivateKey(privateKeyBytesInvalid);
+            Assert.AreEqual("Invalid key length: 29", invalid_key.Error.Message);
         }
 
         [Test]
@@ -62,9 +61,9 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PrivateKeyFromHexStringInvalid()
         {
-            string invalidPkHex = "0x99da9559e15e913ee9ab2e53e3dfad575da3349be1125bb922e33494f49882!";
-            var ex = Assert.Throws<ArgumentException>(() => new PrivateKey(invalidPkHex));
-            Assert.AreEqual("Invalid key: \nParameter name: privateKey", ex.Message);
+            string invalid_pk_hex = "0x99da9559e15e913ee9ab2e53e3dfad575da3349be1125bb922e33494f49882!";
+            PrivateKey invalid_key = new PrivateKey(invalid_pk_hex);
+            Assert.AreEqual("Invalid key.", invalid_key.Error.Message);
         }
 
         [Test]
@@ -83,14 +82,10 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PrivateKeyFromBase64StringInvalid()
         {
-            //string pkHex = "0x99da9559e15e913ee9ab2e53e3dfad575da33b49be1125bb922e33494f498828";
-            string pkBase64Invalid = "mdqVWeFekT7pqy5T49+tV12jO0m+ESW7kSU9JiCg=";
-            //byte[] pkBytes = { 153, 218, 149, 89, 225, 94, 145, 62, 233, 171, 46, 83, 227, 223, 173, 87, 93, 163, 59, 73, 190, 17, 37, 187, 146, 46, 51, 73, 79, 73, 136, 40 };
-            //string publicKey = "Gy9JCW4+Xb0Pz6nAwM2S2as7IVRLNNXdSmXZi4eLmSI=";
-            //PrivateKey pk = new PrivateKey(pkBase64);
+            string pk_base64_invalid = "mdqVWeFekT7pqy5T49+tV12jO0m+ESW7kSU9JiCg=";
 
-            var ex = Assert.Throws<ArgumentException>(() => new PrivateKey(pkBase64Invalid));
-            Assert.AreEqual("Invalid key: \nParameter name: privateKey", ex.Message);
+            PrivateKey invalid_key = new PrivateKey(pk_base64_invalid);
+            Assert.AreEqual("Invalid key.", invalid_key.Error.Message);
         }
 
         [Test]
@@ -166,55 +161,55 @@ namespace Sui.Tests.Cryptography
         [Test]
         public void PublicKeyFromBytesSuccess()
         {
-            PublicKey publicKey = new(TestValues.ValidKeyBytes);
-            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToBase64());
-            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToString());
-            Assert.AreEqual(TestValues.ValidKeyHex, publicKey.KeyHex);
-            Assert.AreEqual(TestValues.ValidKeyBytes, publicKey.KeyBytes);
+            PublicKey public_key = new(TestValues.ValidKeyBytes);
+            Assert.AreEqual(TestValues.ValidKeyBase64, public_key.ToBase64());
+            Assert.AreEqual(TestValues.ValidKeyBase64, public_key.ToString());
+            Assert.AreEqual(TestValues.ValidKeyHex, public_key.KeyHex);
+            Assert.AreEqual(TestValues.ValidKeyBytes, public_key.KeyBytes);
         }
 
         [Test]
         public void PublicKeyFromBytesInvalidLength()
         {
-            byte[] invalidPublicKey = { 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-            var ex = Assert.Throws<ArgumentException>(() => new PublicKey(invalidPublicKey));
-            Assert.AreEqual("Invalid key length: \nParameter name: publicKey", ex.Message);
+            byte[] invalid_public_key = { 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            PublicKey invalid_key = new PublicKey(invalid_public_key);
+            Assert.AreEqual("Invalid key length: 33", invalid_key.Error.Message);
         }
 
         [Test]
         public void PublicKeyFromHexStringSuccess()
         {
-            PublicKey publicKey = new(TestValues.ValidKeyHex);
-            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToBase64());
-            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToString());
-            Assert.AreEqual(TestValues.ValidKeyHex, publicKey.KeyHex);
-            Assert.AreEqual(TestValues.ValidKeyBytes, publicKey.KeyBytes);
+            PublicKey public_key = new(TestValues.ValidKeyHex);
+            Assert.AreEqual(TestValues.ValidKeyBase64, public_key.ToBase64());
+            Assert.AreEqual(TestValues.ValidKeyBase64, public_key.ToString());
+            Assert.AreEqual(TestValues.ValidKeyHex, public_key.KeyHex);
+            Assert.AreEqual(TestValues.ValidKeyBytes, public_key.KeyBytes);
         }
 
         [Test]
         public void PublicKeyFromHexStringInvalid()
         {
-            string invalidPublicKeyHex = "0x30000000";
-            var ex = Assert.Throws<ArgumentException>(() => new PublicKey(invalidPublicKeyHex));
-            Assert.AreEqual("Invalid key: \nParameter name: publicKey", ex.Message);
+            string invalid_public_key_hex = "0x30000000";
+            PublicKey invalid_key = new PublicKey(invalid_public_key_hex);
+            Assert.AreEqual("Invalid key.", invalid_key.Error.Message);
         }
 
         [Test]
         public void PublicKeyFromBase64StringSuccess()
         {
-            PublicKey publicKey = new(TestValues.ValidKeyBase64);
-            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToBase64());
-            Assert.AreEqual(TestValues.ValidKeyBase64, publicKey.ToString());
-            Assert.AreEqual(TestValues.ValidKeyHex, publicKey.KeyHex);
-            Assert.AreEqual(TestValues.ValidKeyBytes, publicKey.KeyBytes);
+            PublicKey public_key = new(TestValues.ValidKeyBase64);
+            Assert.AreEqual(TestValues.ValidKeyBase64, public_key.ToBase64());
+            Assert.AreEqual(TestValues.ValidKeyBase64, public_key.ToString());
+            Assert.AreEqual(TestValues.ValidKeyHex, public_key.KeyHex);
+            Assert.AreEqual(TestValues.ValidKeyBytes, public_key.KeyBytes);
         }
 
         [Test]
         public void PublicKeyFromBase64StringInvalid()
         {
-            string invalidPublicKeyHex = "Uz39UFseB/B38iBwjesIU1JZxY6y+TRL9P84JFw414=";
-            var ex = Assert.Throws<ArgumentException>(() => new PublicKey(invalidPublicKeyHex));
-            Assert.AreEqual("Invalid key: \nParameter name: publicKey", ex.Message);
+            string invalid_public_key_hex = "Uz39UFseB/B38iBwjesIU1JZxY6y+TRL9P84JFw414=";
+            PublicKey invalid_key = new PublicKey(invalid_public_key_hex);
+            Assert.AreEqual("Invalid key.", invalid_key.Error.Message);
         }
 
         [Test]
@@ -277,6 +272,50 @@ namespace Sui.Tests.Cryptography
                 PublicKey publicKey = new PublicKey(rawPublicKey);
                 Assert.AreEqual(suiAddress, publicKey.ToSuiAddress(), "---- \n" + publicKey.ToSuiBytes().ToReadableString() + "\n" + publicKey.ToSuiAddress());
             }
+        }
+
+        [Test]
+        public void PrivateKeySignTest()
+        {
+            Account account = new Account();
+            byte[] data = System.Text.Encoding.UTF8.GetBytes("hello world");
+            Sui.Cryptography.SignatureBase signature = account.Sign(data);
+
+            Assert.IsTrue(account.Verify(data, signature));
+        }
+
+        [UnityTest]
+        public IEnumerator TransactionBlockSigningTest()
+        {
+            Account account = new Account();
+            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+            SuiClient client = new SuiClient(Constants.LocalnetConnection);
+
+            tx_block.SetSender(account.SuiAddress());
+            tx_block.SetGasPrice(5);
+            tx_block.SetGasBudget(100);
+
+            byte[] digest = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            Base58Encoder encoder = new Base58Encoder();
+            tx_block.SetGasPayment
+            (
+                new Types.SuiObjectRef[]
+                {
+                    new Types.SuiObjectRef
+                    (
+                        string.Format("{0:0}", new System.Random().NextDouble() * 100000).PadLeft(64, '0'),
+                        $"{string.Format("{0:0}", new System.Random().NextDouble() * 100000).PadLeft(64, '0')}",
+                        encoder.EncodeData(digest)
+                    )
+                }
+            );
+
+            System.Threading.Tasks.Task<RpcResult<byte[]>> result = tx_block.Build(new Transactions.BuildOptions(client));
+            yield return new WaitUntil(() => result.IsCompleted);
+
+            Sui.Cryptography.SignatureBase serialized_signature = account.SignTransactionBlock(result.Result.Result);
+
+            Assert.IsTrue(account.VerifyTransactionBlock(result.Result.Result, serialized_signature));
         }
     }
 }

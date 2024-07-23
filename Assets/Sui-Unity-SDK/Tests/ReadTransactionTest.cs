@@ -35,7 +35,7 @@ namespace Sui.Tests
             RpcResult<IEnumerable<TransactionBlockResponse>> txns = await this.Toolbox.ExecutePaySuiNTimes(this.NumTransactions);
 
             if (txns.Error != null)
-                return txns.Error;
+                return (RpcError)txns.Error;
 
             this.Transactions = txns.Result.ToList();
 
