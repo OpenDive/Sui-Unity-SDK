@@ -1,22 +1,25 @@
 using System.Numerics;
 using Newtonsoft.Json;
+using Sui.Accounts;
 
 namespace Sui.Rpc.Models
 {
     /// <summary>
-    /// <code>
-    /// {
-    ///     "objectId":"0x7cb7bf705ad0edf9a93f993ba077a5dfd23052c1e059bd51e62a4bce4b3f8378",
-    ///     "sequenceNumber":"1"
-    /// }
-    /// </code>
+    /// The version that the transaction effects took place.
     /// </summary>
     [JsonObject]
     public class TransactionBlockEffectsModifiedAtVersions
     {
+        /// <summary>
+        /// Represents the ID of the object.
+        /// </summary>
         [JsonProperty("objectId")]
-        public string ObjectId { get; set; }
+        public AccountAddress ObjectID { get; internal set; }
+
+        /// <summary>
+        /// Represents the sequence number of the object.
+        /// </summary>
         [JsonProperty("sequenceNumber")]
-        public BigInteger SequenceNumber { get; set; }
+        public BigInteger SequenceNumber { get; internal set; }
     }
 }

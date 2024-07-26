@@ -5,17 +5,12 @@ using UnityEngine;
 using NUnit.Framework;
 using Sui.Rpc;
 using Sui.Rpc.Models;
-using NBitcoin;
 using OpenDive.BCS;
 using Sui.Transactions.Types.Arguments;
-using UnityEditor.VersionControl;
 using System.Linq;
 using System.Collections.Generic;
-using UnityEngine.UI;
-using NUnit.Framework.Interfaces;
-using NUnit.Framework.Internal;
-using Newtonsoft.Json;
-using UnityEditor.UIElements;
+using Sui.Accounts;
+using Sui.Utilities;
 
 namespace Sui.Tests
 {
@@ -30,10 +25,12 @@ namespace Sui.Tests
             this.Toolbox = new TestToolbox();
             yield return this.Toolbox.Setup();
 
-            Task<PublishedPackage> task = this.Toolbox.PublishPackage("entry-point-vector");
-            yield return new WaitUntil(() => task.IsCompleted);
+            yield return this.Toolbox.PublishPackage("entry-point-vector", (package_result) => {
+                if (package_result.Error != null)
+                    Assert.Fail(package_result.Error.Message);
 
-            this.PackageID = task.Result.PackageID;
+                this.PackageID = package_result.Result.PackageID;
+            });
 
             yield return this.Toolbox.Setup();
         }
@@ -41,10 +38,10 @@ namespace Sui.Tests
         private void CheckBlockResponse(RpcResult<TransactionBlockResponse> tx_sign)
         {
             if (tx_sign.Error != null || tx_sign.Result == null || (tx_sign.Result != null && tx_sign.Result.Effects.Status.Status == ExecutionStatus.Failure))
-                Assert.Fail($"Transaction Failed with message - {tx_sign.Error.Message ??= tx_sign.Result.Effects.Status.Error}");
+                Assert.Fail($"Transaction Failed with message - {tx_sign.Error.Message ?? tx_sign.Result.Effects.Status.Error}");
         }
 
-        private async Task<string> MintObject(int val, TestToolbox toolbox)
+        private async Task<AccountAddress> MintObject(int val, TestToolbox toolbox)
         {
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             tx_block.AddMoveCallTx
@@ -57,7 +54,7 @@ namespace Sui.Tests
                 }
             );
 
-            RpcResult<TransactionBlockResponse> tx_sign = await toolbox.Client.SignAndExecuteTransactionBlock
+            RpcResult<TransactionBlockResponse> tx_sign = await toolbox.Client.SignAndExecuteTransactionBlockAsync
             (
                 tx_block,
                 toolbox.Account,
@@ -66,7 +63,7 @@ namespace Sui.Tests
 
             this.CheckBlockResponse(tx_sign);
 
-            return tx_sign.Result.Effects.Created[0].Reference.ObjectId;
+            return tx_sign.Result.Effects.Created[0].Reference.ObjectID;
         }
 
         private IEnumerator DestroyObject(string[] objects, TestToolbox toolbox, bool with_type = false)
@@ -84,7 +81,7 @@ namespace Sui.Tests
                 vec.ToArray()
             );
 
-            Task<RpcResult<TransactionBlockResponse>> tx_sign_task = toolbox.Client.SignAndExecuteTransactionBlock
+            Task<RpcResult<TransactionBlockResponse>> tx_sign_task = toolbox.Client.SignAndExecuteTransactionBlockAsync
             (
                 tx_block,
                 toolbox.Account,
@@ -98,13 +95,13 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator VectorObjectsInitializationTest()
         {
-            Task<string> res_1 = this.MintObject(7, this.Toolbox);
+            Task<AccountAddress> res_1 = this.MintObject(7, this.Toolbox);
             yield return new WaitUntil(() => res_1.IsCompleted);
 
-            Task<string> res_2 = this.MintObject(42, this.Toolbox);
+            Task<AccountAddress> res_2 = this.MintObject(42, this.Toolbox);
             yield return new WaitUntil(() => res_2.IsCompleted);
 
-            yield return this.DestroyObject(new string[] { res_1.Result, res_2.Result }, this.Toolbox);
+            yield return this.DestroyObject(new string[] { res_1.Result.KeyHex, res_2.Result.KeyHex }, this.Toolbox);
         }
 
         // TODO: Figure out and implement a solution for this flaky test.
@@ -112,13 +109,13 @@ namespace Sui.Tests
         [Retry(10)]
         public IEnumerator TypeHintTest()
         {
-            Task<string> res_1 = this.MintObject(7, this.Toolbox);
+            Task<AccountAddress> res_1 = this.MintObject(7, this.Toolbox);
             yield return new WaitUntil(() => res_1.IsCompleted);
 
-            Task<string> res_2 = this.MintObject(42, this.Toolbox);
+            Task<AccountAddress> res_2 = this.MintObject(42, this.Toolbox);
             yield return new WaitUntil(() => res_2.IsCompleted);
 
-            yield return this.DestroyObject(new string[] { res_1.Result, res_2.Result }, this.Toolbox, true);
+            yield return this.DestroyObject(new string[] { res_1.Result.KeyHex, res_2.Result.KeyHex }, this.Toolbox, true);
         }
 
         [UnityTest]
@@ -128,7 +125,7 @@ namespace Sui.Tests
             yield return new WaitUntil(() => coin_task.IsCompleted);
 
             CoinDetails coin = coin_task.Result.Result.Data[3];
-            string[] coin_ids = coin_task.Result.Result.Data.Select((coin) => coin.CoinObjectId).ToArray();
+            string[] coin_ids = coin_task.Result.Result.Data.Select((coin) => coin.CoinObjectID.KeyHex).ToArray();
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             List<SuiTransactionArgument> vec = tx_block.AddMakeMoveVecTx
             (
@@ -150,7 +147,7 @@ namespace Sui.Tests
             );
             tx_block.SetGasPayment(new Types.SuiObjectRef[] { coin.ToSuiObjectRef() });
 
-            Task<RpcResult<TransactionBlockResponse>> tx_sign_task = this.Toolbox.Client.SignAndExecuteTransactionBlock
+            Task<RpcResult<TransactionBlockResponse>> tx_sign_task = this.Toolbox.Client.SignAndExecuteTransactionBlockAsync
             (
                 tx_block,
                 this.Toolbox.Account,

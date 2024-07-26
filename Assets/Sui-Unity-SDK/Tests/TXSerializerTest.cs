@@ -3,17 +3,14 @@ using System.Threading.Tasks;
 using UnityEngine.TestTools;
 using UnityEngine;
 using NUnit.Framework;
-using Sui.Rpc;
 using Sui.Rpc.Models;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.VersionControl;
 using Sui.Types;
-using UnityEngine.Windows;
-using NBitcoin;
 using OpenDive.BCS;
 using Sui.Transactions.Types.Arguments;
-using Newtonsoft.Json;
+using Sui.Accounts;
+using Sui.Utilities;
 
 namespace Sui.Tests
 {
@@ -21,7 +18,7 @@ namespace Sui.Tests
     {
         TestToolbox Toolbox;
         string PackageID;
-        string SharedObjectID;
+        AccountAddress SharedObjectID;
 
         [UnitySetUp]
         public IEnumerator SetUp()
@@ -29,22 +26,24 @@ namespace Sui.Tests
             this.Toolbox = new TestToolbox();
             yield return this.Toolbox.Setup();
 
-            Task<PublishedPackage> task = this.Toolbox.PublishPackage("serializer");
-            yield return new WaitUntil(() => task.IsCompleted);
+            yield return this.Toolbox.PublishPackage("serializer", (package_result) => {
+                if (package_result.Error != null)
+                    Assert.Fail(package_result.Error.Message);
 
-            this.PackageID = task.Result.PackageID;
+                this.PackageID = package_result.Result.PackageID;
 
-            List<SuiOwnedObjectRef> created_objects = task.Result.PublishedTX.Effects.Created;
-            List<SuiOwnedObjectRef> shared_object = created_objects.Where(obj => obj.Owner.Type == SuiOwnerType.Shared).ToList();
+                List<SuiOwnedObjectRef> created_objects = package_result.Result.PublishedTX.Effects.Created.ToList();
+                List<SuiOwnedObjectRef> shared_object = created_objects.Where(obj => obj.Owner.Type == SuiOwnerType.Shared).ToList();
 
-            this.SharedObjectID = shared_object[0].Reference.ObjectId;
+                this.SharedObjectID = shared_object[0].Reference.ObjectID;
+            });
         }
 
         private IEnumerator SerializeAndDeserialize(Transactions.TransactionBlock tx_block, List<bool> mutable)
         {
             tx_block.SetSender(this.Toolbox.Address());
 
-            Task<RpcResult<byte[]>> tx_build_task = tx_block.Build(new Transactions.BuildOptions(this.Toolbox.Client));
+            Task<SuiResult<byte[]>> tx_build_task = tx_block.Build(new Transactions.BuildOptions(this.Toolbox.Client));
             yield return new WaitUntil(() => tx_build_task.IsCompleted);
 
             byte[] tx_build_bytes = tx_build_task.Result.Result;
@@ -68,11 +67,8 @@ namespace Sui.Tests
 
             Transactions.TransactionBlock reserialized_tx_block = new Transactions.TransactionBlock(deserialized_txn_builder);
 
-            Task<RpcResult<byte[]>> tx_rebuild_task = reserialized_tx_block.Build(new Transactions.BuildOptions(this.Toolbox.Client));
+            Task<SuiResult<byte[]>> tx_rebuild_task = reserialized_tx_block.Build(new Transactions.BuildOptions(this.Toolbox.Client));
             yield return new WaitUntil(() => tx_rebuild_task.IsCompleted);
-
-            Debug.Log($"MARCUS::: TX BUILD BYTES - {JsonConvert.SerializeObject(tx_block.BlockDataBuilder.Builder)}");
-            Debug.Log($"MARCUS::: TX REBUILD BYTES - {JsonConvert.SerializeObject(reserialized_tx_block.BlockDataBuilder.Builder)}");
 
             Assert.IsTrue(tx_rebuild_task.Result.Result.SequenceEqual(tx_build_bytes));
         }
@@ -87,7 +83,7 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {
-                        tx_block.AddObjectInput(this.SharedObjectID)
+                        tx_block.AddObjectInput(this.SharedObjectID.KeyHex)
                 }
             );
             yield return this.SerializeAndDeserialize(tx_block, new List<bool> { false });
@@ -103,7 +99,7 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {
-                        tx_block.AddObjectInput(this.SharedObjectID)
+                        tx_block.AddObjectInput(this.SharedObjectID.KeyHex)
                 }
             );
             tx_block.AddMoveCallTx
@@ -112,7 +108,7 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { },
                 new SuiTransactionArgument[]
                 {
-                        tx_block.AddObjectInput(this.SharedObjectID)
+                        tx_block.AddObjectInput(this.SharedObjectID.KeyHex)
                 }
             );
             yield return this.SerializeAndDeserialize(tx_block, new List<bool> { true });

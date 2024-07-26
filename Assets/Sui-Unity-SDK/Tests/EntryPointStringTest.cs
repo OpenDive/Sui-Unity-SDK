@@ -23,10 +23,12 @@ namespace Sui.Tests
             this.Toolbox = new TestToolbox();
             yield return this.Toolbox.Setup();
 
-            Task<PublishedPackage> task = this.Toolbox.PublishPackage("entry-point-types");
-            yield return new WaitUntil(() => task.IsCompleted);
+            yield return this.Toolbox.PublishPackage("entry-point-types", (package_result) => {
+                if (package_result.Error != null)
+                    Assert.Fail(package_result.Error.Message);
 
-            this.PackageID = task.Result.PackageID;
+                this.PackageID = package_result.Result.PackageID;
+            });
         }
 
         private IEnumerator CallWithString
@@ -49,7 +51,7 @@ namespace Sui.Tests
             );
             TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true);
 
-            Task<RpcResult<TransactionBlockResponse>> call_tx_block_task = this.Toolbox.Client.SignAndExecuteTransactionBlock(tx_block, this.Toolbox.Account, options);
+            Task<RpcResult<TransactionBlockResponse>> call_tx_block_task = this.Toolbox.Client.SignAndExecuteTransactionBlockAsync(tx_block, this.Toolbox.Account, options);
             yield return new WaitUntil(() => call_tx_block_task.IsCompleted);
 
             Task tx_task = this.Toolbox.Client.WaitForTransaction(call_tx_block_task.Result.Result.Digest);
@@ -79,7 +81,7 @@ namespace Sui.Tests
             );
             TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true);
 
-            Task<RpcResult<TransactionBlockResponse>> call_tx_block_task = this.Toolbox.Client.SignAndExecuteTransactionBlock(tx_block, this.Toolbox.Account, options);
+            Task<RpcResult<TransactionBlockResponse>> call_tx_block_task = this.Toolbox.Client.SignAndExecuteTransactionBlockAsync(tx_block, this.Toolbox.Account, options);
             yield return new WaitUntil(() => call_tx_block_task.IsCompleted);
 
             Task tx_task = this.Toolbox.Client.WaitForTransaction(call_tx_block_task.Result.Result.Digest);

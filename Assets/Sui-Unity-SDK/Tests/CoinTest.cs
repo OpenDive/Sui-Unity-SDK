@@ -6,8 +6,6 @@ using NUnit.Framework;
 using Sui.Rpc;
 using Sui.Rpc.Models;
 using OpenDive.BCS;
-using Sui.Accounts;
-using System.Collections.Generic;
 
 namespace Sui.Tests
 {
@@ -29,18 +27,19 @@ namespace Sui.Tests
             yield return new WaitUntil(() => coins_task.IsCompleted);
             CoinPage coins = coins_task.Result.Result;
 
-            Assert.Greater(coins.Data.Count, 0);
+            Assert.Greater(coins.Data.Length, 0);
         }
 
         [UnityTest]
         public IEnumerator CoinStructTagTest()
         {
-            SuiStructTag sui_struct_tag = new SuiStructTag(AccountAddress.FromHex("0x2"), "sui", "SUI", new List<SerializableTypeTag>());
+            SuiStructTag sui_struct_tag = new SuiStructTag("0x2::sui::SUI");
+
             Task<RpcResult<CoinPage>> coins_task = this.Toolbox.GetCoins();
             yield return new WaitUntil(() => coins_task.IsCompleted);
             CoinPage coins = coins_task.Result.Result;
 
-            Assert.IsTrue(new SuiStructTag(coins.Data[0].CoinType).Equals(sui_struct_tag));
+            Assert.IsTrue(coins.Data[0].CoinType.Equals(sui_struct_tag));
         }
     }
 }

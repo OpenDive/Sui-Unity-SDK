@@ -30,6 +30,7 @@ using Newtonsoft.Json;
 using Sui.Rpc.Models;
 using Sui.Rpc.Client;
 using static Sui.Cryptography.SignatureUtils;
+using Sui.Utilities;
 
 namespace Sui.Accounts
 {
@@ -95,7 +96,7 @@ namespace Sui.Accounts
 
         public static AccountAddress FromHex(string sui_address)
         {
-            string address = NormalizedTypeConverter.NormalizeSuiAddress(sui_address);
+            string address = Utils.NormalizeSuiAddress(sui_address);
 
             if (address == null)
                 return new AccountAddress(new SuiError(0, "Address string is too long.", sui_address));

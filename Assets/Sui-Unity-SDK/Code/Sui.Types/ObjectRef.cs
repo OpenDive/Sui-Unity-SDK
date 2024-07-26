@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Numerics;
 using Newtonsoft.Json;
 using OpenDive.BCS;
 using Sui.Accounts;
@@ -17,12 +18,14 @@ namespace Sui.Types
     public interface IObjectRef : ISerializable
     {
         public string ObjectIDString { get; set; }
+
         public AccountAddress ObjectID { get; set; }
     }
 
     public class ObjectArg : ISerializable
     {
         public ObjectRefType Type { get; set; }
+
         public IObjectRef ObjectRef { get; set; }
 
         public ObjectArg(ObjectRefType type, IObjectRef object_ref)
@@ -69,13 +72,13 @@ namespace Sui.Types
     /// Where `ObjectDigest` is a base58 BCS serialized string
     /// </summary>
     [JsonObject]
-    public class SuiObjectRef : IObjectRef
+    public class SuiObjectRef : ReturnBase, IObjectRef
     {
         [JsonProperty("objectId")]
         public string ObjectIDString { get; set; }
 
         [JsonProperty("version")]
-        public int Version { get; set; }
+        public BigInteger Version { get; set; }
 
         [JsonProperty("digest")]
         public string Digest { get; set; }
@@ -86,24 +89,38 @@ namespace Sui.Types
             set => this.ObjectIDString = value.ToHex();
         }
 
-        public SuiObjectRef(string objectId, int version, string digest)
+        [JsonConstructor]
+        public SuiObjectRef(string objectId, string version, string digest)
+        {
+            this.ObjectIDString = objectId;
+            this.Version = BigInteger.Parse(version);
+            this.Digest = digest;
+        }
+
+        public SuiObjectRef(string objectId, BigInteger version, string digest)
         {
             this.ObjectIDString = objectId;
             this.Version = version;
             this.Digest = digest;
         }
 
-        public SuiObjectRef(AccountAddress objectId, int version, string digest)
+        public SuiObjectRef(AccountAddress objectId, BigInteger version, string digest)
         {
             this.ObjectIDString = objectId.ToHex();
             this.Version = version;
             this.Digest = digest;
         }
 
-        public SuiObjectRef(string object_id, string version, string digest)
+        public SuiObjectRef(AccountAddress objectId, BigInteger? version, string digest)
         {
-            this.ObjectIDString = object_id;
-            this.Version = int.Parse(version);
+            if (version == null)
+            {
+                this.SetError<SuiError>("Version is null.");
+                return;
+            }
+
+            this.ObjectIDString = objectId.ToHex();
+            this.Version = (BigInteger)version;
             this.Digest = digest;
         }
 
@@ -125,7 +142,7 @@ namespace Sui.Types
             return new SuiObjectRef
             (
                 (AccountAddress)AccountAddress.Deserialize(deserializer),
-                (int)deserializer.DeserializeU64().Value,
+                new BigInteger(deserializer.DeserializeU64().Value),
                 decoder.EncodeData(deserializer.ToBytes())
             );
         }
@@ -156,7 +173,7 @@ namespace Sui.Types
         /// The version the object was shared at.
         /// </summary>
         [JsonProperty("initialSharedVersion")]
-        public int InitialSharedVersion { get; set; }
+        public BigInteger InitialSharedVersion { get; set; }
 
         /// <summary>
         /// Whether reference is mutable.
@@ -170,14 +187,14 @@ namespace Sui.Types
             set => this.ObjectIDString = value.ToHex();
         }
 
-        public SharedObjectRef(string objectId, int initialSharedVersion, bool mutable)
+        public SharedObjectRef(string objectId, BigInteger initialSharedVersion, bool mutable)
         {
             this.ObjectIDString = objectId;
             this.InitialSharedVersion = initialSharedVersion;
             this.Mutable = mutable;
         }
 
-        public SharedObjectRef(AccountAddress objectId, int initialSharedVersion, bool mutable)
+        public SharedObjectRef(AccountAddress objectId, BigInteger initialSharedVersion, bool mutable)
         {
             this.ObjectIDString = objectId.ToHex();
             this.InitialSharedVersion = initialSharedVersion;
@@ -187,7 +204,7 @@ namespace Sui.Types
         public SharedObjectRef(string objectId, string initialSharedVersion, bool mutable)
         {
             this.ObjectIDString = objectId;
-            this.InitialSharedVersion = int.Parse(initialSharedVersion);
+            this.InitialSharedVersion = BigInteger.Parse(initialSharedVersion);
             this.Mutable = mutable;
         }
 
@@ -206,7 +223,7 @@ namespace Sui.Types
             return new SharedObjectRef
             (
                 (AccountAddress)AccountAddress.Deserialize(deserializer),
-                (int)deserializer.DeserializeU64().Value,
+                new BigInteger(deserializer.DeserializeU64().Value),
                 Bool.Deserialize(deserializer).Value
             );
         }

@@ -8,8 +8,8 @@ namespace Sui.Rpc.Models
     {
         public override RawData ReadJson(JsonReader reader, Type objectType, RawData existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            var jsonObject = JObject.Load(reader);
-            var dataType = jsonObject["dataType"].Value<string>();
+            JObject jsonObject = JObject.Load(reader);
+            string dataType = jsonObject["dataType"].Value<string>();
 
             switch (dataType)
             {

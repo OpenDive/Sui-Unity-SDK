@@ -1,6 +1,7 @@
-using System.Collections.Generic;
 using System.Numerics;
 using Newtonsoft.Json;
+using OpenDive.BCS;
+using Sui.Accounts;
 
 namespace Sui.Rpc.Models
 {
@@ -8,51 +9,51 @@ namespace Sui.Rpc.Models
     public class CoinPage
     {
         [JsonProperty("data")]
-        public List<CoinDetails> Data { get; set; }
+        public CoinDetails[] Data { get; internal set; }
+
+        [JsonProperty("nextCursor", NullValueHandling = NullValueHandling.Include)]
+        public AccountAddress NextCursor { get; internal set; }
 
         [JsonProperty("hasNextPage")]
-        public bool HasNextPage { get; set; }
+        public bool HasNextPage { get; internal set; }
     }
 
     [JsonObject]
     public class CoinDetails
     {
         [JsonProperty("coinType")]
-        public string CoinType { get; set; }
+        public SuiStructTag CoinType { get; internal set; }
 
         [JsonProperty("coinObjectId")]
-        public string CoinObjectId { get; set; }
+        public AccountAddress CoinObjectID { get; internal set; }
 
         [JsonProperty("version")]
-        public string Version { get; set; }
+        public BigInteger Version { get; internal set; }
 
         [JsonProperty("digest")]
-        public string Digest { get; set; }
+        public string Digest { get; internal set; }
 
         [JsonProperty("balance")]
-        public string Balance { get; set; }
+        public BigInteger Balance { get; internal set; }
 
         [JsonProperty("previousTransaction")]
-        public string PreviousTransaction { get; set; }
+        public string PreviousTransaction { get; internal set; }
 
         public ObjectData ToSuiObjectData()
-        {
-            ObjectData res = new ObjectData();
-            res.Digest = this.Digest;
-            res.ObjectId = this.CoinObjectId;
-            res.PreviousTransaction = this.PreviousTransaction;
-            res.Version = BigInteger.Parse(this.Version);
-            return res;
-        }
+            => new ObjectData
+            (
+                object_id: this.CoinObjectID,
+                digest: this.Digest,
+                previous_transaction: this.PreviousTransaction,
+                version: this.Version
+            );
 
         public Types.SuiObjectRef ToSuiObjectRef()
-        {
-            return new Types.SuiObjectRef
+            => new Types.SuiObjectRef
             (
-                this.CoinObjectId,
+                this.CoinObjectID,
                 this.Version,
                 this.Digest
             );
-        }
     }
 }

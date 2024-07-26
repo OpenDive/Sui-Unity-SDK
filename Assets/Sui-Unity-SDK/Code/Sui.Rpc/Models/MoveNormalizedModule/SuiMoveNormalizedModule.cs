@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
-using System.Numerics;
 using OpenDive.BCS;
 using Sui.Accounts;
 using System;
@@ -8,99 +7,168 @@ using Sui.Rpc.Client;
 
 namespace Sui.Rpc.Models
 {
-    [JsonObject, JsonConverter(typeof(NormalizedMoveModuleConverter))]
+    /// <summary>
+    /// Represents a normalized Sui Move Module, containing various details about the module including its address,
+    /// name, friend modules, structs, and exposed functions.
+    /// </summary>
+    [JsonObject]
     public class SuiMoveNormalizedModule
 	{
+        /// <summary>
+        /// The address where the module is located.
+        /// </summary>
         [JsonProperty("address")]
-        public string Address { get; set; }
+        public AccountAddress Address { get; internal set; }
 
+        /// <summary>
+        /// The name of the module.
+        /// </summary>
         [JsonProperty("name")]
-        public string Name { get; set; }
+        public string Name { get; internal set; }
 
+        /// <summary>
+        /// Specifies the file format version of the module.
+        /// </summary>
         [JsonProperty("fileFormatVersion")]
-        public int FileFormatVersion { get; set; }
+        public int FileFormatVersion { get; internal set; }
 
+        /// <summary>
+        /// A list of `Friend` representing the friend modules of this module.
+        /// </summary>
         [JsonProperty("friends")]
-        public Friends[] Friends { get; set; }
+        public Friend[] Friends { get; internal set; }
 
+        /// <summary>
+        /// A dictionary containing the structs present in the module, where the
+        /// key is the name of the struct and the value is an instance of `SuiMoveNormalizedStruct`.
+        /// </summary>
         [JsonProperty("structs")]
-        public Dictionary<string, SuiMoveNormalizedStruct> Structs { get; set; }
+        public Dictionary<string, SuiMoveNormalizedStruct> Structs { get; internal set; }
 
+        /// <summary>
+        /// A dictionary containing the exposed functions of the module,
+        /// where the key is the name of the function and the value is an instance of `SuiMoveNormalizedFunction`.
+        /// </summary>
         [JsonProperty("exposedFunctions")]
-        public Dictionary<string, NormalizedMoveFunctionResponse> ExposedFunctions { get; set; }
+        public Dictionary<string, NormalizedMoveFunctionResponse> ExposedFunctions { get; internal set; }
     }
 
+    /// <summary>
+    /// Represents the unique identifier for a Sui Move module.
+    /// </summary>
     [JsonObject]
-    public class Friends
+    public class Friend
     {
+        /// <summary>
+        /// Holds the address of the SuiMove module, serving as a part of its unique identifier.
+        /// </summary>
         [JsonProperty("address")]
-        public string Address { get; set; }
+        public AccountAddress Address { get; internal set; }
 
+        /// <summary>
+        /// Holds the name of the Sui Move module, serving as a part of its unique identifier.
+        /// </summary>
         [JsonProperty("name")]
-        public string Name { get; set; }
+        public string Name { get; internal set; }
     }
 
-    [JsonObject, JsonConverter(typeof(MoveStructConverter))]
+    /// <summary>
+    /// Represents a normalized Sui Move Struct, containing details about the struct including its abilities,
+    /// type parameters, and fields.
+    /// </summary>
+    [JsonObject]
     public class SuiMoveNormalizedStruct
     {
+        /// <summary>
+        /// A `SuiMoveAbilitySet` representing the abilities of the struct.
+        /// </summary>
         [JsonProperty("abilities")]
-        public SuiMoveAbilitySet Abilities { get; set; }
+        public SuiMoveAbilitySet Abilities { get; internal set; }
 
+        /// <summary>
+        /// A list of `SuiMoveStructTypeParameter` representing the type parameters of the struct.
+        /// </summary>
         [JsonProperty("typeParameters")]
-        public SuiMoveStructTypeParameter[] TypeParameters { get; set; }
+        public SuiMoveStructTypeParameter[] TypeParameters { get; internal set; }
 
+        /// <summary>
+        /// A list of `SuiMoveNormalizedField` representing the fields within the struct.
+        /// </summary>
         [JsonProperty("fields")]
-        public SuiMoveNormalizedField[] Fields { get; set; }
+        public SuiMoveNormalizedField[] Fields { get; internal set; }
     }
 
+    /// <summary>
+    /// Represents the set of abilities of a Sui Move in the ecosystem.
+    /// </summary>
     [JsonObject]
     public class SuiMoveAbilitySet
     {
+        /// <summary>
+        /// Holds the abilities of the Sui Move.
+        /// </summary>
         [JsonProperty("abilities")]
-        public string[] Abilities { get; set; }
+        public string[] Abilities { get; internal set; }
     }
 
+    /// <summary>
+    /// Represents a type parameter in a Sui Move structure, along with
+    /// its constraints and whether it's a phantom type parameter.
+    /// </summary>
     [JsonObject]
     public class SuiMoveStructTypeParameter
     {
+        /// <summary>
+        /// A `SuiMoveAbilitySet` representing the constraints on the
+        /// type parameter in the Sui Move structure.
+        /// </summary>
         [JsonProperty("constraints")]
-        public SuiMoveAbilitySet Constraints { get; set; }
+        public SuiMoveAbilitySet Constraints { get; internal set; }
 
+        /// <summary>
+        /// A `Bool` indicating whether the type parameter is a
+        /// phantom type parameter in the Sui Move structure.
+        /// </summary>
         [JsonProperty("isPhantom")]
-        public bool IsPhantom { get; set; }
+        public bool IsPhantom { get; internal set; }
     }
 
+    /// <summary>
+    /// Represents a normalized field within a Sui Move structure or contract.
+    /// </summary>
     [JsonObject]
     public class SuiMoveNormalizedField
     {
-        public SuiMoveNormalizedField(string name, SuiMoveNormalizedType type)
-        {
-            this.Name = name;
-            this.Type = type;
-        }
-
-        public SuiMoveNormalizedField()
-        {
-            this.Name = null;
-            this.Type = null;
-        }
-
+        /// <summary>
+        /// Holds the name of the field, serving as an identifier within its containing entity.
+        /// </summary>
         [JsonProperty("name")]
-        public string Name { get; set; }
+        public string Name { get; internal set; }
 
-        // Types that are used:
-        // - String
-        // - SuiMoveNormalizedTypeParameterType
-        // - Reference: SuiMoveNormalizedType
-        // - MutableReference: SuiMoveNormalizedType
-        // - Vector: SuiMoveNormalizedType
-        // - SuiMoveNormalizedStructType
+        /// <summary>
+        /// Represents the type of the field, defining what kind of data or structure it can hold.
+        /// </summary>
         [JsonProperty("type")]
-        public SuiMoveNormalizedType Type { get; set; }
+        public SuiMoveNormalizedType Type { get; internal set; }
     }
 
-    public interface ISuiMoveNormalizedType: ISerializable { }
+    /// <summary>
+    /// <para>An abstract class representing the various types of Normalized Move Types</para>
+    /// <para>- String: A type that can be an unsigned integer, boolean, or address.</para>
+    /// <para>- Type Parameter: A type that nests its parameter as an index.</para>
+    /// <para>- Struct: A type that represents a Move structure.</para>
+    /// <para>- Vector: A type that represents a Move vector.</para>
+    /// <para>- Referece: A type that contains a call-by value (read only) to another type.</para>
+    /// <para>- Mutable Reference: A type that contains a call-by reference (read and write) to another type.</para>
+    /// </summary>
+    public abstract class ISuiMoveNormalizedType : ReturnBase, ISerializable
+    {
+        public virtual void Serialize(Serialization serializer) => throw new NotImplementedException();
+    }
 
+    /// <summary>
+    /// The serialization type of the Normalized Type.
+    /// </summary>
     public enum SuiMoveNormalizedTypeSerializationType
     {
         String,
@@ -111,11 +179,21 @@ namespace Sui.Rpc.Models
         MutableReference
     }
 
+    /// <summary>
+    /// A class representing the Normalized Type of the given parameter.
+    /// </summary>
     [JsonConverter(typeof(NormalizedTypeConverter))]
-    public class SuiMoveNormalizedType: ISerializable
+    public class SuiMoveNormalizedType : ReturnBase, ISerializable
     {
-        public ISuiMoveNormalizedType NormalizedType;
-        public SuiMoveNormalizedTypeSerializationType Type;
+        /// <summary>
+        /// The Normalized Type's value.
+        /// </summary>
+        public ISuiMoveNormalizedType NormalizedType { get; internal set; }
+
+        /// <summary>
+        /// The type of Normalized Type.
+        /// </summary>
+        public SuiMoveNormalizedTypeSerializationType Type { get; internal set; }
 
         public SuiMoveNormalizedType
         (
@@ -127,6 +205,16 @@ namespace Sui.Rpc.Models
             this.Type = type;
         }
 
+        public SuiMoveNormalizedType(SuiError error)
+        {
+            this.Error = error;
+        }
+
+        /// <summary>
+        /// Converts a string value to a Normalized Type.
+        /// </summary>
+        /// <param name="value">The normalized value as a string.</param>
+        /// <returns>A `SuiMoveNormalziedType` value, or null if it's not in the allowed types.</returns>
         public static SuiMoveNormalizedType FromStr(string value)
         {
             List<string> allowed_types = new List<string>() { "Address", "Bool", "U8", "U16", "U32", "U64", "U128", "U256", "Signer" };
@@ -174,6 +262,7 @@ namespace Sui.Rpc.Models
         public static ISerializable Deserialize(Deserialization deserializer)
         {
             byte type = deserializer.DeserializeU8().Value;
+
             ISuiMoveNormalizedType normalized_type;
             SuiMoveNormalizedTypeSerializationType type_value;
 
@@ -236,23 +325,26 @@ namespace Sui.Rpc.Models
                     normalized_type = (SuiMoveNormalziedTypeStruct)SuiMoveNormalziedTypeStruct.Deserialize(deserializer);
                     break;
                 default:
-                    return new SuiError(0, "Unable to deserialize SuiMoveNormalizedType", null);
+                    return new SuiError(0, "Unable to deserialize SuiMoveNormalizedType.", null);
             }
 
             return new SuiMoveNormalizedType(normalized_type, type_value);
         }
     }
 
-    public class SuiMoveNormalizedTypeString: ISuiMoveNormalizedType
+    /// <summary>
+    /// Represents an unsigned integer, boolean, or address.
+    /// </summary>
+    public class SuiMoveNormalizedTypeString : ISuiMoveNormalizedType
     {
-        public string Value { get; set; }
+        public string Value { get; internal set; }
 
         public SuiMoveNormalizedTypeString(string Value)
         {
             this.Value = Value;
         }
 
-        public void Serialize(Serialization serializer)
+        public override void Serialize(Serialization serializer)
         {
             switch (this.Value)
             {
@@ -284,108 +376,116 @@ namespace Sui.Rpc.Models
                     serializer.SerializeU8(8);
                     break;
                 default:
-                    throw new Exception($"Unable to serialize type - {this.Value}");
+                    this.SetError<SuiError>("Invalid value", this.Value);
+                    break;
             }
         }
     }
 
+    /// <summary>
+    /// Represents a Type Parameter.
+    /// </summary>
     public class SuiMoveNormalziedTypeParameterType : ISuiMoveNormalizedType
     {
-        public ushort TypeParameter { get; set; }
+        public ushort TypeParameter { get; internal set; }
 
-        public SuiMoveNormalziedTypeParameterType(ushort TypeParameter)
+        public SuiMoveNormalziedTypeParameterType(ushort type_parameter)
         {
-            this.TypeParameter = TypeParameter;
+            this.TypeParameter = type_parameter;
         }
 
-        public void Serialize(Serialization serializer)
-        {
-            serializer.SerializeU16(this.TypeParameter);
-        }
+        public override void Serialize(Serialization serializer)
+            => serializer.SerializeU16(this.TypeParameter);
 
         public static ISerializable Deserialize(Deserialization deserializer)
-        {
-            return new SuiMoveNormalziedTypeParameterType(deserializer.DeserializeU16().Value);
-        }
+            => new SuiMoveNormalziedTypeParameterType(deserializer.DeserializeU16().Value);
     }
 
-    public class SuiMoveNormalziedTypeStruct: ISuiMoveNormalizedType
+    /// <summary>
+    /// Represents a Move structure.
+    /// </summary>
+    public class SuiMoveNormalziedTypeStruct : ISuiMoveNormalizedType
     {
-        public SuiMoveNormalizedStructType Struct { get; set; }
+        public SuiMoveNormalizedStructType Struct { get; internal set; }
 
-        public SuiMoveNormalziedTypeStruct(SuiMoveNormalizedStructType Struct)
+        public SuiMoveNormalziedTypeStruct(SuiMoveNormalizedStructType structure)
         {
-            this.Struct = Struct;
+            this.Struct = structure;
         }
 
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(this.Struct);
-        }
+        public override void Serialize(Serialization serializer)
+            => serializer.Serialize(this.Struct);
 
         public static ISerializable Deserialize(Deserialization deserializer)
-        {
-            return new SuiMoveNormalziedTypeStruct((SuiMoveNormalizedStructType)SuiMoveNormalizedStructType.Deserialize(deserializer));
-        }
+            => new SuiMoveNormalziedTypeStruct
+               (
+                   (SuiMoveNormalizedStructType)SuiMoveNormalizedStructType.Deserialize(deserializer)
+               );
     }
 
-    public class SuiMoveNormalizedTypeVector: ISuiMoveNormalizedType
+    /// <summary>
+    /// Represents a Move vector.
+    /// </summary>
+    public class SuiMoveNormalizedTypeVector : ISuiMoveNormalizedType
     {
-        public SuiMoveNormalizedType Vector { get; set; }
+        public SuiMoveNormalizedType Vector { get; internal set; }
 
         public SuiMoveNormalizedTypeVector(SuiMoveNormalizedType vector)
         {
             this.Vector = vector;
         }
 
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(this.Vector);
-        }
+        public override void Serialize(Serialization serializer)
+            => serializer.Serialize(this.Vector);
 
         public static ISerializable Deserialize(Deserialization deserializer)
-        {
-            return new SuiMoveNormalizedTypeVector((SuiMoveNormalizedType)SuiMoveNormalizedType.Deserialize(deserializer));
-        }
+            => new SuiMoveNormalizedTypeVector
+               (
+                   (SuiMoveNormalizedType)SuiMoveNormalizedType.Deserialize(deserializer)
+               );
     }
 
+    /// <summary>
+    /// Represents a Reference.
+    /// </summary>
     public class SuiMoveNormalizedTypeReference : ISuiMoveNormalizedType
     {
-        public SuiMoveNormalizedType Reference { get; set; }
+        public SuiMoveNormalizedType Reference { get; internal set; }
 
         public SuiMoveNormalizedTypeReference(SuiMoveNormalizedType reference)
         {
             this.Reference = reference;
         }
 
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(this.Reference);
-        }
+        public override void Serialize(Serialization serializer)
+            => serializer.Serialize(this.Reference);
 
         public static ISerializable Deserialize(Deserialization deserializer)
-        {
-            return new SuiMoveNormalizedTypeVector((SuiMoveNormalizedType)SuiMoveNormalizedType.Deserialize(deserializer));
-        }
+            => new SuiMoveNormalizedTypeVector
+               (
+                   (SuiMoveNormalizedType)SuiMoveNormalizedType.Deserialize(deserializer)
+               );
     }
 
-    public class SuiMoveNormalizedTypeMutableReference: ISuiMoveNormalizedType
+    /// <summary>
+    /// Represents a Mutable Reference.
+    /// </summary>
+    public class SuiMoveNormalizedTypeMutableReference : ISuiMoveNormalizedType
     {
-        public SuiMoveNormalizedType MutableReference { get; set; }
+        public SuiMoveNormalizedType MutableReference { get; internal set; }
 
         public SuiMoveNormalizedTypeMutableReference(SuiMoveNormalizedType mutable_reference)
         {
             this.MutableReference = mutable_reference;
         }
 
-        public void Serialize(Serialization serializer)
-        {
-            serializer.Serialize(this.MutableReference);
-        }
+        public override void Serialize(Serialization serializer)
+            => serializer.Serialize(this.MutableReference);
 
         public static ISerializable Deserialize(Deserialization deserializer)
-        {
-            return new SuiMoveNormalizedTypeMutableReference((SuiMoveNormalizedType)SuiMoveNormalizedType.Deserialize(deserializer));
-        }
+            => new SuiMoveNormalizedTypeMutableReference
+               (
+                   (SuiMoveNormalizedType)SuiMoveNormalizedType.Deserialize(deserializer)
+               );
     }
 }

@@ -5,6 +5,7 @@ using UnityEngine;
 using NUnit.Framework;
 using Sui.Rpc;
 using Sui.Rpc.Models;
+using System.Numerics;
 
 namespace Sui.Tests
 {
@@ -25,7 +26,7 @@ namespace Sui.Tests
             Task<RpcResult<ProtocolConfig>> config_task = this.Toolbox.Client.GetProtocolConfigAsync();
             yield return new WaitUntil(() => config_task.IsCompleted);
 
-            Assert.IsTrue(config_task.Result.Result.ProtocolVersion != "");
+            Assert.IsTrue(config_task.Result.Result.ProtocolVersion != new BigInteger());
         }
     }
 }

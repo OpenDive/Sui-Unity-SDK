@@ -3,26 +3,21 @@ using Newtonsoft.Json;
 namespace Sui.Rpc.Models
 {
     /// <summary>
-    ///
-    /// <code>
-    /// {
-    ///     "owner":{
-    ///         "AddressOwner":"0x0c567ffdf8162cb6d51af74be0199443b92e823d4ba6ced24de5c6c463797d46"
-    ///     },
-    ///     "reference":{
-    ///         "objectId":"0x7cb7bf705ad0edf9a93f993ba077a5dfd23052c1e059bd51e62a4bce4b3f8378",
-    ///         "version":2,
-    ///         "digest":"6ZNCsz3aFqLwp883sD64wia77F9xxL27ymfe4Cj6GKij"
-    ///     }
-    /// }
-    /// </code>
+    /// The class representing an Owned Object Reference
     /// </summary>
     [JsonObject]
     public class SuiOwnedObjectRef
     {
+        /// <summary>
+        /// An `Owner` object representing the owner of the objec
+        /// </summary>
         [JsonProperty("owner")]
         public Owner Owner { get; set; }
+
+        /// <summary>
+        /// A `SuiObjectRef` type representing a reference to the Sui Object.
+        /// </summary>
         [JsonProperty("reference")]
-        public SuiObjectRef Reference { get; set; }
+        public Sui.Types.SuiObjectRef Reference { get; set; }
     }
 }

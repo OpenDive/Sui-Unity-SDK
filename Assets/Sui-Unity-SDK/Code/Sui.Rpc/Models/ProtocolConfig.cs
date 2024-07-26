@@ -1,6 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using OpenDive.BCS;
+using Sui.Rpc.Client;
 
 namespace Sui.Rpc.Models
 {
@@ -8,90 +13,214 @@ namespace Sui.Rpc.Models
     /// Represents protocol config table for the given version number.
     /// If the version number is not specified, If none is specified,
     /// the node uses the version of the latest epoch it has processed.
-    /// <code>
-    ///
-    /// </code>
     /// </summary>
     public class ProtocolConfig
     {
+        /// <summary>
+        /// A `BigInteger` representing the minimum supported protocol version.
+        /// </summary>
         [JsonProperty("minSupportedProtocolVersion")]
-        public string MinSupportedProtocolVersion { get; set; }
+        public BigInteger MinSupportedProtocolVersion { get; internal set; }
+
+        /// <summary>
+        /// A `BigInteger` representing the maximum supported protocol version.
+        /// </summary>
         [JsonProperty("maxSupportedProtocolVersion")]
-        public string MaxSupportedProtocolVersion { get; set; }
+        public BigInteger MaxSupportedProtocolVersion { get; internal set; }
+
+        /// <summary>
+        /// A `BigInteger` representing the current protocol version.
+        /// </summary>
         [JsonProperty("protocolVersion")]
-        public string ProtocolVersion { get; set; }
+        public BigInteger ProtocolVersion { get; internal set; }
+
+        /// <summary>
+        /// A dictionary containing feature flags related to the protocol configuration.
+        /// The keys are strings representing the name of the feature flag,
+        /// and the values are Booleans representing whether the feature is enabled (`true`) or disabled (`false`).
+        /// </summary>
         [JsonProperty("featureFlags")]
-        public Dictionary<string, bool> FeatureFlags { get; set; }
+        public Dictionary<string, bool> FeatureFlags { get; internal set; }
+
+        /// <summary>
+        /// A dictionary containing attributes related to the protocol configuration.
+        /// The keys are strings representing the name of the attribute,
+        /// and the values are optional `AttributeValue` instances representing the value of the attribute.
+        /// </summary>
         [JsonProperty("attributes")]
-        public Dictionary<string, AttributeValue> Attributes { get; set; }
+        public Dictionary<string, AttributeValue> Attributes { get; internal set; }
     }
 
-    public class FeatureFlags
+    public interface IAttributeValue { }
+
+    public enum AttributeValueType
     {
-        [JsonProperty("advance_epoch_start_time_in_safe_mode")]
-        public bool AdvanceEpochStartTimeInSafeMode { get; set; }
-        [JsonProperty("advance_to_highest_supported_protocol_version")]
-        public bool AdvanceToHighestSupportedProtocolVersion { get; set; }
-        [JsonProperty("ban_entry_init")]
-        public bool BanEntryInit { get; set; }
-        [JsonProperty("commit_root_state_digest")]
-        public bool CommitRootStateDigest { get; set; }
-        [JsonProperty("consensus_order_end_of_epoch_last")]
-        public bool ConsensusOrderEndOfEpochLast { get; set; }
-        [JsonProperty("disable_invariant_violation_check_in_swap_loc")]
-        public bool DisableInvariantViolationCheckInSwapLoc { get; set; }
-        [JsonProperty("disallow_adding_abilities_on_upgrade")]
-        public bool DisallowAddingAbilitiesOnUpgrade { get; set; }
-        [JsonProperty("disallow_change_struct_type_params_on_upgrade")]
-        public bool DisallowChangeStructTypeParamsOnUpgrade { get; set; }
-        [JsonProperty("enable_jwk_consensus_updates")]
-        public bool EnableJwkConsensusUpdates { get; set; }
-        [JsonProperty("end_of_epoch_transaction_supported")]
-        public bool EndOfEpochTransactionSupported { get; set; }
-        [JsonProperty("loaded_child_object_format")]
-        public bool LoadedChildObjectFormat { get; set; }
-        [JsonProperty("loaded_child_object_format_type")]
-        public bool LoadedChildObjectFormatType { get; set; }
-        [JsonProperty("loaded_child_objects_fixed")]
-        public bool LoadedChildObjectsFixed { get; set; }
-        [JsonProperty("missing_type_is_compatibility_error")]
-        public bool MissingTypeIsCompatibilityError { get; set; }
-        [JsonProperty("narwhal_new_leader_election_schedule")]
-        public bool NarwhalNewLeaderElectionSchedule { get; set; }
-        [JsonProperty("narwhal_versioned_metadata")]
-        public bool NarwhalVersionedMetadata { get; set; }
-        [JsonProperty("no_extraneous_module_bytes")]
-        public bool NoExtraneousModuleBytes { get; set; }
-        [JsonProperty("package_digest_hash_module")]
-        public bool PackageDigestHashModule { get; set; }
-        [JsonProperty("package_upgrades")]
-        public bool PackageUpgrades { get; set; }
-        [JsonProperty("scoring_decision_with_validity_cutoff")]
-        public bool ScoringDecisionWithValidityCutoff { get; set; }
-        [JsonProperty("simple_conservation_checks")]
-        public bool SimpleConservationChecks { get; set; }
-        [JsonProperty("simplified_unwrap_then_delete")]
-        public bool SimplifiedUnwrapThenDelete { get; set; }
-        [JsonProperty("txn_base_cost_as_multiplier")]
-        public bool TxnBaseCostAsMultiplier { get; set; }
-        [JsonProperty("upgraded_multisig_supported")]
-        public bool UpgradedMultisigSupported { get; set; }
-        [JsonProperty("zklogin_auth")]
-        public bool ZkloginAuth { get; set; }
+        U64,
+        U32,
+        F64,
+        U16
     }
 
-    public class AttributeValue
+    [JsonConverter(typeof(AttributeValueConverter))]
+    public class AttributeValue : ReturnBase
     {
-        [JsonProperty("u64")]
-        public string U64 { get; set; }
+        public AttributeValueType Type { get; internal set; }
 
-        [JsonProperty("u32")]
-        public string U32 { get; set; }
+        public IAttributeValue Attribute { get; internal set; }
 
-        [JsonProperty("f64")]
-        public string F64 { get; set; }
+        internal AttributeValue
+        (
+            AttributeValueType type,
+            IAttributeValue attribute
+        )
+        {
+            this.Type = type;
+            this.Attribute = attribute;
+        }
 
-        [JsonProperty("u16")]
-        public string U16 { get; set; }
+        internal AttributeValue(SuiError error)
+        {
+            this.Error = error;
+        }
+
+        public BigInteger? GetValue()
+        {
+            return this.Type switch
+            {
+                AttributeValueType.F64 => new BigInteger(((U64AttributeValue)this.Attribute).Value),
+                AttributeValueType.U32 => new BigInteger(((U64AttributeValue)this.Attribute).Value),
+                AttributeValueType.U64 => new BigInteger(((U64AttributeValue)this.Attribute).Value),
+                AttributeValueType.U16 => new BigInteger(((U64AttributeValue)this.Attribute).Value),
+                _ => this.SetError<BigInteger?, SuiError>(null, "Unable to convert to a BigInteger")
+            };
+        }
+    }
+
+    public class U64AttributeValue : IAttributeValue
+    {
+        public ulong Value { get; internal set; }
+
+        internal U64AttributeValue(ulong value)
+        {
+            this.Value = value;
+        }
+    }
+
+    public class U32AttributeValue : IAttributeValue
+    {
+        public uint Value { get; internal set; }
+
+        internal U32AttributeValue(uint value)
+        {
+            this.Value = value;
+        }
+    }
+
+    public class F64AttributeValue : IAttributeValue
+    {
+        public double Value { get; internal set; }
+
+        internal F64AttributeValue(double value)
+        {
+            this.Value = value;
+        }
+    }
+
+    public class U16AttributeValue : IAttributeValue
+    {
+        public ushort Value { get; internal set; }
+
+        internal U16AttributeValue(ushort value)
+        {
+            this.Value = value;
+        }
+    }
+
+    public class AttributeValueConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType) => objectType == typeof(AttributeValue);
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.StartObject)
+            {
+                JObject attribute_value = JObject.Load(reader);
+
+                string attribute_type = attribute_value.Properties().ToArray()[0].Name;
+
+                return attribute_type switch
+                {
+                    "u64" => new AttributeValue
+                    (
+                        AttributeValueType.U64,
+                        new U64AttributeValue(attribute_value[AttributeValueType.U64.ToString().ToLower()].Value<ulong>())
+                    ),
+                    "u32" => new AttributeValue
+                     (
+                        AttributeValueType.U32,
+                        new U32AttributeValue(attribute_value[AttributeValueType.U32.ToString().ToLower()].Value<uint>())
+                    ),
+                    "f64" => new AttributeValue
+                    (
+                        AttributeValueType.F64,
+                        new F64AttributeValue(attribute_value[AttributeValueType.F64.ToString().ToLower()].Value<double>())
+                    ),
+                    "u16" => new AttributeValue
+                    (
+                        AttributeValueType.U16,
+                        new U16AttributeValue(attribute_value[AttributeValueType.U16.ToString().ToLower()].Value<ushort>())
+                    ),
+                    _ => new AttributeValue
+                    (
+                        new SuiError
+                        (
+                            0,
+                            $"Unable to convert {attribute_type} to AttributeValueType.",
+                            null
+                        )
+                    ),
+                };
+            }
+
+            return new AttributeValue(new SuiError(0, "Unable to convert JSON to AttributeValue.", reader));
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            if (value == null)
+                writer.WriteNull();
+            else
+            {
+                AttributeValue attribute_value = (AttributeValue)value;
+
+                writer.WriteStartObject();
+
+                switch (attribute_value.Type)
+                {
+                    case AttributeValueType.U64:
+                        U64AttributeValue u64 = (U64AttributeValue)attribute_value.Attribute;
+                        writer.WritePropertyName(AttributeValueType.U64.ToString().ToLower());
+                        writer.WriteValue(u64.Value);
+                        break;
+                    case AttributeValueType.U32:
+                        U32AttributeValue u32 = (U32AttributeValue)attribute_value.Attribute;
+                        writer.WritePropertyName(AttributeValueType.U32.ToString().ToLower());
+                        writer.WriteValue(u32.Value);
+                        break;
+                    case AttributeValueType.F64:
+                        F64AttributeValue f64 = (F64AttributeValue)attribute_value.Attribute;
+                        writer.WritePropertyName(AttributeValueType.F64.ToString().ToLower());
+                        writer.WriteValue(f64.Value);
+                        break;
+                    case AttributeValueType.U16:
+                        U16AttributeValue u16 = (U16AttributeValue)attribute_value.Attribute;
+                        writer.WritePropertyName(AttributeValueType.U16.ToString().ToLower());
+                        writer.WriteValue(u16.Value);
+                        break;
+                }
+
+                writer.WriteEndObject();
+            }
+        }
     }
 }

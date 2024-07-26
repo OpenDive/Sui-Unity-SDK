@@ -23,10 +23,7 @@ namespace Sui.Types
 
     public class CallArgumentConverter : JsonConverter
     {
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(CallArg);
-        }
+        public override bool CanConvert(Type objectType) => objectType == typeof(CallArg);
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {

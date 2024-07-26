@@ -1,6 +1,7 @@
 using System.Numerics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using OpenDive.BCS;
 
 namespace Sui.Rpc.Models
 {
@@ -8,12 +9,12 @@ namespace Sui.Rpc.Models
     public class BalanceChange
     {
         [JsonProperty("amount")]
-        public BigInteger Amount { get; set; }
+        public BigInteger Amount { get; internal set; }
 
         [JsonProperty("coinType")]
-        public string CoinType { get; set; }
+        public SuiStructTag CoinType { get; internal set; }
 
         [JsonProperty("owner")]
-        public Owner Owner { get; set; }
+        public Owner Owner { get; internal set; }
     }
 }

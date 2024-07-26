@@ -21,10 +21,7 @@ namespace Sui.Transactions.Kinds
 
     public class TransactionKindConverter : JsonConverter
     {
-        public override bool CanConvert(System.Type objectType)
-        {
-            return objectType == typeof(TransactionBlockKind);
-        }
+        public override bool CanConvert(System.Type objectType) => objectType == typeof(TransactionBlockKind);
 
         public override object ReadJson(JsonReader reader, System.Type objectType, object existingValue, JsonSerializer serializer)
         {
@@ -73,7 +70,7 @@ namespace Sui.Transactions.Kinds
     [JsonConverter(typeof(TransactionKindConverter))]
     public class TransactionBlockKind: ISerializable
     {
-        public SuiTransactionKindType Type { get; private set; }
+        public SuiTransactionKindType Type { get; internal set; }
 
         private ITransactionKind transaction;
 
@@ -104,7 +101,7 @@ namespace Sui.Transactions.Kinds
         )
         {
             this.Type = type;
-            this.Transaction = transaction;
+            this.transaction = transaction;
         }
 
         public void Serialize(Serialization serializer)

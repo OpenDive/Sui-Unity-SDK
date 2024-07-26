@@ -212,7 +212,7 @@ namespace Sui.Cryptography
 
             // Convert to hex and normalize address.
             string address_hex = CryptoBytes.ToHexStringLower(hashed_address);
-            return NormalizedTypeConverter.NormalizeSuiAddress(address_hex);
+            return Utils.NormalizeSuiAddress(address_hex);
         }
 
         /// <summary>

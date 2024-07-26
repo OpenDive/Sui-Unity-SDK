@@ -7,15 +7,14 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using System.IO;
-using Sui.Transactions;
+using Sui.Rpc.Client;
 using System.Linq;
 using Sui.Transactions.Types.Arguments;
 using Sui.Rpc.Models;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
 using System.Collections;
 using OpenDive.BCS;
-using UnityEditor.VersionControl;
+using Sui.Utilities;
 
 namespace Sui.Tests
 {
@@ -31,7 +30,7 @@ namespace Sui.Tests
         }
     }
 
-    public class TestToolbox: MonoBehaviour
+    public class TestToolbox
     {
         public int DefaultGasBudget = 10_000_000;
         public int DefaultSendAmount = 1_000;
@@ -65,21 +64,21 @@ namespace Sui.Tests
 
         public async Task<RpcResult<CoinPage>> GetAllCoins()
         {
-            return await this.Client.GetAllCoins(this.Account.SuiAddress(), 50);
+            return await this.Client.GetAllCoinsAsync(this.Account, new SuiRpcFilter(limit: 50));
         }
 
         public async Task<RpcResult<CoinPage>> GetCoins()
         {
-            return await this.Client.GetCoins(this.Account.SuiAddress(), "0x2::sui::SUI");
+            return await this.Client.GetCoinsAsync(this.Account, new SuiStructTag("0x2::sui::SUI"));
         }
 
-        public async Task<List<Validator>> GetActiveValidators()
+        public async Task<List<SuiValidatorSummary>> GetActiveValidators()
         {
-            RpcResult<SuiSystemSummary> system = await this.Client.GetLatestSuiSystemState();
-            return system.Result.ActiveValidators;
+            RpcResult<SuiSystemSummary> system = await this.Client.GetLatestSuiSystemStateAsync();
+            return system.Result.ActiveValidators.ToList();
         }
 
-        public async Task<PublishedPackage> PublishPackage(string name)
+        public IEnumerator PublishPackage(string name, System.Action<SuiResult<PublishedPackage>> callback)
         {
             JObject file_data = GetModule(name);
             Transactions.TransactionBlock tx = new Transactions.TransactionBlock();
@@ -106,34 +105,39 @@ namespace Sui.Tests
 
             TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true, showObjectChanges: true);
 
-            RpcResult<TransactionBlockResponse> published_tx_block = await this.Client.SignAndExecuteTransactionBlock(tx, this.Account, options);
+            Task<RpcResult<TransactionBlockResponse>> published_tx_block = this.Client.SignAndExecuteTransactionBlockAsync(tx, this.Account, options);
+            yield return new WaitUntil(() => published_tx_block.IsCompleted);
 
-            if (published_tx_block.Result.Effects.Status.Status == ExecutionStatus.Failure)
-                throw new Exception("Transaction Failed");
+            if (published_tx_block.Result.Error != null)
+                callback(new SuiResult<PublishedPackage>(null, published_tx_block.Result.Error));
 
-            await this.Client.WaitForTransaction(published_tx_block.Result.Digest);
+            if (published_tx_block.Result.Result.Effects.Status.Status == ExecutionStatus.Failure)
+                callback(new SuiResult<PublishedPackage>(null, new SuiError(0, $"Transaction failed with message - {published_tx_block.Result.Result.Effects.Status.Error}", null)));
 
-            if (published_tx_block.Result.ObjectChanges == null) 
-                throw new Exception("Objects Change was not Queried");
+            Task<RpcResult<TransactionBlockResponse>> transaction_wait = this.Client.WaitForTransaction(published_tx_block.Result.Result.Digest, options);
+            yield return new WaitUntil(() => transaction_wait.IsCompleted);
 
-            List<ObjectChange> object_changes = published_tx_block.Result.ObjectChanges;
+            if (transaction_wait.Result.Result.ObjectChanges == null)
+                callback(new SuiResult<PublishedPackage>(null, new SuiError(0, "Objects Change was not queried.", transaction_wait.Result)));
 
-            List<PublishedObjectChange> package_ids = object_changes.Select((obj) =>
+            List<ObjectChange> object_changes = transaction_wait.Result.Result.ObjectChanges.ToList();
+
+            List<ObjectChangePublished> package_ids = object_changes.Select((obj) =>
             {
-                if (obj.GetType() == typeof(PublishedObjectChange))
-                    return (PublishedObjectChange)obj;
+                if (obj.Change.GetType() == typeof(ObjectChangePublished))
+                    return (ObjectChangePublished)obj.Change;
                 else
                     return null;
             }).Where((value) => value != null).ToList();
 
             if (package_ids.Count() == 0)
-                throw new Exception("Package ID cannot be found");
+                callback(new SuiResult<PublishedPackage>(null, new SuiError(0, "Package ID cannot be found.", object_changes)));
 
-            string package_id = Regex.Replace(package_ids[0].PackageId, "^(0x)(0+)", "0x");
+            string package_id = Regex.Replace(package_ids[0].PackageID.KeyHex, "^(0x)(0+)", "0x");
 
             Debug.Log($"Published package {package_id} from address {this.Address()}");
 
-            return new PublishedPackage(package_id, published_tx_block.Result);
+            callback(new SuiResult<PublishedPackage>(new PublishedPackage(package_id, published_tx_block.Result.Result)));
         }
 
         public string[] GetRandomAddresses(int amount) => Enumerable.Range(0, amount).Select(_ => new Account().SuiAddress()).ToArray();
@@ -143,7 +147,7 @@ namespace Sui.Tests
             int num_recipients = 1,
             string[] recipients = null,
             int[] amounts = null,
-            string coin_id = null
+            AccountAddress coin_id = null
         )
         {
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
@@ -156,13 +160,13 @@ namespace Sui.Tests
             if (recipients_tx.Count() != amounts_tx.Count())
                 return RpcResult<TransactionBlockResponse>.GetErrorResult("Recipients and amounts do not match.");
 
-            string coin_id_tx = coin_id ??= (await this.Client.GetCoins(this.Address(), "0x2::sui::SUI")).Result.Data[0].CoinObjectId;
+            AccountAddress coin_id_tx = coin_id ??= (await this.Client.GetCoinsAsync(this.Account, new SuiStructTag("0x2::sui::SUI"))).Result.Data[0].CoinObjectID;
 
             foreach (Tuple<int, string> recipient in recipients_tx.Select((rec, i) => new Tuple<int, string>(i, rec)))
             {
                 List<SuiTransactionArgument> coin = tx_block.AddSplitCoinsTx
                 (
-                    tx_block.AddObjectInput(coin_id_tx),
+                    tx_block.AddObjectInput(coin_id_tx.KeyHex),
                     new SuiTransactionArgument[]
                     {
                         tx_block.AddPure(new U64((ulong)amounts_tx[recipient.Item1]))
@@ -171,7 +175,7 @@ namespace Sui.Tests
                 tx_block.AddTransferObjectsTx(coin.ToArray(), recipient.Item2);
             }
 
-            RpcResult<TransactionBlockResponse> published_tx_block = await this.Client.SignAndExecuteTransactionBlock
+            RpcResult<TransactionBlockResponse> published_tx_block = await this.Client.SignAndExecuteTransactionBlockAsync
             (
                 tx_block,
                 this.Account,
@@ -181,7 +185,7 @@ namespace Sui.Tests
             if (published_tx_block.Error != null || published_tx_block.Result.Effects.Status.Status == ExecutionStatus.Failure)
                 return RpcResult<TransactionBlockResponse>.GetErrorResult
                 (
-                    $"Transaction failed with message: {published_tx_block.Error.Message ??= published_tx_block.Result.Effects.Status.Error}"
+                    $"Transaction failed with message: {published_tx_block.Error.Message ?? published_tx_block.Result.Effects.Status.Error}"
                 );
 
             return published_tx_block;
@@ -204,7 +208,7 @@ namespace Sui.Tests
                 if (tx_response.Error != null || tx_response.Result.Effects.Status.Status == ExecutionStatus.Failure)
                     return RpcResult<IEnumerable<TransactionBlockResponse>>.GetErrorResult
                     (
-                        $"One of the Transactions failed with message: {tx_response.Error.Message ??= tx_response.Result.Effects.Status.Error}"
+                        $"One of the Transactions failed with message: {tx_response.Error.Message ?? tx_response.Result.Effects.Status.Error}"
                     );
 
                 await this.Client.WaitForTransaction(tx_response.Result.Digest);

@@ -1,72 +1,79 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Sui.Accounts;
-using static Sui.Rpc.Models.ValidatorsApy;
+using Sui.Rpc.Client;
 
 namespace Sui.Rpc.Models
 {
     /// <summary>
-    ///
-    /// <code>
-    /// {
-    ///     "jsonrpc": "2.0",
-    ///     "result": {
-    ///         "coinType": "0x168da5bf1f48dafc111b0a488fa454aca95e0b5e::usdc::USDC",
-    ///         "coinObjectCount": 15,
-    ///         "totalBalance": "15",
-    ///         "lockedBalance": {}
-    ///     }
-    /// }
-    /// </code>
+    /// A class representing the committee information.
     /// </summary>
     [JsonObject]
     public class CommitteeInfo
     {
+        /// <summary>
+        /// A `BigInteger` representing the epoch related to the committee information.
+        /// </summary>
         [JsonProperty("epoch")]
-        public BigInteger Epoch;
+        public BigInteger Epoch { get; internal set; }
 
-        [JsonProperty("validators"), JsonConverter(typeof(VotingRightsConverter))]
-        public VotingRights[] Validators;
+        /// <summary>
+        /// A `VotingRights` list containing the validators and their corresponding voting rights.
+        /// </summary>
+        [JsonProperty("validators")]
+        public VotingRights[] Validators { get; internal set; }
 
-
-        [JsonObject]
-        public class VotingRights
+        // TODO: FROM SUI MYSTEN LABS DOCS: the stake and voting power of a validator can be different so
+        // in some places when we are actually referring to the voting power, we
+        // should use a different type alias, field name, etc.
+        /// <summary>
+        /// The class that represents the voting rights a validator has within the committee.
+        /// </summary>
+        [JsonConverter(typeof(VotingRightsConverter))]
+        public class VotingRights : ReturnBase
         {
-            [JsonProperty("authority_name")]
             // TODO: Ask about the type of the string returned
-            //public AccountAddress AuthorityName;
-            public string AuthorityName;
+            /// <summary>
+            /// The name of the authority represented as an encoded base 64
+            /// Public Key.
+            /// </summary>
+            [JsonProperty("authority_name")]
+            public string AuthorityName { get; internal set; }
 
-            // TODO: FROM SUI MYSTEN LABS DOCS: the stake and voting power of a validator can be different so
-            // in some places when we are actually referring to the voting power, we
-            // should use a different type alias, field name, etc.
+            /// <summary>
+            /// The amount of stake the authority is holding.
+            /// This represents their power within the voting system.
+            /// </summary>
             [JsonProperty("stake_unit")]
-            public BigInteger StakeUnit;
-        }
+            public BigInteger StakeUnit { get; internal set; }
 
+            public VotingRights
+            (
+                string authority_name,
+                BigInteger stake_unit
+            )
+            {
+                this.AuthorityName = authority_name;
+                this.StakeUnit = stake_unit;
+            }
+
+            public VotingRights(SuiError error)
+            {
+                this.Error = error;
+            }
+        }
 
         private class VotingRightsConverter : JsonConverter
         {
-            public override bool CanConvert(Type objectType)
-            {
-                //return (objectType == typeof(ValidatorApy));
-                // TODO: Implement
-                throw new NotImplementedException();
-            }
+            public override bool CanConvert(Type objectType) => objectType == typeof(VotingRights);
 
             public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             {
-                List<VotingRights> votingRightsList = new List<VotingRights>();
-
-                JToken token = JToken.Load(reader);
-                JArray votingRightsArr = token as JArray;
-
-                foreach(JArray item in votingRightsArr.Cast<JArray>())
+                if (reader.TokenType == JsonToken.StartArray)
                 {
+                    JArray voting_rights = JArray.Load(reader);
+
                     // NOTE: We expect it to follow the response example provided in the RPC docs
                     // "validators": [
                     //      [
@@ -74,25 +81,36 @@ namespace Sui.Rpc.Models
                     //          "2500"
                     //      ],
                     //      ...
+                    //      [
+                    //          "rd7vlNiYyI5A297/kcXxBfnPLHR/tvK8N+wD1ske2y4aV4z1RL6LCTHiXyQ9WbDDDZihbOO6HWzx1/UEJpkusK2zE0sFW+gUDS218l+wDYP45CIr8B/WrJOh/0152ljy",
+                    //          "2500"
+                    //      ]
                     // ]
-                    string authorityName = (string)item[0];
-                    BigInteger stakeUnit = BigInteger.Parse((string)item[1]);
-
-                    VotingRights votingRights = new VotingRights();
-                    // TODO: Ask about the type of the string returned
-                    //votingRights.AuthorityName = AccountAddress.FromBase58((authorityName));
-                    votingRights.AuthorityName = authorityName;
-                    votingRights.StakeUnit = stakeUnit;
-
-                    votingRightsList.Add(votingRights);
+                    return new VotingRights
+                    (
+                        (string)voting_rights[0],
+                        BigInteger.Parse((string)voting_rights[1])
+                    );
                 }
 
-                return votingRightsList.ToArray();
+                return new VotingRights(new SuiError(0, "Unable to convert JSON to VotingRights.", reader));
             }
 
             public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
             {
-                throw new NotImplementedException();
+                if (value == null)
+                    writer.WriteNull();
+                else
+                {
+                    VotingRights voting_rights = (VotingRights)value;
+
+                    writer.WriteStartArray();
+
+                    writer.WriteValue(voting_rights.AuthorityName);
+                    writer.WriteValue(voting_rights.StakeUnit.ToString());
+
+                    writer.WriteEndArray();
+                }
             }
         }
     }

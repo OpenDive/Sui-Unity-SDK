@@ -36,17 +36,22 @@ namespace Sui.Accounts
     public abstract class AccountAddressBase : CryptographyKey, ISerializable
     {
         /// <summary>
-        /// Public key represented as a byte array.
+        /// Account Address represented as a byte array.
         /// </summary>
         protected byte[] _key_bytes;
 
         /// <summary>
-        /// Public key represented as a hex string.
+        /// Account Address represented as a hex string.
         /// </summary>
         protected string _key_hex;
 
         /// <summary>
-        /// Public key represented as a hex string.
+        /// Account Address represented as a base64 string.
+        /// </summary>
+        protected string _key_base64;
+
+        /// <summary>
+        /// Returns the Account Address as a hex string.
         /// </summary>
         public string KeyHex
         {
@@ -54,8 +59,18 @@ namespace Sui.Accounts
             {
                 if (this._key_hex == null)
                 {
-                    string address_hex = CryptoBytes.ToHexStringLower(this._key_bytes);
-                    this._key_hex = "0x" + address_hex;
+                    if (this._key_bytes != null)
+                    {
+                        string address_hex = CryptoBytes.ToHexStringLower(this._key_bytes);
+                        this._key_hex = "0x" + address_hex;
+                    }
+                    else // _key_base64 != null -- public key was set using base64 string
+                    {
+                        byte[] bytes = Convert.FromBase64String(this._key_base64);
+                        string hex = BitConverter.ToString(bytes);
+                        hex = hex.Replace("-", "").ToLowerInvariant();
+                        this._key_hex = "0x" + hex;
+                    }
                 }
 
                 if (this._key_hex.StartsWith("0x") == false)
@@ -68,17 +83,47 @@ namespace Sui.Accounts
         }
 
         /// <summary>
-        /// Public key represented as a byte array.
+        /// Returns the Account Address as a base64 string.
         /// </summary>
-        public byte[] KeyBytes
+        public string KeyBase64
+        {
+            get
+            {
+                if (this._key_base64 == null)
+                {
+                    if (this._key_bytes != null)
+                        this._key_base64 = CryptoBytes.ToBase64String(this.KeyBytes);
+                    else // _key_base64 != null -- public key was set using hex string
+                    {
+                        string key = this._key_hex;
+                        if (this._key_hex[0..2].Equals("0x")) key = this._key_hex[2..];
+                        byte[] key_bytes = key.HexStringToByteArray();
+                        this._key_base64 = CryptoBytes.ToBase64String(key_bytes);
+                    }
+
+                }
+                return this._key_base64;
+            }
+            set => this._key_base64 = value;
+        }
+
+        /// <summary>
+        /// Account Address represented as a byte array.
+        /// </summary>
+        public virtual byte[] KeyBytes
         {
             get
             {
                 if (this._key_bytes == null)
                 {
-                    string key = this._key_hex;
-                    if (this._key_hex[0..2].Equals("0x")) key = this._key_hex[2..];
-                    this._key_bytes = key.HexStringToByteArray();
+                    if (this._key_hex != null)
+                    {
+                        string key = this._key_hex;
+                        if (this._key_hex[0..2].Equals("0x")) key = this._key_hex[2..];
+                        this._key_bytes = key.HexStringToByteArray();
+                    }
+                    else // _key_base64 is not null
+                        this._key_bytes = CryptoBytes.FromBase64String(_key_base64);
                 }
                 return this._key_bytes;
             }
@@ -108,21 +153,35 @@ namespace Sui.Accounts
             if (this.CheckIfKeyIsNull(account_address) == false)
                 return;
 
-            if (Utils.IsValidHexKey(account_address) == false)
+            byte[] key_value;
+
+            if (Utils.IsValidHexKey(account_address))
+            {
+                if (account_address.StartsWith("0x"))
+                    account_address = account_address[2..];
+
+                key_value = CryptoBytes.FromHexString(account_address);
+
+                if (this.CheckIfKeyIsExactLength(key_value) == false)
+                    return;
+
+                this._key_hex = account_address;
+            }
+            else if (Utils.IsBase64String(account_address))
+            {
+                key_value = CryptoBytes.FromBase64String(account_address);
+
+                if (this.CheckIfKeyIsExactLength(key_value) == false)
+                    return;
+
+                this._key_base64 = account_address;
+            }
+            else
             {
                 this.SetError<SuiError>("Invalid key.", account_address);
                 return;
             }
 
-            if (account_address.StartsWith("0x"))
-                account_address = account_address[2..];
-
-            byte[] key_value = CryptoBytes.FromHexString(account_address);
-
-            if (this.CheckIfKeyIsExactLength(key_value) == false)
-                return;
-
-            this._key_hex = account_address;
             this._key_bytes = key_value;
         }
 
@@ -142,10 +201,16 @@ namespace Sui.Accounts
         }
 
         /// <summary>
-        /// Return the account address as a hex string.
+        /// Return the Account Address as a hex string.
         /// </summary>
-        /// <returns>The account address as a hex string.</returns>
+        /// <returns>The Account Address as a hex string.</returns>
         public string ToHex() => this.KeyHex;
+
+        /// <summary>
+        /// Return the Account Address as a base64 string.
+        /// </summary>
+        /// <returns>The Account Address as a base64 string.</returns>
+        public string ToBase64() => this.KeyBase64;
 
         public void Serialize(Serialization serializer)
             => serializer.SerializeFixedBytes(this._key_bytes);

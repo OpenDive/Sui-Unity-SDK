@@ -79,7 +79,7 @@ namespace Sui.Transactions.Types
                         TransactionKind.Publish,
                         new Publish
                         (
-                            ((JArray)arguments_publish[0]).Select((val) => ((JArray)val).Select((inner) => val.ToObject<byte>()).ToArray()).ToArray(),
+                            ((JArray)arguments_publish[0]).Select((val) => ((JArray)val).Select((inner) => val.Value<byte>()).ToArray()).ToArray(),
                             ((JArray)arguments_publish[1]).Select((val) => AccountAddress.FromHex(val.Value<string>())).ToArray()
                         )
                     );
@@ -276,7 +276,7 @@ namespace Sui.Transactions.Types
         public SuiTransaction(TransactionKind kind, ITransaction transaction)
         {
             this.Kind = kind;
-            this.Transaction = transaction;
+            this.transaction = transaction;
         }
 
         public void Serialize(Serialization serializer)

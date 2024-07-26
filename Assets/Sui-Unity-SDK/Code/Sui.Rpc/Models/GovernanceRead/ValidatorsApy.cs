@@ -1,83 +1,48 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Numerics;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Sui.Accounts;
-using UnityEngine;
-using static Sui.Rpc.Models.CommitteeInfo;
+using Sui.Rpc.Client;
 
 namespace Sui.Rpc.Models
 {
     /// <summary>
-    ///
-    /// <code>
-    /// {
-    ///     "jsonrpc": "2.0",
-    ///     "result": {
-    ///         "apys": [
-    ///             {
-    ///                 "address": "0xb7d1cb695b9491893f88a5ae1b9d4f235b3c7e00acf5386662fa062483ba507b",
-    ///                 "apy": 0.06
-    ///             },
-    ///             {
-    ///                 "address": "0x1e9e3039750f0a270f2e12441ad7f611a5f7fd0b2c4326c56b1fec231d73038d",
-    ///                 "apy": 0.02
-    ///             },
-    ///             {
-    ///                 "address": "0xba0f0885b97982f5fcac3ec6f5c8cae16743671832358f25bfacde706e528df4",
-    ///                 "apy": 0.05
-    ///             }
-    ///         ],
-    ///         "epoch": "420"
-    ///     }
-    /// }
-    /// </code>
+    /// Represents a collection of `ValidatorApy` instances associated with a specific epoch.
     /// </summary>
     [JsonObject]
     public class ValidatorsApy
     {
+        /// <summary>
+        /// An list containing `ValidatorApy` instances, each of which represents
+        /// the Annual Percentage Yield (APY) of a specific validator.
+        /// </summary>
         [JsonProperty("apys")]
-        public ValidatorApy[] Apys;
+        public ValidatorApy[] APYs { get; internal set; }
 
+        /// <summary>
+        /// A `BigInteger` representing the epoch associated with the APYs.
+        /// </summary>
         [JsonProperty("epoch")]
-        public BigInteger Epoch;
+        public BigInteger Epoch { get; internal set; }
+    }
 
-        [JsonObject, JsonConverter(typeof(ValidatorApyConverter))]
-        public class ValidatorApy
-        {
-            [JsonProperty("address")]
-            public AccountAddress Address;
+    /// <summary>
+    /// Represents the Annual Percentage Yield (APY) related information for a validator.
+    /// </summary>
+    [JsonObject]
+    public class ValidatorApy : ReturnBase
+    {
+        /// <summary>
+        /// An `AccountAddress` representing the address of the validator.
+        /// </summary>
+        [JsonProperty("address")]
+        public AccountAddress Address { get; internal set; }
 
-            [JsonProperty("apy")]
-            public double Apy; // f64
-        }
-
-        private class ValidatorApyConverter : JsonConverter
-        {
-            public override bool CanConvert(Type objectType)
-            {
-                return (objectType == typeof(ValidatorApy));
-            }
-
-            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-            {
-                JObject jo = JObject.Load(reader);
-                AccountAddress address = AccountAddress.FromHex((string)jo["address"]);
-                Debug.Log("APY VALUE: " + (string)jo["apy"]);
-                double apy = double.Parse((string)jo["apy"]);
-
-                ValidatorApy validatorApy = new ValidatorApy();
-                validatorApy.Address = address;
-                validatorApy.Apy = apy;
-                return validatorApy;
-            }
-
-            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-            {
-                throw new NotImplementedException();
-            }
-        }
+        /// <summary>
+        /// A `ulong` value representing the Annual Percentage Yield (APY) of the validator.
+        /// The APY is a percentage that indicates the profitability of the validator on an annual basis,
+        /// allowing delegators to assess the potential return on their staked assets.
+        /// </summary>
+        [JsonProperty("apy")]
+        public double APY { get; internal set; }
     }
 }

@@ -1,233 +1,222 @@
-using System.Collections;
+//
+//  IReadApi.cs
+//  Sui-Unity-SDK
+//
+//  Copyright (c) 2024 OpenDive
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using Sui.Accounts;
 using Sui.Rpc.Models;
-using UnityEngine;
 
 namespace Sui.Rpc.Api
 {
     public interface IReadApi
     {
-        /// <summary>
-        /// Return the total number of transaction blocks known to the server.
-        /// https://docs.sui.io/sui-jsonrpc#sui_getTotalTransactionBlocks
-        /// </summary>
-        /// <returns></returns>
-        Task<RpcResult<BigInteger>> GetTotalTransactionBlocksAsync();
-
-        /// <summary>
-        /// Return the protocol config table for the given version number.
-        /// If the version number is not specified, If none is specified,
-        /// the node uses the version of the latest epoch it has processed.
-        /// </summary>
-        /// <returns></returns>
-        Task<RpcResult<ProtocolConfig>> GetProtocolConfigAsync();
-
-        /// <summary>
-        /// Return the reference gas price for the network.
-        /// https://docs.sui.io/sui-jsonrpc#suix_getReferenceGasPrice
-        /// <code>
-        /// {
-        ///     "jsonrpc": "2.0",
-        ///     "result": 1000
-        /// }
-        /// </code>
-        /// </summary>
-        /// <returns></returns>
-        Task<RpcResult<ulong>> GetReferenceGasPriceAsync();
-
-        /// <summary>
-        /// Return a structured representation of Move function
-        /// https://docs.sui.io/sui-jsonrpc#sui_getNormalizedMoveFunction
-        /// </summary>
-        /// <param name="package">ObjectID / package name</param>
-        /// <param name="moduleName"></param>
-        /// <param name="functionName"></param>
-        /// <returns></returns>
-        Task<RpcResult<NormalizedMoveFunctionResponse>> GetNormalizedMoveFunction(string package, string moduleName, string functionName);
-
-        /// <summary>
-        /// TODO: Needs to be tested
-        /// </summary>
-        /// <param name="objectIds"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        Task<RpcResult<IEnumerable<SuiObjectResponse>>> GetObjectsAsync(IEnumerable<string> objectIds, ObjectDataOptions options);
-
-        /// <summary>
-        /// Return all Coin<`coin_type`> objects owned by an address.
-        /// https://docs.sui.io/sui-jsonrpc#suix_getCoins
-        /// </summary>
-        /// <param name="owner"></param>
-        /// <param name="coinType"></param>
-        /// <param name="objectId"></param>
-        /// <param name="limit"></param>
-        /// <returns></returns>
-        Task<RpcResult<CoinPage>> GetCoins(string owner, string coinType, string objectId, int? limit);
-
-        /// <summary>
-        /// Return transaction execution effects including the gas cost summary,
-        /// while the effects are not committed to the chain.
-        /// https://docs.sui.io/sui-jsonrpc#sui_dryRunTransactionBlock
-        /// </summary>
-        /// <param name="txBytes"></param>
-        /// <returns></returns>
-        Task<RpcResult<TransactionBlockResponse>> DryRunTransactionBlock(string txBytesBase64);
+        #region sui_getChainIdentifier
 
         /// <summary>
         /// Return the first four bytes of the chain's genesis checkpoint digest.
         /// https://docs.sui.io/sui-jsonrpc#sui_getChainIdentifier
         /// </summary>
-        /// <returns></returns>
-        Task<RpcResult<string>> GetChainIdentifier();
+        /// <returns>An asynchronous task object containing the wrapped result of a `string` object.</returns>
+        public Task<RpcResult<string>> GetChainIdentifierAsync();
+
+        #endregion
+
+        #region sui_getCheckpoint
 
         /// <summary>
         /// Return a checkpoint
         /// https://docs.sui.io/sui-jsonrpc#sui_getCheckpoint
         /// </summary>
         /// <param name="id">Checkpoint identifier, can use either checkpoint digest, or checkpoint sequence number as input.</param>
-        /// <returns></returns>
-        Task<RpcResult<Checkpoint>> GetCheckpoint(string id);
+        /// <returns>An asynchronous task object containing the wrapped result of a `Checkpoint` object.</returns>
+        public Task<RpcResult<Checkpoint>> GetCheckpointAsync(string id);
+
+        /// <summary>
+        /// Return a checkpoint
+        /// https://docs.sui.io/sui-jsonrpc#sui_getCheckpoint
+        /// </summary>
+        /// <param name="id">Checkpoint identifier, can use either checkpoint digest, or checkpoint sequence number as input.</param>
+        /// <returns>An asynchronous task object containing the wrapped result of a `Checkpoint` object.</returns>
+        public Task<RpcResult<Checkpoint>> GetCheckpointAsync(UInt53 id);
+
+        #endregion
+
+        #region sui_getCheckpoints
 
         /// <summary>
         /// Return paginated list of checkpoints
         /// https://docs.sui.io/sui-jsonrpc#sui_getCheckpoints
         /// </summary>
-        /// <param name="cursor">An optional paging cursor. If provided, the query will start from the next item after the specified cursor. Default to start from the first item if not specified.</param>
-        /// <param name="limit">Maximum item returned per page, default to [QUERY_MAX_RESULT_LIMIT_CHECKPOINTS] if not specified.</param>
-        /// <param name="descendingOrder">query result ordering, default to false (ascending order), oldest record first.</param>
-        /// <returns></returns>
-        Task<RpcResult<Checkpoints>> GetCheckpoints(string cursor, int limit, bool descendingOrder);
+        /// <param name="filter">
+        /// <para>Provides the following:</para>
+        /// <para>- Cursor: An optional paging cursor. If provided, the query will start from the next item after the specified cursor. Default to start from the first item if not specified.</para>
+        /// <para>- Limit: Maximum item returned per page, default to [QUERY_MAX_RESULT_LIMIT_CHECKPOINTS] if not specified.</para>
+        /// <para>- Order: Query result ordering, default to false (ascending order), oldest record first.</para>
+        /// </param>
+        /// <returns>An asynchronous task object containing the wrapped result of a `Checkpoints` object.</returns>
+        public Task<RpcResult<Checkpoints>> GetCheckpointsAsync(SuiRpcFilter filter = null);
 
-        /// <summary>
-        /// Return the sequence number of the latest checkpoint that has been executed
-        /// https://docs.sui.io/sui-jsonrpc#sui_getLatestCheckpointSequenceNumber
-        /// </summary>
-        /// <returns></returns>
-        Task<RpcResult<string>> GetLatestCheckpointSequenceNumber();
+        #endregion
 
-        /// <summary>
-        /// Return a structured representation of Move module
-        /// https://docs.sui.io/sui-jsonrpc#sui_getNormalizedMoveModule
-        /// </summary>
-        /// <param name="package"></param>
-        /// <param name="moduleName"></param>
-        /// <returns></returns>
-        Task<RpcResult<SuiMoveNormalizedModule>> GetNormalizedMoveModule(string package, string moduleName);
+        #region sui_getEvents
 
         /// <summary>
         /// Return transaction events.
         /// https://docs.sui.io/sui-jsonrpc#sui_getEvents
         /// </summary>
-        /// <param name="transactionDigest">The event query criteria.</param>
-        /// <returns></returns>
-        Task<RpcResult<Models.Event[]>> GetEvents(string transactionDigest);
+        /// <param name="transaction_digest">The event query criteria.</param>
+        /// <returns>An asynchronous task object containing the wrapped result of an `EventPage` object.</returns>
+        public Task<RpcResult<EventPage>> GetEventsAsync(string transaction_digest);
+
+        #endregion
+
+        #region sui_getLatestCheckpointSequenceNumber
 
         /// <summary>
-        /// Return structured representations of all modules in the given package
-        /// https://docs.sui.io/sui-jsonrpc#sui_getNormalizedMoveModulesByPackage
+        /// Return the sequence number of the latest checkpoint that has been executed
+        /// https://docs.sui.io/sui-jsonrpc#sui_getLatestCheckpointSequenceNumber
         /// </summary>
-        /// <param name="package"></param>
-        /// <returns></returns>
-        Task<RpcResult<Dictionary<string, SuiMoveNormalizedModule>>> GetNormalizedMoveModulesByPackage(string package);
+        /// <returns>An asynchronous task object containing the wrapped result of a `string` value.</returns>
+        public Task<RpcResult<string>> GetLatestCheckpointSequenceNumberAsync();
+
+        #endregion
+
+        #region sui_getObject
 
         /// <summary>
-        /// Return the argument types of a Move function, based on normalized Type.
-        /// https://docs.sui.io/sui-jsonrpc#sui_getMoveFunctionArgTypes
-        /// </summary>
-        /// <param name="package"></param>
-        /// <param name="module"></param>
-        /// <param name="function"></param>
-        /// <returns></returns>
-        Task<RpcResult<MoveFunctionArgTypes>> GetMoveFunctionArgTypes(string package, string module, string function);
-
-        /// <summary>
-        /// Return a structured representation of Move struct
-        /// https://docs.sui.io/sui-jsonrpc#sui_getNormalizedMoveStruct
-        /// </summary>
-        /// <param name="package"></param>
-        /// <param name="moduleName"></param>
-        /// <param name="structName"></param>
-        /// <returns></returns>
-        Task<RpcResult<SuiMoveNormalizedStruct>> GetNormalizedMoveStruct(string package, string moduleName, string structName);
-
-        /// <summary>
-        /// Gets loaded child objects associated with the transaction the request provides.
-        /// https://docs.sui.io/sui-jsonrpc#sui_getLoadedChildObjects
-        /// </summary>
-        /// <param name="digest"></param>
-        /// <returns></returns>
-        Task<RpcResult<ChildObjects>> GetLoadedChildObjects(string digest);
-
-        /// <summary>
-        /// Runs the transaction in dev-inspect mode. Which allows for nearly any transaction (or Move call) with any arguments. Detailed results are provided,
-        /// including both the transaction effects and any return values.
-        /// https://docs.sui.io/sui-jsonrpc#sui_devInspectTransactionBlock
-        /// </summary>
-        /// <param name="senderAddress"></param>
-        /// <param name="txBytes">BCS encoded TransactionKind(as opposed to TransactionData, which include gasBudget and gasPrice)</param>
-        /// <param name="gasPrice">Gas is not charged, but gas usage is still calculated. Default to use reference gas price</param>
-        /// <param name="epoch">The epoch to perform the call. Will be set from the system state object if not provided</param>
-        /// <returns></returns>
-        Task<RpcResult<DevInspectResponse>> DevInspectTransactionBlock(
-           Account sender, Transactions.TransactionBlock transaction_block, int? gasPrice, string epoch);
-
-        /// <summary>
-        /// Return the dynamic field object information for a specified object
-        /// https://docs.sui.io/sui-jsonrpc#suix_getDynamicFieldObject
-        /// </summary>
-        /// <param name="parentObjectId">The ID of the queried parent object</param>
-        /// <param name="name">The Name of the dynamic field</param>
-        /// <returns></returns>
-        Task<RpcResult<ObjectDataResponse>> GetDynamicFieldObject(string parentObjectId, DynamicFieldName name);
-
-        /// <summary>
-        /// Return the list of dynamic field objects owned by an object.
-        /// https://docs.sui.io/sui-jsonrpc#suix_getDynamicFields
-        /// </summary>
-        /// <param name="parentObjectId">The ID of the parent object</param>
-        /// <param name="cursor">An optional paging cursor. If provided, the query will start from the next item after the specified cursor. Default to start from the first item if not specified.</param>
-        /// <param name="limit">Maximum item returned per page, default to [QUERY_MAX_RESULT_LIMIT] if not specified.</param>
-        /// <returns></returns>
-        Task<RpcResult<DynamicFieldPage>> GetDynamicFields(string parentObjectId, IObjectDataFilter filter, ObjectDataOptions options, string cursor, int? limit);
-
-        /// <summary>
-        /// Note there is no software-level guarantee/SLA that objects with past versions can be retrieved by this API, even if the object and version exists/existed. The result may vary across nodes depending on their pruning policies. Return the object information for a specified version
-        /// https://docs.sui.io/sui-jsonrpc#sui_tryGetPastObject
-        /// </summary>
-        /// <param name="objectId">the ID of the queried object</param>
-        /// <param name="options">the version of the queried object. If None, default to the latest known version</param>
-        /// <param name="version">options for specifying the content to be returned</param>
-        /// <returns></returns>
-        Task<RpcResult<ObjectRead>> TryGetPastObject(AccountAddress objectId, ObjectDataOptions options, string version);
-
-        /// <summary>
-        /// Note there is no software-level guarantee/SLA that objects with past versions can be retrieved by this API, even if the object and version exists/existed. The result may vary across nodes depending on their pruning policies. Return the object information for a specified version
-        /// https://docs.sui.io/sui-jsonrpc#sui_tryMultiGetPastObjects
-        /// </summary>
-        /// <param name="pastObjects">a vector of object and versions to be queried</param>
-        /// <param name="options">options for specifying the content to be returned</param>
-        /// <returns></returns>
-        Task<RpcResult<ObjectRead[]>> TryMultiGetPastObjects(PastObjectRequest pastObjects, ObjectDataOptions options);
-
-        /// <summary>
-        /// Return the object data for a list of objects
-        /// https://docs.sui.io/sui-jsonrpc#sui_multiGetObjects
-        /// </summary>
-        /// <param name="objectIds">the IDs of the queried objects</param>
-        /// <param name="options">options for specifying the content to be returned</param>
-        /// <returns></returns>
-        Task<RpcResult<IEnumerable<ObjectDataResponse>>> MultiGetObjects(AccountAddress[] objectIds, ObjectDataOptions options);
-
-        /// <summary>
-        /// Return the object information for a specified object
+        /// Return the object information for a specified object.
         /// https://docs.sui.io/sui-jsonrpc#sui_getObject
         /// </summary>
-        /// <param name="objectId">the ID of the queried object</param>
-        /// <param name="options">options for specifying the content to be returned</param>
-        /// <returns></returns>
-        Task<RpcResult<ObjectDataResponse>> GetObject(AccountAddress objectId, ObjectDataOptions options);
+        /// <param name="object_id">The ID of the queried object.</param>
+        /// <param name="options">Options for specifying the content of the object to be returned.</param>
+        /// <returns>An asynchronous task object containing the wrapped result of a `ObjectDataResponse` object.</returns>
+        public Task<RpcResult<ObjectDataResponse>> GetObjectAsync(AccountAddress object_id, ObjectDataOptions options = null);
+
+        #endregion
+
+        #region sui_getProtocolConfig
+
+        /// <summary>
+        /// Return the protocol config table for the given version number.
+        /// If the version number is not specified, If none is specified,
+        /// the node uses the version of the latest epoch it has processed.
+        /// https://docs.sui.io/sui-api-ref#sui_getprotocolconfig
+        /// </summary>
+        /// <param name="version">
+        /// An optional protocol version specifier. If omitted,
+        /// the latest protocol config table for the node will be returned.
+        /// </param>
+        /// <returns>An asynchronous task object containing the wrapped result of a `ProtocolConfig` object.</returns>
+        public Task<RpcResult<ProtocolConfig>> GetProtocolConfigAsync(BigInteger? version = null);
+
+        #endregion
+
+        #region sui_getTotalTransactionBlocks
+
+        /// <summary>
+        /// Return the total number of transaction blocks known to the server.
+        /// https://docs.sui.io/sui-jsonrpc#sui_getTotalTransactionBlocks
+        /// </summary>
+        /// <returns>An asynchronous task object containing the wrapped result of a `BigInteger` object.</returns>
+        public Task<RpcResult<BigInteger>> GetTotalTransactionBlocksAsync();
+
+        #endregion
+
+        #region sui_getTransactionBlock
+
+        /// <summary>
+        /// Return the transaction response object.
+        /// https://docs.sui.io/sui-api-ref#sui_gettransactionblock
+        /// </summary>
+        /// <param name="digest">The digest of the queried transaction.</param>
+        /// <param name="options">Options for specifying the content to be returned.</param>
+        /// <returns>An asynchronous task object containing the wrapped result of a `TransactionBlockResponse` object.</returns>
+        public Task<RpcResult<TransactionBlockResponse>> GetTransactionBlockAsync(string digest, TransactionBlockResponseOptions options = null);
+
+        #endregion
+
+        #region sui_multiGetObjects
+
+        /// <summary>
+        /// Return the object data for a list of objects.
+        /// https://docs.sui.io/sui-jsonrpc#sui_multiGetObjects
+        /// </summary>
+        /// <param name="object_ids">The IDs of the queried objects.</param>
+        /// <param name="options">Options for specifying the content to be returned.</param>
+        /// <returns>An asynchronous task object containing the wrapped result of an IEnumerable `ObjectDataResponse`.</returns>
+        public Task<RpcResult<IEnumerable<ObjectDataResponse>>> MultiGetObjectsAsync(List<AccountAddress> object_ids, ObjectDataOptions options = null);
+
+        #endregion
+
+        #region sui_multiGetTransactionBlocks
+
+        /// <summary>
+        /// Returns an ordered list of transaction responses The method will throw an error
+        /// if the input contains any duplicate or the input size exceeds QUERY_MAX_RESULT_LIMIT.
+        /// </summary>
+        /// <param name="digests">A list of transaction digests.</param>
+        /// <param name="options">Config options to control which fields to fetch</param>
+        /// <returns>An asynchronous task object containing the wrapped result of an IEnumerable `TransactionBlockResponse`.</returns>
+        public Task<RpcResult<IEnumerable<TransactionBlockResponse>>> MultiGetTransactionBlocksAsync(List<string> digests, TransactionBlockResponseOptions options = null);
+
+        #endregion
+
+        #region sui_tryGetPastObject
+
+        /// <summary>
+        /// <para>Note there is no software-level guarantee/SLA that objects with past versions can be retrieved by this API,
+        /// even if the object and version exists/existed. The result may vary across nodes depending
+        /// on their pruning policies.</para>
+        /// 
+        /// Return the object information for a specified version.
+        /// https://docs.sui.io/sui-jsonrpc#sui_tryGetPastObject
+        /// </summary>
+        /// <param name="object_id">The ID of the queried object.</param>
+        /// <param name="version">The version of the queried object. If None, default to the latest known version.</param>
+        /// <param name="options">Options for specifying the content to be returned.</param>
+        /// <returns>An asynchronous task object containing the wrapped result of a `ObjectRead` object.</returns>
+        public Task<RpcResult<ObjectRead>> TryGetPastObjectAsync(AccountAddress object_id, BigInteger? version = null, ObjectDataOptions options = null);
+
+        #endregion
+
+        #region sui_tryMultiGetPastObjects
+
+        /// <summary>
+        /// <para>Note there is no software-level guarantee/SLA that objects with past versions can be retrieved by this API,
+        /// even if the object and version exists/existed. The result may vary across nodes depending
+        /// on their pruning policies.</para>
+        ///
+        /// Return the object information for a specified version.
+        /// https://docs.sui.io/sui-jsonrpc#sui_tryMultiGetPastObjects
+        /// </summary>
+        /// <param name="objects">A vector of versions and objects to be queried.</param>
+        /// <param name="options">Options for specifying the content to be returned.</param>
+        /// <returns>An asynchronous task object containing the wrapped result of an IEnumerable `ObjectRead`.</returns>
+        public Task<RpcResult<IEnumerable<ObjectRead>>> TryMultiGetPastObjectsAsync(List<PastObjectsInput> objects, ObjectDataOptions options = null);
+
+        #endregion
     }
 }

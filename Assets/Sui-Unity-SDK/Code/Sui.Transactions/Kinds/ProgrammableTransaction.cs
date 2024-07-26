@@ -20,9 +20,9 @@ namespace Sui.Transactions.Kinds
         /// Holds a set of transactions, e.g. MoveCallTransaction, TransferObjectsTransaction, etc.
         /// </summary>
         [JsonProperty("transactions")]
-        public List<SuiTransaction> Transactions { get; private set; }
+        public SuiTransaction[] Transactions { get; private set; }
 
-        public ProgrammableTransaction(CallArg[] inputs, List<SuiTransaction> transactions)
+        public ProgrammableTransaction(CallArg[] inputs, SuiTransaction[] transactions)
         {
             Inputs = inputs;
             Transactions = transactions;
@@ -41,7 +41,7 @@ namespace Sui.Transactions.Kinds
         {
             return new ProgrammableTransaction(
                 deserializer.DeserializeSequence(typeof(CallArg)).Values.Cast<CallArg>().ToArray(),
-                deserializer.DeserializeSequence(typeof(SuiTransaction)).Values.Cast<SuiTransaction>().ToList()
+                deserializer.DeserializeSequence(typeof(SuiTransaction)).Values.Cast<SuiTransaction>().ToArray()
             );
         }
     }
@@ -95,9 +95,9 @@ namespace Sui.Transactions.Kinds
     public class Genesis : ITransactionKind
     {
         [JsonProperty("objects")]
-        public List<string> Objects { get; set; }
+        public string[] Objects { get; set; }
 
-        public Genesis(List<string> objects)
+        public Genesis(string[] objects)
         {
             this.Objects = objects;
         }
@@ -111,7 +111,7 @@ namespace Sui.Transactions.Kinds
         public static ISerializable Deserialize(Deserialization deserializer)
         {
             return new Genesis(
-                deserializer.DeserializeSequence(typeof(BString)).Values.Cast<BString>().Select((obj) => obj.Value).ToList()
+                deserializer.DeserializeSequence(typeof(BString)).Values.Cast<BString>().Select((obj) => obj.Value).ToArray()
             );
         }
     }

@@ -60,7 +60,7 @@ namespace Sui.Tests
                         SuiTransactionKindType.ProgrammableTransaction, new ProgrammableTransaction
                         (
                             inputs,
-                            transactions
+                            transactions.ToArray()
                         )
                     )
                 )
@@ -121,7 +121,7 @@ namespace Sui.Tests
                 gasData,
                 new TransactionBlockKind(SuiTransactionKindType.ProgrammableTransaction, new ProgrammableTransaction(
                     inputs,
-                    transactions
+                    transactions.ToArray()
                 ))
             );
 

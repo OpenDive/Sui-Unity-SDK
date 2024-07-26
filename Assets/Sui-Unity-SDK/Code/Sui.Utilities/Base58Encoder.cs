@@ -6,59 +6,6 @@ namespace Sui.Utilities
 	/// <summary>
 	/// https://github.com/MetacoSA/NBitcoin/blob/master/NBitcoin/DataEncoders/Base58Encoder.cs
 	/// </summary>
-	//public class Base58CheckEncoder : Base58Encoder
-	//{
-	//	private static readonly Base58Encoder InternalEncoder = new Base58Encoder();
-
-	//       /// <summary>
-	//       /// Fast check if the string to know if base58 str
-	//       /// </summary>
-	//       /// <param name="str"></param>
-	//       /// <returns></returns>
-	//       public override bool IsMaybeEncoded(string str)
-	//	{
-	//		return base.IsMaybeEncoded(str) && str.Length > 4;
-	//	}
-
-	//	public override string EncodeData(byte[] data, int offset, int count)
-	//	{
-	//		var toEncode = new byte[count + 4];
-	//		Buffer.BlockCopy(data, offset, toEncode, 0, count);
-
-	//		var hash = CalculateHash(data, offset, count);
-	//		Buffer.BlockCopy(hash, 0, toEncode, count, 4);
-
-	//		return InternalEncoder.EncodeData(toEncode, 0, toEncode.Length);
-	//	}
-
-	//	public override byte[] DecodeData(string encoded)
-	//	{
-	//		var vchRet = InternalEncoder.DecodeData(encoded);
-	//		if (vchRet.Length < 4)
-	//		{
-	//			Array.Clear(vchRet, 0, vchRet.Length);
-	//			throw new FormatException("Invalid checked base 58 string");
-	//		}
-	//		var calculatedHash = CalculateHash(vchRet, 0, vchRet.Length - 4);
-
-	//		if (!Utils.ArrayEqual(calculatedHash, 0, vchRet, vchRet.Length - 4, 4))
-	//		{
-	//			Array.Clear(vchRet, 0, vchRet.Length);
-	//			throw new FormatException("Invalid hash of the base 58 string");
-	//		}
-	//		vchRet = vchRet.SafeSubarray(0, vchRet.Length - 4);
-	//		return vchRet;
-	//	}
-
-	//	protected virtual byte[] CalculateHash(byte[] bytes, int offset, int length)
-	//	{
-	//		return Hashes.DoubleSHA256RawBytes(bytes, offset, length);
-	//	}
-	//}
-
-	/// <summary>
-	/// https://github.com/MetacoSA/NBitcoin/blob/master/NBitcoin/DataEncoders/Base58Encoder.cs
-	/// </summary>
 	public class Base58Encoder : DataEncoder
 	{
 		static readonly char[] pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".ToCharArray();
@@ -80,6 +27,7 @@ namespace Sui.Utilities
 			-1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
 			-1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
 		};
+
 		/// <summary>
 		/// Fast check if the string to know if base58 str
 		/// </summary>
@@ -101,34 +49,6 @@ namespace Sui.Utilities
 			}
 			return maybeb58 && str.Count() > 0;
 		}
-
-
-		//public virtual bool IsMaybeEncoded(string str)
-		//{
-		//	bool maybeb58 = true;
-		//	if (maybeb58)
-		//	{
-		//		for (int i = 0; i < str.Length; i++)
-		//		{
-		//			if (!pszBase58.Contains(str[i]))
-		//			{
-		//				maybeb58 = false;
-		//				break;
-		//			}
-		//		}
-		//	}
-		//	return maybeb58 && str.Length > 0;
-		//}
-
-		//public static bool IsValidWithoutWhitespace(string value)
-		//{
-		//	if (value == null) throw new ArgumentNullException(nameof(value));
-		//	for (var ix = 0; ix < value.Length; ix++)
-		//		if (!Validator.ContainsKey(value[ix]))
-		//			return false;
-		//	return true;
-		//}
-
 
 		public override string EncodeData(byte[] data, int offset, int count)
 		{

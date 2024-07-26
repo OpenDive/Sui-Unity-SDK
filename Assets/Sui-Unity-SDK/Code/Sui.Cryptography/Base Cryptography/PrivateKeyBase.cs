@@ -140,7 +140,7 @@ namespace Sui.Cryptography
                         if (this._key_hex[0..2].Equals("0x")) key = this._key_hex[2..];
                         this._key_bytes = key.HexStringToByteArray();
                     }
-                    else // _keyBase64 is not null
+                    else // _key_base64 is not null
                         this._key_bytes = CryptoBytes.FromBase64String(_key_base64);
                 }
                 return this._key_bytes;

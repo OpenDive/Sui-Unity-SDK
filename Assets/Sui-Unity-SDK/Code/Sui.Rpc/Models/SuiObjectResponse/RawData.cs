@@ -5,6 +5,7 @@ using Sui.Accounts;
 
 namespace Sui.Rpc.Models
 {
+    [JsonConverter(typeof(RawDataJsonConverter))]
     public abstract class RawData
     {
         [JsonProperty("dataType")]

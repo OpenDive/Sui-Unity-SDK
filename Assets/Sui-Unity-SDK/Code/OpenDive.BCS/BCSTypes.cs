@@ -28,11 +28,13 @@ using Newtonsoft.Json.Linq;
 using Sui.Accounts;
 using Sui.Rpc.Client;
 using Sui.Rpc.Models;
+using Sui.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using UnityEngine;
 
 namespace OpenDive.BCS
 {
@@ -96,7 +98,7 @@ namespace OpenDive.BCS
     /// <summary>
     /// An object that contains the type tag associated with the BCS value.
     /// </summary>
-    public class SerializableTypeTag: ISerializable
+    public class SerializableTypeTag: ReturnBase, ISerializable
     {
         /// <summary>
         /// The Move type of the value.
@@ -108,11 +110,6 @@ namespace OpenDive.BCS
         /// </summary>
         public ISerializable Value { get; set; }
 
-        /// <summary>
-        /// Won't be null if there were any errors thrown when utilizing the class.
-        /// </summary>
-        public RpcError Error { get; private set; }
-
         public SerializableTypeTag(ISerializable value)
         {
             this.Value = value;
@@ -122,7 +119,7 @@ namespace OpenDive.BCS
             else if (value.GetType() == typeof(AccountAddress))
                 this.Type = TypeTag.ACCOUNT_ADDRESS;
             else
-                this.Error = new RpcError(0, "Unable to initialize SerializableTypeTag.", value);
+                this.Error = new SuiError(0, "Unable to initialize SerializableTypeTag.", value);
         }
 
         public SerializableTypeTag(string string_value)
@@ -188,12 +185,28 @@ namespace OpenDive.BCS
             this.Value = value;
         }
 
+        public override bool Equals(object other)
+        {
+            if (other is not SerializableTypeTag)
+                this.SetError<bool, SuiError>(false, "Compared object is not a SerializableTypeTag.", other);
+
+            SerializableTypeTag other_serializable_type_tag = (SerializableTypeTag)other;
+
+            return
+                this.Type == other_serializable_type_tag.Type &&
+                this.Value.Equals(other_serializable_type_tag.Value);
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
+
         public override string ToString()
         {
             switch (this.Type)
             {
                 case TypeTag.ACCOUNT_ADDRESS:
                     return "address";
+                case TypeTag.STRUCT:
+                    return this.Value.ToString();
                 default:
                     return this.Type.ToString().ToLower();
             }
@@ -954,7 +967,7 @@ namespace OpenDive.BCS
     /// Representation of a Struct Tag in BCS
     /// </summary>
     /// <typeparam name="T">Value of Type Arguments used</typeparam>
-    public abstract class StructTag<T>: ISerializable where T: ISerializable
+    public abstract class StructTag<T>: ReturnBase, ISerializable where T: ISerializable
     {
         /// <summary>
         /// The address of the struct tag.
@@ -975,11 +988,6 @@ namespace OpenDive.BCS
         /// The type fields for the given struct.
         /// </summary>
         public List<T> TypeArguments { get; set; }
-
-        /// <summary>
-        /// Won't be null if there were any errors thrown when utilizing the class.
-        /// </summary>
-        public ErrorBase Error { get; internal set; }
 
         internal static string[] FromStr_(string struct_tag) => struct_tag.Split("::");
 
@@ -1010,22 +1018,45 @@ namespace OpenDive.BCS
         public override bool Equals(object other)
         {
             if (other is not StructTag<T>)
-            {
-                this.Error = new SuiError(0, "Compared object is not a StructTag", other);
-                return false;
-            }
+                this.SetError<bool, SuiError>(false, "Compared object is not a StructTag.", other);
 
             StructTag<T> other_struct_tag = (StructTag<T>)other;
 
-            return this.Address.KeyBytes.SequenceEqual(other_struct_tag.Address.KeyBytes) &&
+            return
+                this.Address.KeyBytes.SequenceEqual(other_struct_tag.Address.KeyBytes) &&
                 this.Module == other_struct_tag.Module &&
                 this.Name == other_struct_tag.Name &&
-                Enumerable.SequenceEqual(this.TypeArguments, other_struct_tag.TypeArguments);
+                this.TypeArguments.SequenceEqual(other_struct_tag.TypeArguments);
         }
 
         public override int GetHashCode() => base.GetHashCode();
     }
 
+    public class SuiStructTagTypeConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType) => objectType == typeof(SuiStructTag);
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.String)
+                return new SuiStructTag(reader.Value.ToString());
+
+            return new SuiStructTag(new SuiError(0, "Unable to convert JSON to SuiMoveNormalizedStructType.", reader));
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            if (value == null)
+                writer.WriteNull();
+            else
+            {
+                SuiStructTag sui_struct_type = (SuiStructTag)value;
+                writer.WriteValue(sui_struct_type.ToString());
+            }
+        }
+    }
+
+    [JsonConverter(typeof(SuiStructTagTypeConverter))]
     public class SuiStructTag : StructTag<SerializableTypeTag>
     {
         internal SuiStructTag(ErrorBase error) => this.Error = error;
@@ -1046,9 +1077,9 @@ namespace OpenDive.BCS
             this.TypeArguments = type_arguments;
         }
 
-        public SuiStructTag(string suiStructTag)
+        public SuiStructTag(string sui_struct_tag)
         {
-            SuiStructTag result = SuiStructTag.FromStr(suiStructTag);
+            SuiStructTag result = SuiStructTag.FromStr(sui_struct_tag);
             this.Address = result.Address;
             this.Module = result.Module;
             this.Name = result.Name;
@@ -1095,7 +1126,7 @@ namespace OpenDive.BCS
                     {
                         nested_value = new SerializableTypeTag
                         (
-                            struct_tag_components[2][index..struct_tag_components[2].Length]
+                            string.Join("::", struct_tag_components[2..struct_tag_components.Length])[index..]
                         );
                         break;
                     }
@@ -1107,7 +1138,8 @@ namespace OpenDive.BCS
 
                 AccountAddress address = AccountAddress.FromHex(struct_tag_components[0]);
 
-                return new SuiStructTag(
+                return new SuiStructTag
+                (
                     address,
                     struct_tag_components[1],
                     name,
@@ -1118,9 +1150,25 @@ namespace OpenDive.BCS
             }
             catch
             {
-                return new SuiStructTag(new SuiError(0, "Unable to initialize SuiStructTag from string", type_tag));
+                return new SuiStructTag(new SuiError(0, "Unable to initialize SuiStructTag from string.", type_tag));
             }
         }
+
+        public override bool Equals(object other)
+        {
+            if (other is not SuiStructTag)
+                this.SetError<bool, SuiError>(false, "Compared object is not a SuiStructTag.", other);
+
+            SuiStructTag other_sui_struct_tag = (SuiStructTag)other;
+
+            return
+                this.Address.KeyBytes.SequenceEqual(other_sui_struct_tag.Address.KeyBytes) &&
+                this.Module == other_sui_struct_tag.Module &&
+                this.Name == other_sui_struct_tag.Name &&
+                this.TypeArguments.SequenceEqual(other_sui_struct_tag.TypeArguments);
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
     }
 
     public class StructTypeConverter : JsonConverter
@@ -1134,7 +1182,7 @@ namespace OpenDive.BCS
                 JObject structTypeObj = (JObject)JToken.ReadFrom(reader);
                 AccountAddress address = AccountAddress.FromHex
                 (
-                    NormalizedTypeConverter.NormalizeSuiAddress(structTypeObj["package"].Value<string>())
+                    Utils.NormalizeSuiAddress(structTypeObj["package"].Value<string>())
                 );
                 string module = structTypeObj["module"].Value<string>();
                 string name = structTypeObj["function"].Value<string>();
@@ -1218,7 +1266,10 @@ namespace OpenDive.BCS
 
                     if (letter == '<')
                     {
-                        nested_value = SuiMoveNormalizedType.FromStr(struct_tag_components[2][index..struct_tag_components[2].Length]);
+                        nested_value = SuiMoveNormalizedType.FromStr
+                        (
+                            string.Join("::", struct_tag_components[2..struct_tag_components.Length])[index..]
+                        );
                         break;
                     }
                     else if (letter == '>')
@@ -1229,7 +1280,8 @@ namespace OpenDive.BCS
 
                 AccountAddress address = AccountAddress.FromHex(struct_tag_components[0]);
 
-                return new SuiMoveNormalizedStructType(
+                return new SuiMoveNormalizedStructType
+                (
                     address,
                     struct_tag_components[1],
                     name,
@@ -1240,9 +1292,25 @@ namespace OpenDive.BCS
             }
             catch
             {
-                return new SuiMoveNormalizedStructType(new SuiError(0, "Unable to initialize SuiMoveNormalizedStructType from string", type_tag));
+                return new SuiMoveNormalizedStructType(new SuiError(0, "Unable to initialize SuiMoveNormalizedStructType from string.", type_tag));
             }
         }
+
+        public override bool Equals(object other)
+        {
+            if (other is not SuiMoveNormalizedStructType)
+                this.SetError<bool, SuiError>(false, "Compared object is not a SuiMoveNormalizedStructType.", other);
+
+            SuiMoveNormalizedStructType other_normalized_struct_tag = (SuiMoveNormalizedStructType)other;
+
+            return
+                this.Address.KeyBytes.SequenceEqual(other_normalized_struct_tag.Address.KeyBytes) &&
+                this.Module == other_normalized_struct_tag.Module &&
+                this.Name == other_normalized_struct_tag.Name &&
+                this.TypeArguments.SequenceEqual(other_normalized_struct_tag.TypeArguments);
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
 
         public override void Serialize(Serialization serializer)
         {

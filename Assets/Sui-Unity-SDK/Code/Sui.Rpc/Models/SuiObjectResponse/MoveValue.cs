@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Sui.Rpc.Models
 {
@@ -36,8 +37,7 @@ namespace Sui.Rpc.Models
 
     public class MoveStructMoveValue : MoveValue
     {
-        [JsonConverter(typeof(MoveValueJsonConverter))]
-        public MoveStruct Value { get; set; }
+        public JToken Value { get; set; }
     }
 
     public class ArrayMoveValue : MoveValue

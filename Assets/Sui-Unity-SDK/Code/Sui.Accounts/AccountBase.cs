@@ -28,24 +28,26 @@ using Sui.Rpc.Client;
 
 namespace Sui.Accounts
 {
-    public abstract class AccountBase : ReturnBase
+    public abstract class AccountBase<T, U> : ReturnBase
+        where T : PrivateKeyBase
+        where U : PublicKeyBase
     {
         /// <summary>
         /// Represents a `PrivateKey` object.
         /// </summary>
-        public PrivateKeyBase PrivateKey { get; set; }
+        public T PrivateKey { get; set; }
 
         /// <summary>
         /// Represents a `PublicKey` object.
         /// </summary>
-        public PublicKeyBase PublicKey { get; set; }
+        public U PublicKey { get; set; }
 
         public AccountBase() { }
 
         public AccountBase
         (
-            PrivateKeyBase private_key,
-            PublicKeyBase public_key
+            T private_key,
+            U public_key
         )
         {
             this.PrivateKey = private_key;

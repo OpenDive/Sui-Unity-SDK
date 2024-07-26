@@ -54,7 +54,7 @@ namespace Sui.Tests
                 }
             );
             tx_block.AddTransferObjectsTx(coin.ToArray(), toolbox.Address());
-            return await toolbox.Client.SignAndExecuteTransactionBlock
+            return await toolbox.Client.SignAndExecuteTransactionBlockAsync
             (
                 tx_block,
                 toolbox.Account,
@@ -102,7 +102,7 @@ namespace Sui.Tests
 
             string digest = this.Transactions[0].Digest;
 
-            Task<RpcResult<TransactionBlockResponse>> tx_block_task = this.Toolbox.Client.GetTransactionBlock(digest);
+            Task<RpcResult<TransactionBlockResponse>> tx_block_task = this.Toolbox.Client.GetTransactionBlockAsync(digest);
             yield return new WaitUntil(() => tx_block_task.IsCompleted);
 
             Assert.IsTrue(tx_block_task.Result.Result.Digest == digest);
@@ -113,9 +113,9 @@ namespace Sui.Tests
         {
             yield return this.PaySuiWithCheck();
 
-            string[] digests = this.Transactions.Select((txn) => txn.Digest).ToArray();
+            List<string> digests = this.Transactions.Select((txn) => txn.Digest).ToList();
 
-            Task<RpcResult<IEnumerable<TransactionBlockResponse>>> txns_task = this.Toolbox.Client.GetTransactionBlocks
+            Task<RpcResult<IEnumerable<TransactionBlockResponse>>> txns_task = this.Toolbox.Client.MultiGetTransactionBlocksAsync
             (
                 digests,
                 new TransactionBlockResponseOptions(showBalanceChanges: true)
@@ -143,12 +143,19 @@ namespace Sui.Tests
                 showBalanceChanges: true
             );
 
-            Task<RpcResult<TransactionBlockResponsePage>> response_1_task = this.Toolbox.Client.QueryTransactionBlocks(limit: 1, options: options);
+            Task<RpcResult<TransactionBlockResponsePage>> response_1_task = this.Toolbox.Client.QueryTransactionBlocksAsync
+            (
+                new TransactionBlockResponseQueryInput
+                (
+                    limit: 1,
+                    transaction_block_response_options: options
+                )
+            );
             yield return new WaitUntil(() => response_1_task.IsCompleted);
 
             string digest = response_1_task.Result.Result.Data[0].Digest;
 
-            Task<RpcResult<TransactionBlockResponse>> response_2_task = this.Toolbox.Client.GetTransactionBlock(digest, options);
+            Task<RpcResult<TransactionBlockResponse>> response_2_task = this.Toolbox.Client.GetTransactionBlockAsync(digest, options);
             yield return new WaitUntil(() => response_2_task.IsCompleted);
 
             Assert.IsTrue(digest == response_2_task.Result.Result.Digest);
@@ -159,10 +166,10 @@ namespace Sui.Tests
         {
             yield return this.PaySuiWithCheck();
 
-            Task<RpcResult<TransactionBlockResponsePage>> all_transactions_task = this.Toolbox.Client.QueryTransactionBlocks(limit: 10);
+            Task<RpcResult<TransactionBlockResponsePage>> all_transactions_task = this.Toolbox.Client.QueryTransactionBlocksAsync(new TransactionBlockResponseQueryInput(limit: 10));
             yield return new WaitUntil(() => all_transactions_task.IsCompleted);
 
-            Assert.Greater(all_transactions_task.Result.Result.Data.Count, 0);
+            Assert.Greater(all_transactions_task.Result.Result.Data.Length, 0);
         }
 
         [UnityTest]
@@ -170,10 +177,10 @@ namespace Sui.Tests
         {
             yield return this.PaySuiWithCheck();
 
-            Task<RpcResult<TransactionBlockResponsePage>> all_transactions_task = this.Toolbox.Client.QueryTransactionBlocks(limit: 1, order: SortOrder.Ascending);
+            Task<RpcResult<TransactionBlockResponsePage>> all_transactions_task = this.Toolbox.Client.QueryTransactionBlocksAsync(new TransactionBlockResponseQueryInput(limit: 1, order: SortOrder.Ascending));
             yield return new WaitUntil(() => all_transactions_task.IsCompleted);
 
-            Task<RpcResult<TransactionBlockResponse>> transaction_block_task = this.Toolbox.Client.GetTransactionBlock
+            Task<RpcResult<TransactionBlockResponse>> transaction_block_task = this.Toolbox.Client.GetTransactionBlockAsync
             (
                 all_transactions_task.Result.Result.Data[0].Digest,
                 new TransactionBlockResponseOptions(showInput: true)

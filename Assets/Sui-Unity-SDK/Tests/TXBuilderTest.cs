@@ -5,21 +5,23 @@ using UnityEngine;
 using Sui.Transactions.Types.Arguments;
 using Sui.Transactions;
 using Sui.Rpc;
+using Sui.Rpc.Client;
 using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.TestTools;
 using Sui.Rpc.Models;
+using Sui.Utilities;
 
 namespace Sui.Tests
 {
-    public class TXBuilderTest: MonoBehaviour
+    public class TXBuilderTest
     {
         TestToolbox Toolbox;
         string PackageID;
         string SharedObjectID;
-        string SuiClockObjectID = NormalizedTypeConverter.NormalizeSuiAddress("0x6");
+        string SuiClockObjectID = Utils.NormalizeSuiAddress("0x6");
 
         [UnitySetUp]
         public IEnumerator SetUp()
@@ -27,15 +29,17 @@ namespace Sui.Tests
             this.Toolbox = new TestToolbox();
             yield return this.Toolbox.Setup();
 
-            Task<PublishedPackage> task = this.Toolbox.PublishPackage("serializer");
-            yield return new WaitUntil(() => task.IsCompleted);
+            yield return this.Toolbox.PublishPackage("serializer", (package_result) => {
+                if (package_result.Error != null)
+                    Assert.Fail(package_result.Error.Message);
 
-            this.PackageID = task.Result.PackageID;
+                this.PackageID = package_result.Result.PackageID;
 
-            List<SuiOwnedObjectRef> created_objects = task.Result.PublishedTX.Effects.Created;
-            List<SuiOwnedObjectRef> shared_object = created_objects.Where(obj => obj.Owner.Type == SuiOwnerType.Shared).ToList();
+                List<SuiOwnedObjectRef> created_objects = package_result.Result.PublishedTX.Effects.Created.ToList();
+                List<SuiOwnedObjectRef> shared_object = created_objects.Where(obj => obj.Owner.Type == SuiOwnerType.Shared).ToList();
 
-            this.SharedObjectID = shared_object[0].Reference.ObjectId;
+                this.SharedObjectID = shared_object[0].Reference.ObjectID.KeyHex;
+            });
         }
 
         private IEnumerator ValidateTransaction
@@ -47,12 +51,12 @@ namespace Sui.Tests
         {
             tx_block.SetSenderIfNotSet(account.SuiAddress());
 
-            Task<RpcResult<string>> local_digest_task = tx_block.GetDigest(new BuildOptions(client));
+            Task<SuiResult<string>> local_digest_task = tx_block.GetDigest(new BuildOptions(client));
             yield return new WaitUntil(() => local_digest_task.IsCompleted);
 
             TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true);
 
-            Task<RpcResult<TransactionBlockResponse>> result_task = client.SignAndExecuteTransactionBlock
+            Task<RpcResult<TransactionBlockResponse>> result_task = client.SignAndExecuteTransactionBlockAsync
             (
                 tx_block,
                 account,
@@ -82,7 +86,7 @@ namespace Sui.Tests
 
             List<SuiTransactionArgument> coin = tx_block.AddSplitCoinsTx
             (
-                tx_block.AddObjectInput(coin_0.CoinObjectId),
+                tx_block.AddObjectInput(coin_0.CoinObjectID.KeyHex),
                 new SuiTransactionArgument[] { tx_block.AddPure(new U64((ulong)(this.Toolbox.DefaultGasBudget * 2))) }
             );
             tx_block.AddTransferObjectsTx(coin.ToArray(), this.Toolbox.Address());
@@ -110,8 +114,8 @@ namespace Sui.Tests
 
             tx_block.AddMergeCoinsTx
             (
-                tx_block.AddObjectInput(coin_0.CoinObjectId),
-                new SuiTransactionArgument[] { tx_block.AddObjectInput(coin_1.CoinObjectId) }
+                tx_block.AddObjectInput(coin_0.CoinObjectID.KeyHex),
+                new SuiTransactionArgument[] { tx_block.AddObjectInput(coin_1.CoinObjectID.KeyHex) }
             );
 
             yield return this.ValidateTransaction
@@ -139,7 +143,7 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { new SerializableTypeTag("0x2::sui::SUI") },
                 new SuiTransactionArgument[]
                 {
-                        tx_block.AddObjectInput(coin_0.CoinObjectId),
+                        tx_block.AddObjectInput(coin_0.CoinObjectID.KeyHex),
                         tx_block.AddPure(new U64((ulong)(this.Toolbox.DefaultGasBudget * 2)))
                 }
             );
@@ -207,7 +211,7 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             tx_block.AddTransferObjectsTx
             (
-                new SuiTransactionArgument[] { tx_block.AddObjectInput(coin_0.CoinObjectId) },
+                new SuiTransactionArgument[] { tx_block.AddObjectInput(coin_0.CoinObjectID.KeyHex) },
                 this.Toolbox.DefaultRecipient
             );
 

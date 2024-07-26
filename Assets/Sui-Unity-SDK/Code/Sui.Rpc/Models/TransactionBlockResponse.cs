@@ -1,228 +1,370 @@
 
-using System.Collections.Generic;
-using System.Numerics;
+using System;
+using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using OpenDive.BCS;
+using Sui.Accounts;
+using Sui.Rpc.Client;
 using Sui.Transactions.Builder;
 
 namespace Sui.Rpc.Models
 {
     /// <summary>
-    /// Response for `DryTransactionBlock` and other transaction related queries.
-    /// <code>
-    /// {
-    ///     "jsonrpc": "2.0",
-    ///     "result": {
-    ///         "digest": "DNtx7EmGqSywGbnSC1CKoqmBFEXGvApXpRVt6bU855xP",
-    ///         "transaction": {
-    ///             "data": {
-    ///                 "messageVersion": "v1",
-    ///                 "transaction": {
-    ///                     "kind": "ProgrammableTransaction",
-    ///                     "inputs": [
-    ///                         {
-    ///                             "type": "pure",
-    ///                             "valueType": "address",
-    ///                             "value": "0x7ba91ddc7e717cf708c937060f04048736ec33fb1746d999a5e58cd5c677ed80"
-    ///                         },
-    ///                         {
-    ///                             "type": "object",
-    ///                             "objectType": "immOrOwnedObject",
-    ///                             "objectId": "0x4f82f1c8587b98d64c00bfb46c3843bd8bf6ccfa7c65a86138698cd1fdcac3dc",
-    ///                             "version": "2",
-    ///                             "digest": "Cv7n2YaM7Am1ssZGu4khsFkcKHnpgVhwFCSs4kLjrtLW"
-    ///                         }
-    ///                     ],
-    ///                     "transactions": [
-    ///                         {
-    ///                             "TransferObjects": [
-    ///                                 [
-    ///                                     {
-    ///                                         "Input": 1
-    ///                                     }
-    ///                                 ],
-    ///                                 {
-    ///                                     "Input": 0
-    ///                                 }
-    ///                             ]
-    ///                         }
-    ///                     ]
-    ///                 },
-    ///                 "sender": "0x61fbb5b4f342a40bdbf87fe4a946b9e38d18cf8ffc7b0000b975175c7b6a9576",
-    ///                 "gasData": {
-    ///                     "payment": [
-    ///                         {
-    ///                             "objectId": "0xe8d8c7ce863f313da3dbd92a83ef26d128b88fe66bf26e0e0d09cdaf727d1d84",
-    ///                             "version": 2,
-    ///                             "digest": "EnRQXe1hDGAJCFyF2ds2GmPHdvf9V6yxf24LisEsDkYt"
-    ///                         }
-    ///                     ],
-    ///                     "owner": "0x61fbb5b4f342a40bdbf87fe4a946b9e38d18cf8ffc7b0000b975175c7b6a9576",
-    ///                     "price": "10",
-    ///                     "budget": "100000"
-    ///                 }
-    ///             },
-    ///             "txSignatures": [
-    ///                 "AG+AHZMT7BZWQVagaGfENXyiFQ2nYRkG4XdnwqwToeJEmZ4J1IxKw0xKzTATGiUzFedY/nxKVuHikFibNlZ3wg9Dij1TvBYKLcfLNo8fq6GASb9yfo6uvuwNUBGkTf54wQ=="
-    ///             ]
-    ///         },
-    ///         "rawTransaction": "AQAAAAAAAgAge6kd3H5xfPcIyTcGDwQEhzbsM/sXRtmZpeWM1cZ37YABAE+C8chYe5jWTAC/tGw4Q72L9sz6fGWoYThpjNH9ysPcAgAAAAAAAAAgsQwARuKTwIzsD0B4PZrEv0q7TX+CBkf9hdGRg97nx/8BAQEBAQABAABh+7W080KkC9v4f+SpRrnjjRjPj/x7AAC5dRdce2qVdgHo2MfOhj8xPaPb2SqD7ybRKLiP5mvybg4NCc2vcn0dhAIAAAAAAAAAIMzKqXoCzDqYBBZw4WCdtxTphYyW6eRphV8c87/fl+hlYfu1tPNCpAvb+H/kqUa5440Yz4/8ewAAuXUXXHtqlXYKAAAAAAAAAKCGAQAAAAAAAAFhAG+AHZMT7BZWQVagaGfENXyiFQ2nYRkG4XdnwqwToeJEmZ4J1IxKw0xKzTATGiUzFedY/nxKVuHikFibNlZ3wg9Dij1TvBYKLcfLNo8fq6GASb9yfo6uvuwNUBGkTf54wQ==",
-    ///         "effects": {
-    ///             "messageVersion": "v1",
-    ///             "status": {
-    ///                 "status": "success"
-    ///             },
-    ///             "executedEpoch": "0",
-    ///             "gasUsed": {
-    ///                 "computationCost": "100",
-    ///                 "storageCost": "100",
-    ///                 "storageRebate": "10",
-    ///                 "nonRefundableStorageFee": "0"
-    ///             },
-    ///             "transactionDigest": "8UExPV121BEfWkbymSPDYhh23rVNh3MSWtC5juJ9JGMJ",
-    ///             "mutated": [
-    ///                 {
-    ///                     "owner": {
-    ///                         "AddressOwner": "0x61fbb5b4f342a40bdbf87fe4a946b9e38d18cf8ffc7b0000b975175c7b6a9576"
-    ///                     },
-    ///                     "reference": {
-    ///                         "objectId": "0xe8d8c7ce863f313da3dbd92a83ef26d128b88fe66bf26e0e0d09cdaf727d1d84",
-    ///                         "version": 2,
-    ///                         "digest": "EnRQXe1hDGAJCFyF2ds2GmPHdvf9V6yxf24LisEsDkYt"
-    ///                     }
-    ///                 },
-    ///                 {
-    ///                     "owner": {
-    ///                         "AddressOwner": "0x7ba91ddc7e717cf708c937060f04048736ec33fb1746d999a5e58cd5c677ed80"
-    ///                     },
-    ///                     "reference": {
-    ///                         "objectId": "0x4f82f1c8587b98d64c00bfb46c3843bd8bf6ccfa7c65a86138698cd1fdcac3dc",
-    ///                         "version": 2,
-    ///                         "digest": "Cv7n2YaM7Am1ssZGu4khsFkcKHnpgVhwFCSs4kLjrtLW"
-    ///                     }
-    ///                 }
-    ///             ],
-    ///             "gasObject": {
-    ///                 "owner": {
-    ///                     "ObjectOwner": "0x61fbb5b4f342a40bdbf87fe4a946b9e38d18cf8ffc7b0000b975175c7b6a9576"
-    ///                 },
-    ///                 "reference": {
-    ///                     "objectId": "0xe8d8c7ce863f313da3dbd92a83ef26d128b88fe66bf26e0e0d09cdaf727d1d84",
-    ///                     "version": 2,
-    ///                     "digest": "EnRQXe1hDGAJCFyF2ds2GmPHdvf9V6yxf24LisEsDkYt"
-    ///                 }
-    ///             },
-    ///             "eventsDigest": "55TNn3v5vpuXjQfjqamw76P9GZD522pumo4NuT7RYeFB"
-    ///         },
-    ///         "objectChanges": [
-    ///             {
-    ///                 "type": "transferred",
-    ///                 "sender": "0x61fbb5b4f342a40bdbf87fe4a946b9e38d18cf8ffc7b0000b975175c7b6a9576",
-    ///                 "recipient": {
-    ///                     "AddressOwner": "0x7ba91ddc7e717cf708c937060f04048736ec33fb1746d999a5e58cd5c677ed80"
-    ///                 },
-    ///                 "objectType": "0x2::example::Object",
-    ///                 "objectId": "0x4f82f1c8587b98d64c00bfb46c3843bd8bf6ccfa7c65a86138698cd1fdcac3dc",
-    ///                 "version": "2",
-    ///                 "digest": "B3xLC8EbyvTxy5pgiwTNUzHLa6kS7uwD6sZdErKB8F8f"
-    ///             }
-    ///         ]
-    ///     }
-    /// }
-    ///
-    /// </code>
+    /// Represents a paginated response containing a list of `string` objects
+    /// that represent the resolved names associated with the inputted ID.
     /// </summary>
-    ///
+    public class NameServicePage
+    {
+        /// <summary>
+        /// A list of `string` instances, each representing the associated name
+        /// service associated with the inputted ID
+        /// </summary>
+        [JsonProperty("data")]
+        public string[] Data { get; internal set; }
 
+        /// <summary>
+        /// An optional string representing the cursor for the next page of the name service.
+        /// `null` if there are no more pages available.
+        /// </summary>
+        [JsonProperty("nextCursor")]
+        public string NextCursor { get; internal set; }
+
+        /// <summary>
+        /// A `bool` value indicating whether there are more pages of name services available to be retrieved.
+        /// `true` if there are more pages available, otherwise `false`.
+        /// </summary>
+        [JsonProperty("hasNextPage")]
+        public bool HasNextPage { get; internal set; }
+    }
+
+    /// <summary>
+    /// Represents a paginated response containing a list of `TransactionBlockResponsePage` instances,
+    /// which may represent transaction blocks retrieved from the Sui blockchain, along with
+    /// pagination information.
+    /// </summary>
     [JsonObject]
     public class TransactionBlockResponsePage
     {
+        /// <summary>
+        /// A list of `TransactionBlockResponse` instances, each representing the response
+        /// for a specific transaction block, possibly containing transaction data.
+        /// </summary>
         [JsonProperty("data")]
-        public List<TransactionBlockResponse> Data { get; set; }
+        public TransactionBlockResponse[] Data { get; internal set; }
 
+        /// <summary>
+        /// An optional string representing the cursor for the next page of transaction blocks.
+        /// `null` if there are no more pages available.
+        /// </summary>
         [JsonProperty("nextCursor")]
-        public string NextCursor { get; set; }
+        public string NextCursor { get; internal set; }
 
+        /// <summary>
+        /// A `bool` value indicating whether there are more pages of transaction blocks available to be retrieved.
+        /// `true` if there are more pages available, otherwise `false`.
+        /// </summary>
         [JsonProperty("hasNextPage")]
-        public bool HasNextPage { get; set; }
+        public bool HasNextPage { get; internal set; }
     }
 
+    /// <summary>
+    /// The resulting values after execution of the transaction block.
+    /// </summary>
     [JsonObject]
     public class TransactionBlockResponse
     {
-        [JsonProperty("effects")]
-        public TransactionBlockEffects Effects { get; set; }
+        /// <summary>
+        /// An optional `TransactionBlockEffects` representing the effects of the transaction.
+        /// </summary>
+        [JsonProperty("effects", NullValueHandling = NullValueHandling.Include)]
+        public TransactionBlockEffects Effects { get; internal set; }
 
-        [JsonProperty("events")]
-        public List<SuiEvent> Events { get; set; }
+        /// <summary>
+        /// An optional list of `Event` objects representing the events occurred during the transaction.
+        /// </summary>
+        [JsonProperty("events", NullValueHandling = NullValueHandling.Include)]
+        public Event[] Events { get; internal set; }
 
-        [JsonProperty("objectChanges")]
-        public List<ObjectChange> ObjectChanges { get; set; }
+        /// <summary>
+        /// An optional list of `ObjectChange` representing the object changes occurred during the transaction.
+        /// </summary>
+        [JsonProperty("objectChanges", NullValueHandling = NullValueHandling.Include)]
+        public ObjectChange[] ObjectChanges { get; internal set; }
 
-        [JsonProperty("balanceChanges")]
-        public List<BalanceChange> BalanceChanges { get; set; }
+        /// <summary>
+        /// An optional list of `BalanceChange` representing the balance changes occurred during the transaction.
+        /// </summary>
+        [JsonProperty("balanceChanges", NullValueHandling = NullValueHandling.Include)]
+        public BalanceChange[] BalanceChanges { get; internal set; }
 
+        /// <summary>
+        /// An optional `string` representing the timestamp of the transaction block response in milliseconds.
+        /// </summary>
         [JsonProperty("timestampMs", NullValueHandling = NullValueHandling.Include)]
-        public BigInteger? TimestampMs { get; set; }
+        public string TimestampMs { get; internal set; }
 
+        /// <summary>
+        /// A `string` representing the digest of the transaction block response.
+        /// </summary>
         [JsonProperty("digest")]
-        public string Digest { get; set; }
+        public string Digest { get; internal set; }
 
-        [JsonProperty("transaction")]
-        public SuiTransactionBlock Transaction { get; set; }
+        /// <summary>
+        /// An optional `SuiTransactionBlock` representing the transaction block in the response.
+        /// </summary>
+        [JsonProperty("transaction", NullValueHandling = NullValueHandling.Include)]
+        public SuiTransactionBlock Transaction { get; internal set; }
     }
 
+    /// <summary>
+    /// The class representing the Sui transaction block within a block response call
+    /// </summary>
     [JsonObject]
     public class SuiTransactionBlock
     {
+        /// <summary>
+        /// A `SuiTransactionBlockData` object representing the data of the block
+        /// </summary>
         [JsonProperty("data")]
-        public SuiTransactionBlockData Data { get; set; }
+        public SuiTransactionBlockData Data { get; internal set; }
 
+        /// <summary>
+        /// A list of `string` objects representing the transaction signatures of the transactions executed within the block.
+        /// </summary>
         [JsonProperty("txSignature")]
-        public List<string> TransactionSignature { get; set; }
+        public string[] TransactionSignature { get; internal set; }
     }
 
+    /// <summary>
+    /// The class representing the data within the transaction block.
+    /// </summary>
     [JsonObject]
     public class SuiTransactionBlockData
     {
+        /// <summary>
+        /// A `string` representing the message version of the transaction block data.
+        /// </summary>
         [JsonProperty("messageVersion")]
-        public string MessageVersion { get; set; }
+        public string MessageVersion { get; internal set; }
 
+        /// <summary>
+        /// An `AccountAddress` representing the sender of the transaction block.
+        /// </summary>
         [JsonProperty("sender")]
-        public string Sender { get; set; }
+        public AccountAddress Sender { get; internal set; }
 
+        /// <summary>
+        /// A `GasData` representing the gas data associated with the transaction block.
+        /// </summary>
         [JsonProperty("gasData")]
-        public GasData GasData { get; set; }
+        public GasData GasData { get; internal set; }
 
+        /// <summary>
+        /// A `TransactionBlockKind` representing the kind or type of the transaction block.
+        /// </summary>
         [JsonProperty("transaction")]
-        public Transactions.Kinds.TransactionBlockKind Transaction { get; set; }
+        public Transactions.Kinds.TransactionBlockKind Transaction { get; internal set; }
     }
 
+    /// <summary>
+    /// A class representing the results of Dev Inspect call.
+    /// </summary>
     [JsonObject]
     public class DevInspectResponse
     {
+        /// <summary>
+        /// Summary of effects that likely would be generated if the
+        /// transaction is actually run. Note however, that not all dev-
+        /// inspect transactions are actually usable as transactions so it
+        /// might not be possible actually generate these effects from a
+        /// normal transaction.
+        /// </summary>
         [JsonProperty("effects")]
-        public TransactionBlockEffects Effects { get; set; }
+        public TransactionBlockEffects Effects { get; internal set; }
 
+        /// <summary>
+        /// Events that likely would be generated if the transaction is actually run.
+        /// </summary>
         [JsonProperty("events")]
-        public List<SuiEvent> Events { get; set; }
+        public Event[] Events { get; internal set; }
 
-        //[JsonProperty("results")]
-        //public List<ExecutionResultType> Results { get; set; }
+        /// <summary>
+        /// The raw effects of the transaction that was dev inspected.
+        /// </summary>
+        [JsonProperty("rawEffects", NullValueHandling = NullValueHandling.Include)]
+        public string[] RawEffects { get; internal set; }
 
-        [JsonProperty("error", Required = Required.Default)]
-        public string Error { get; set; }
+        /// <summary>
+        /// The raw transaction data that was dev inspected.
+        /// </summary>
+        [JsonProperty("rawTxnData", NullValueHandling = NullValueHandling.Include)]
+        public string[] RawTransactionData { get; internal set; }
+
+        /// <summary>
+        /// An optional list of `ExecutionResultType` representing the results of the execution.
+        /// This will be `null` if there are no execution results to represent.
+        /// </summary>
+        [JsonProperty("results", NullValueHandling = NullValueHandling.Include)]
+        public ExecutionResultType[] Results { get; internal set; }
+
+        /// <summary>
+        /// An optional `string` representing any error that occurred during the inspection.
+        /// This will be `null` if there is no error to report.
+        /// </summary>
+        [JsonProperty("error", NullValueHandling = NullValueHandling.Include)]
+        public string Error { get; internal set; }
     }
 
-    // TODO: Implement full types:
-    // MutableReferenceOutputType: (MoveNormalizedStructType, byte[], string)
-    // ReturnValueType: (byte[], MoveNormalizedStructType)
+    /// <summary>
+    /// Represents the type of execution result, which includes mutable reference outputs
+    /// and return values after the execution of a function or operation.
+    /// </summary>
     [JsonObject]
     public class ExecutionResultType
     {
-        [JsonProperty("mutableReferenceOutputs")]
-        public string[] MutableReferenceOutputs { get; set; }
+        /// <summary>
+        /// An optional list of `MutableReferenceOutput` representing the mutable
+        /// reference outputs obtained as a result of the execution. If `null`, it may indicate
+        /// that there were no mutable reference outputs produced during the execution.
+        /// </summary>
+        [JsonProperty("mutableReferenceOutputs", NullValueHandling = NullValueHandling.Include)]
+        public MutableReferenceOutput[] MutableReferenceOutputs { get; internal set; }
 
-        [JsonProperty("returnValues")]
-        public string[] ReturnValues { get; set; }
+        /// <summary>
+        /// An optional list of `ReturnValue` representing the return values obtained
+        /// as a result of the execution. If `null`, it may indicate that there were no return
+        /// values produced during the execution.
+        /// </summary>
+        [JsonProperty("returnValues", NullValueHandling = NullValueHandling.Include)]
+        public ReturnValue[] ReturnValues { get; internal set; }
+    }
+
+    [JsonConverter(typeof(ReturnValueConverter))]
+    public class ReturnValue : ReturnBase
+    {
+        public byte[] ObjectID { get; internal set; }
+
+        public SuiStructTag Type { get; internal set; }
+
+        public ReturnValue
+        (
+            byte[] object_id,
+            SuiStructTag type
+        )
+        {
+            this.ObjectID = object_id;
+            this.Type = type;
+        }
+
+        public ReturnValue(SuiError error)
+        {
+            this.Error = error;
+        }
+    }
+
+    [JsonConverter(typeof(MutableReferenceOutputConverter))]
+    public class MutableReferenceOutput : ReturnBase
+    {
+        public string Name { get; internal set; }
+
+        public byte[] ObjectID { get; internal set; }
+
+        public SuiStructTag Type { get; internal set; }
+
+        public MutableReferenceOutput
+        (
+            string name,
+            byte[] object_id,
+            SuiStructTag type
+        )
+        {
+            this.Name = name;
+            this.ObjectID = object_id;
+            this.Type = type;
+        }
+
+        public MutableReferenceOutput(SuiError error)
+        {
+            this.Error = error;
+        }
+    }
+
+    public class ReturnValueConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType) => objectType == typeof(ReturnValue);
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.StartArray)
+            {
+                JArray return_value = (JArray)JToken.ReadFrom(reader);
+
+                return new ReturnValue
+                (
+                    ((JArray)return_value[0]).Select(val => val.Value<byte>()).ToArray(),
+                    new SuiStructTag(return_value[1].Value<string>())
+                );
+            }
+
+            return new ReturnValue(new SuiError(0, "Unable to convert JSON to ReturnValue.", reader));
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            if (value == null)
+                writer.WriteNull();
+            else
+            {
+                writer.WriteStartArray();
+
+                ReturnValue return_value = (ReturnValue)value;
+
+                writer.WriteValue(return_value.ObjectID);
+                writer.WriteValue(return_value.Type.ToString());
+
+                writer.WriteEndArray();
+            }
+        }
+    }
+
+    public class MutableReferenceOutputConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType) => objectType == typeof(MutableReferenceOutput);
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.StartArray)
+            {
+                JArray mutable_reference_output = (JArray)JToken.ReadFrom(reader);
+
+                return new MutableReferenceOutput
+                (
+                    mutable_reference_output[0].Value<string>(),
+                    ((JArray)mutable_reference_output[1]).Select(val => val.Value<byte>()).ToArray(),
+                    new SuiStructTag(mutable_reference_output[2].Value<string>())
+                );
+            }
+
+            return new MutableReferenceOutput(new SuiError(0, "Unable to convert JSON to MutableReferenceOutput.", reader));
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            if (value == null)
+                writer.WriteNull();
+            else
+            {
+                writer.WriteStartArray();
+
+                MutableReferenceOutput mutable_reference_output = (MutableReferenceOutput)value;
+
+                writer.WriteValue(mutable_reference_output.Name);
+                writer.WriteValue(mutable_reference_output.ObjectID);
+                writer.WriteValue(mutable_reference_output.Type.ToString());
+
+                writer.WriteEndArray();
+            }
+        }
     }
 }

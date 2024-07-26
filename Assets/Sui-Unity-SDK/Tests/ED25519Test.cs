@@ -1,5 +1,5 @@
 using NUnit.Framework;
-using System;
+using Sui.Rpc.Client;
 using Sui.Utilities;
 using Sui.Cryptography.Ed25519;
 using Sui.Accounts;
@@ -7,6 +7,9 @@ using Sui.Rpc;
 using UnityEngine.TestTools;
 using System.Collections;
 using UnityEngine;
+using System.Threading.Tasks;
+using Sui.Transactions;
+using Sui.Cryptography;
 
 namespace Sui.Tests.Cryptography
 {
@@ -132,28 +135,33 @@ namespace Sui.Tests.Cryptography
             Assert.AreNotEqual(pk1, pk2);
         }
 
-        //[Test]
-        //public async Task TransactionSigningSuccess()
-        //{
-        //    Account account = new Account();
-        //    TransactionBlock tx_block = new TransactionBlock();
-        //    SuiClient client = new SuiClient(Constants.LocalnetConnection);
+        [Test]
+        public async Task TransactionSigningSuccess()
+        {
+            Account account = new Account();
+            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+            SuiClient client = new SuiClient(Constants.LocalnetConnection);
 
-        //    tx_block.SetSender(AccountAddress.FromHex(account.SuiAddress()));
-        //    tx_block.SetGasPrice(5);
-        //    tx_block.SetGasBudget(100);
-        //    byte[] digest = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        //    Base58Encoder base58Encoder = new Base58Encoder();
-        //    tx_block.SetGasPayment(new Types.SuiObjectRef[] { new Types.SuiObjectRef
-        //    (
-        //        AccountAddress.FromHex(string.Format("{0:0}", new System.Random().NextDouble() * 100000).PadLeft(64, '0')),
-        //        new System.Random().Next() * 10000,
-        //        base58Encoder.EncodeData(digest)
-        //    ) });
-        //    byte[] bytes = await tx_block.Build(new BuildOptions(client));
-        //    SignatureBase serialized_signature = account.SignTransactionBlock(bytes);
-        //    Assert.IsTrue(account.VerifyTransactionBlock(bytes, serialized_signature));
-        //}
+            tx_block.SetSender(AccountAddress.FromHex(account.SuiAddress()));
+            tx_block.SetGasPrice(5);
+            tx_block.SetGasBudget(100);
+            byte[] digest = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            Base58Encoder base58Encoder = new Base58Encoder();
+            tx_block.SetGasPayment(new Types.SuiObjectRef[] { new Types.SuiObjectRef
+            (
+                AccountAddress.FromHex(string.Format("{0:0}", new System.Random().NextDouble() * 100000).PadLeft(64, '0')),
+                new System.Random().Next() * 10000,
+                base58Encoder.EncodeData(digest)
+            ) });
+            SuiResult<byte[]> bytes_result = await tx_block.Build(new BuildOptions(client));
+
+            if (bytes_result.Error != null)
+                Assert.Fail(bytes_result.Error.Message);
+
+            byte[] bytes = bytes_result.Result;
+            SignatureBase serialized_signature = account.SignTransactionBlock(bytes);
+            Assert.IsTrue(account.VerifyTransactionBlock(bytes, serialized_signature));
+        }
 
         /// <summary>
         /// Public key
@@ -310,7 +318,7 @@ namespace Sui.Tests.Cryptography
                 }
             );
 
-            System.Threading.Tasks.Task<RpcResult<byte[]>> result = tx_block.Build(new Transactions.BuildOptions(client));
+            Task<SuiResult<byte[]>> result = tx_block.Build(new Transactions.BuildOptions(client));
             yield return new WaitUntil(() => result.IsCompleted);
 
             Sui.Cryptography.SignatureBase serialized_signature = account.SignTransactionBlock(result.Result.Result);

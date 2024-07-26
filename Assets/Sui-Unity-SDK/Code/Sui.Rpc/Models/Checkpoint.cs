@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.Numerics;
 using OpenDive.BCS;
 
@@ -9,62 +8,62 @@ namespace Sui.Rpc.Models
     public class Checkpoint
     {
         [JsonProperty("checkpointCommitments")]
-        public ISerializable[] CheckpointCommitments { get; set; }
+        public ISerializable[] CheckpointCommitments { get; internal set; }
 
         [JsonProperty("digest")]
-        public string Digest { get; set; }
+        public string Digest { get; internal set; }
 
         [JsonProperty("endOfEpochData", Required = Required.Default)]
-        public EndOfEpochData EndOfEpochData { get; set; }
+        public EndOfEpochData EndOfEpochData { get; internal set; }
 
         [JsonProperty("epoch")]
-        public BigInteger Epoch { get; set; }
+        public BigInteger Epoch { get; internal set; }
 
         [JsonProperty("epochRollingGasCostSummary")]
-        public GasCostSummary EpochRollingGasCostSummary { get; set; }
+        public GasCostSummary EpochRollingGasCostSummary { get; internal set; }
 
         [JsonProperty("networkTotalTransactions")]
-        public BigInteger NetworkTotalTransactions { get; set; }
+        public BigInteger NetworkTotalTransactions { get; internal set; }
 
         [JsonProperty("previousDigest", Required = Required.Default)]
-        public string PreviousDigest { get; set; }
+        public string PreviousDigest { get; internal set; }
 
         [JsonProperty("sequenceNumber")]
-        public BigInteger SequenceNumber { get; set; }
+        public BigInteger SequenceNumber { get; internal set; }
 
         [JsonProperty("timestampMs")]
-        public BigInteger TimestampMs { get; set; }
+        public BigInteger TimestampMs { get; internal set; }
 
         [JsonProperty("transactions")]
-        public string[] Transactions { get; set; }
+        public string[] Transactions { get; internal set; }
 
         [JsonProperty("validatorSignature")]
-        public string ValidatorSignature { get; set; }
+        public string ValidatorSignature { get; internal set; }
     }
 
     [JsonObject]
     public class EndOfEpochData
     {
         [JsonProperty("nextEpochCommittee")]
-        public string[][] NextEpochCommittee { get; set; }
+        public string[][] NextEpochCommittee { get; internal set; }
 
         [JsonProperty("nextEpochProtocolVersion")]
-        public string NextEpochProtocolVersion { get; set; }
+        public string NextEpochProtocolVersion { get; internal set; }
 
         [JsonProperty("epochCommitments")]
-        public ISerializable EpochCommitments { get; set; }
+        public ISerializable EpochCommitments { get; internal set; }
     }
 
     [JsonObject]
     public class Checkpoints
     {
         [JsonProperty("data")]
-        public Checkpoint[] Data { get; set; }
+        public Checkpoint[] Data { get; internal set; }
 
         [JsonProperty("nextCursor")]
-        public string NextCursor { get; set; }
+        public string NextCursor { get; internal set; }
 
         [JsonProperty("hasNextPage")]
-        public bool HasNextPage { get; set; }
+        public bool HasNextPage { get; internal set; }
     }
 }

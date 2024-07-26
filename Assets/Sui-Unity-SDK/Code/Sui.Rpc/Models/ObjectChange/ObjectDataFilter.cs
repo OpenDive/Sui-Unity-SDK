@@ -11,6 +11,7 @@ namespace Sui.Rpc.Models
 
     public interface IEventFilter { }
 
+    [JsonObject]
     public class AnyEventFilter : IEventFilter
     {
         [JsonProperty("Any")]
@@ -22,17 +23,19 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class AllEventFilter : IEventFilter
     {
         [JsonProperty("All")]
         public IEventFilter[] All { get; set; }
 
-        public AllEventFilter(IEventFilter[] all)
+        public AllEventFilter(IEventFilter[] all = null)
         {
-            this.All = all;
+            this.All = all ?? new IEventFilter[] { };
         }
     }
 
+    [JsonObject]
     public class AndEventFilter : IEventFilter
     {
         [JsonProperty("And")]
@@ -44,6 +47,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class OrEventFilter : IEventFilter
     {
         [JsonProperty("Or")]
@@ -55,6 +59,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class SenderEventFilter: IEventFilter
     {
         [JsonProperty("Sender")]
@@ -66,6 +71,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class TransactionEventFilter : IEventFilter
     {
         [JsonProperty("Transaction")]
@@ -77,6 +83,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class PackageEventFilter : IEventFilter
     {
         [JsonProperty("Package")]
@@ -88,6 +95,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class MoveModuleEventFilter: IEventFilter
     {
         [JsonProperty("MoveModule")]
@@ -99,6 +107,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class MoveEventTypeEventFilter : IEventFilter
     {
         [JsonProperty("MoveEventType")]
@@ -110,6 +119,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class MoveEventModuleEventFilter : IEventFilter
     {
         [JsonProperty("MoveEventModule")]
@@ -121,6 +131,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class MoveEventFieldEventFilter: IEventFilter
     {
         [JsonProperty("MoveEventField")]
@@ -132,6 +143,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class TimeRangeEventFilter: IEventFilter
     {
         [JsonProperty("TimeRange")]
@@ -143,15 +155,16 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ObjectResponseQuery
     {
-        [JsonProperty("filter", Required = Required.Default)]
+        [JsonProperty("filter", NullValueHandling = NullValueHandling.Include)]
         public IObjectDataFilter Filter { get; set; }
 
-        [JsonProperty("options", Required = Required.Default)]
+        [JsonProperty("options", NullValueHandling = NullValueHandling.Include)]
         public ObjectDataOptions Options { get; set; }
 
-        public ObjectResponseQuery(IObjectDataFilter filter, ObjectDataOptions options)
+        public ObjectResponseQuery(IObjectDataFilter filter = null, ObjectDataOptions options = null)
         {
             this.Filter = filter;
             this.Options = options;
@@ -160,6 +173,7 @@ namespace Sui.Rpc.Models
 
 	public interface IObjectDataFilter { }
 
+    [JsonObject]
     public class MoveEventField
     {
         [JsonProperty("path")]
@@ -175,6 +189,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class TimeRange
     {
         [JsonProperty("endTime")]
@@ -190,6 +205,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class FilterMoveModule
     {
         [JsonProperty("package")]
@@ -205,7 +221,8 @@ namespace Sui.Rpc.Models
         }
     }
 
-	public class ObjectDataFilterMatchAll: IObjectDataFilter
+    [JsonObject]
+    public class ObjectDataFilterMatchAll: IObjectDataFilter
     {
         [JsonProperty("MatchAll")]
         public IObjectDataFilter[] MatchAll { get; set; }
@@ -216,6 +233,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ObjectDataFilterMatchAny : IObjectDataFilter
     {
         [JsonProperty("MatchAny")]
@@ -227,6 +245,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ObjectDataFilterMatchNone : IObjectDataFilter
     {
         [JsonProperty("MatchNone")]
@@ -238,6 +257,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ObjectDataFilterPackage : IObjectDataFilter
     {
         [JsonProperty("Package")]
@@ -249,6 +269,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ObjectDataFilterMoveModule: IObjectDataFilter
     {
         [JsonProperty("MoveModule")]
@@ -260,6 +281,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ObjectDataFilterStructType : IObjectDataFilter
     {
         [JsonProperty("StructType")]
@@ -271,6 +293,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ObjectDataFilterAddressOwner : IObjectDataFilter
     {
         [JsonProperty("AddressOwner")]
@@ -282,6 +305,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ObjectDataFilterObjectOwner : IObjectDataFilter
     {
         [JsonProperty("ObjectOwner")]
@@ -293,6 +317,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ObjectDataFilterObjectId : IObjectDataFilter
     {
         [JsonProperty("ObjectId")]
@@ -304,6 +329,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ObjectDataFilterObjectIds : IObjectDataFilter
     {
         [JsonProperty("ObjectIds")]
@@ -315,6 +341,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ObjectDataFilterVersion : IObjectDataFilter
     {
         [JsonProperty("Version")]
@@ -326,12 +353,13 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class TransactionBlockResponseQuery
     {
-        [JsonProperty("filter")]
+        [JsonProperty("filter", NullValueHandling = NullValueHandling.Include)]
         public ITransactionFilter Filter { get; set; }
 
-        [JsonProperty("options")]
+        [JsonProperty("options", NullValueHandling = NullValueHandling.Include)]
         public TransactionBlockResponseOptions Options { get; set; }
 
         public TransactionBlockResponseQuery
@@ -347,6 +375,7 @@ namespace Sui.Rpc.Models
 
     public interface ITransactionFilter { }
 
+    [JsonObject]
     public class CheckpointTransactionFilter: ITransactionFilter
     {
         [JsonProperty("Checkpoint")]
@@ -358,6 +387,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class MoveFunctionTransactionFilter: ITransactionFilter
     {
         [JsonProperty("MoveFunction")]
@@ -369,6 +399,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class InputObjectTransactionFilter : ITransactionFilter
     {
         [JsonProperty("InputObject")]
@@ -380,6 +411,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ChangedObjectTransactionFilter : ITransactionFilter
     {
         [JsonProperty("ChangedObject")]
@@ -391,6 +423,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class FromAddressTransactionFilter : ITransactionFilter
     {
         [JsonProperty("FromAddress")]
@@ -402,6 +435,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class ToAddressTransactionFilter : ITransactionFilter
     {
         [JsonProperty("ToAddress")]
@@ -413,6 +447,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class FromAndToAddressTransactionFilter: ITransactionFilter
     {
         [JsonProperty("FromAndToAddress")]
@@ -424,6 +459,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class FromOrToAddressTransactionFilter : ITransactionFilter
     {
         [JsonProperty("FromOrToAddress")]
@@ -435,6 +471,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class TransactionKindTransactionFilter : ITransactionFilter
     {
         [JsonProperty("TransactionKind")]
@@ -446,6 +483,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class TransactionKindInTransactionFilter : ITransactionFilter
     {
         [JsonProperty("TransactionKindIn")]
@@ -457,6 +495,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class TransactionMoveFunction
     {
         [JsonProperty("function")]
@@ -481,6 +520,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class FromAndToAddress
     {
         [JsonProperty("from")]
@@ -496,6 +536,7 @@ namespace Sui.Rpc.Models
         }
     }
 
+    [JsonObject]
     public class FromOrToAddress
     {
         [JsonProperty("addr")]

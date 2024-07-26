@@ -31,19 +31,19 @@ using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Accounts
 {
-    public class Account: AccountBase
+    public class Account : AccountBase<SuiPrivateKeyBase, SuiPublicKeyBase>
     {
         /// <summary>
         /// Signature scheme of the account.
         /// </summary>
-        public SignatureScheme SignatureScheme { get; set; }
+        public SignatureScheme SignatureScheme { get; }
 
         /// <summary>
         /// Represents an AccoutAddress object.
         /// </summary>
         public AccountAddress AccountAddress
         {
-            get => AccountAddress.FromHex(((SuiPublicKeyBase)this.PublicKey).ToSuiAddress());
+            get => AccountAddress.FromHex(this.PublicKey.ToSuiAddress());
         }
 
         public Account(string private_key, string public_key, SignatureScheme signature_scheme)
@@ -84,7 +84,7 @@ namespace Sui.Accounts
             {
                 case SignatureScheme.ED25519:
                     this.PrivateKey = new Cryptography.Ed25519.PrivateKey(private_key);
-                    this.PublicKey = this.PrivateKey.PublicKey();
+                    this.PublicKey = (SuiPublicKeyBase)this.PrivateKey.PublicKey();
                     break;
                 default:
                     this.SetError<Account, SuiError>(null, "Cryptography signature not implemented yet.", signature_scheme);
@@ -100,7 +100,7 @@ namespace Sui.Accounts
             {
                 case SignatureScheme.ED25519:
                     this.PrivateKey = new Cryptography.Ed25519.PrivateKey(private_key);
-                    this.PublicKey = this.PrivateKey.PublicKey();
+                    this.PublicKey = (SuiPublicKeyBase)this.PrivateKey.PublicKey();
                     break;
                 default:
                     this.SetError<Account, SuiError>(null, "Cryptography signature not implemented yet.", signature_scheme);
@@ -116,7 +116,7 @@ namespace Sui.Accounts
             {
                 case SignatureScheme.ED25519:
                     this.PrivateKey = new Cryptography.Ed25519.PrivateKey();
-                    this.PublicKey = this.PrivateKey.PublicKey();
+                    this.PublicKey = (SuiPublicKeyBase)this.PrivateKey.PublicKey();
                     break;
                 default:
                     this.SetError<Account, SuiError>(null, "Cryptography signature not implemented yet.", signature_scheme);

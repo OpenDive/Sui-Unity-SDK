@@ -8,10 +8,13 @@ namespace Sui.Rpc.Models
     {
         [JsonProperty("computationCost")]
         public BigInteger ComputationCost { get; set; }
+
         [JsonProperty("storageCost")]
         public BigInteger StorageCost { get; set; }
+
         [JsonProperty("storageRebate")]
         public BigInteger StorageRebate { get; set; }
+
         [JsonProperty("nonRefundableStorageFee")]
         public BigInteger NonRefundableStorageFee { get; set; }
     }

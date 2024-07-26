@@ -1,35 +1,73 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using OpenDive.BCS;
+using Sui.Rpc.Client;
 
 namespace Sui.Rpc.Models
 {
-    public abstract class Data
+    public enum DataType
     {
-        [JsonProperty("dataType")]
-        public string DataType { get; set; }
+        MoveObject,
+        MovePackage
     }
 
-    public class MoveObjectData : Data
+    public interface IParsedData { }
+
+    [JsonConverter(typeof(DataJsonConverter))]
+    public class Data : ReturnBase
     {
-        [JsonProperty("fields")]
-        [JsonConverter(typeof(MoveStructJsonConverter))]
-        public MoveStruct Fields { get; set; }
+        public DataType Type { get; internal set; }
 
-        [JsonProperty("hasPublicTransfer")]
-        public bool HasPublicTransfer { get; set; }
+        public IParsedData ParsedData { get; internal set; }
 
-        [JsonProperty("type")]
-        public string Type { get; set; }
-
-        public T ConvertFieldsTo<T>() where T : class
+        public Data
+        (
+            DataType type,
+            IParsedData parsed_data
+        )
         {
-            return Fields.ToObject<T>();
+            this.Type = type;
+            this.ParsedData = parsed_data;
+        }
+
+        public Data(SuiError error)
+        {
+            this.Error = error;
         }
     }
 
-    public class PackageData : Data
+    public class ParsedMoveObject : IParsedData
     {
-        [JsonProperty("disassembled")]
-        public Dictionary<string, object> Disassembled { get; set; }
+        public JToken Fields { get; internal set; }
+
+        public bool HasPublicTransfer { get; internal set; }
+
+        public SuiStructTag Type { get; internal set; }
+
+        public ParsedMoveObject
+        (
+            JToken fields,
+            bool has_public_transfer,
+            SuiStructTag type
+        )
+        {
+            this.Fields = fields;
+            this.HasPublicTransfer = has_public_transfer;
+            this.Type = type;
+        }
+    }
+
+    public class ParsedMovePackage : IParsedData
+    {
+        public Dictionary<string, object> Disassembled { get; internal set; }
+
+        public ParsedMovePackage
+        (
+            Dictionary<string, object> disassembled
+        )
+        {
+            this.Disassembled = disassembled;
+        }
     }
 }

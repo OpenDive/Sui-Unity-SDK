@@ -7,12 +7,11 @@ using Sui.Rpc;
 using Sui.Rpc.Models;
 using Sui.Accounts;
 using Sui.Transactions.Types.Arguments;
-using Sui.Transactions;
+using Sui.Rpc.Client;
 using System.Collections.Generic;
 using OpenDive.BCS;
 using System.Linq;
-using UnityEditor.UIElements;
-using UnityEditor.VersionControl;
+using Sui.Utilities;
 
 namespace Sui.Tests
 {
@@ -20,7 +19,7 @@ namespace Sui.Tests
     {
         TestToolbox Toolbox;
         int DefaultStakeAmount = 1_000_000_000;
-        string StateObjectID = NormalizedTypeConverter.NormalizeSuiAddress("0x5");
+        string StateObjectID = Utils.NormalizeSuiAddress("0x5");
 
         [UnitySetUp]
         public IEnumerator SetUp()
@@ -31,11 +30,11 @@ namespace Sui.Tests
 
         private async Task<RpcResult<TransactionBlockResponse>> AddStake(SuiClient client, Account account)
         {
-            RpcResult<CoinPage> coins_task = await client.GetCoins(account.SuiAddress(), "0x2::sui::SUI");
+            RpcResult<CoinPage> coins_task = await client.GetCoinsAsync(account, new SuiStructTag("0x2::sui::SUI"));
 
-            RpcResult<SuiSystemSummary> info_task = await client.GetLatestSuiSystemState();
+            RpcResult<SuiSystemSummary> info_task = await client.GetLatestSuiSystemStateAsync();
 
-            string active_validator = info_task.Result.ActiveValidators[0].SuiAddress;
+            AccountAddress active_validator = AccountAddress.FromHex(info_task.Result.ActiveValidators[0].SuiAddress);
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             List<SuiTransactionArgument> coins_tx = tx_block.AddSplitCoinsTx(tx_block.gas, new SuiTransactionArgument[]
             {
@@ -50,19 +49,19 @@ namespace Sui.Tests
                 {
                         tx_block.AddObjectInput(this.StateObjectID),
                         coins_tx[0],
-                        tx_block.AddPure(AccountAddress.FromHex(active_validator))
+                        tx_block.AddPure(active_validator)
                 }
             );
 
-            RpcResult<IEnumerable<ObjectDataResponse>> coin_objects_task = await client.MultiGetObjects
+            RpcResult<IEnumerable<ObjectDataResponse>> coin_objects_task = await client.MultiGetObjectsAsync
             (
-                coins_task.Result.Data.Select((coin) => AccountAddress.FromHex(coin.CoinObjectId)).ToArray(),
+                coins_task.Result.Data.Select((coin) => coin.CoinObjectID).ToList(),
                 new ObjectDataOptions(show_owner: true)
             );
 
             tx_block.SetGasPayment(coin_objects_task.Result.Select((obj) => obj.GetObjectReference()).ToArray());
 
-            return await client.SignAndExecuteTransactionBlock(tx_block, account, new TransactionBlockResponseOptions(showEffects: true));
+            return await client.SignAndExecuteTransactionBlockAsync(tx_block, account, new TransactionBlockResponseOptions(showEffects: true));
         }
 
         [UnityTest]
@@ -85,26 +84,29 @@ namespace Sui.Tests
             Task<RpcResult<TransactionBlockResponse>> stake_task = this.AddStake(this.Toolbox.Client, this.Toolbox.Account);
             yield return new WaitUntil(() => stake_task.IsCompleted);
 
-            Task<RpcResult<IEnumerable<Stakes>>> stake_fetch_task = this.Toolbox.Client.GetStakes(this.Toolbox.Address());
+            if (stake_task.Result.Error != null)
+                Assert.Fail(stake_task.Result.Error.Message);
+
+            Task<RpcResult<IEnumerable<DelegatedStake>>> stake_fetch_task = this.Toolbox.Client.GetStakesAsync(this.Toolbox.Account);
             yield return new WaitUntil(() => stake_fetch_task.IsCompleted);
 
-            Task<RpcResult<IEnumerable<Stakes>>> stakes_by_id_task = this.Toolbox.Client.GetStakesByIds
+            Task<RpcResult<IEnumerable<DelegatedStake>>> stakes_by_id_task = this.Toolbox.Client.GetStakesByIdsAsync
             (
-                new List<string>()
+                new List<AccountAddress>()
                 {
-                    stake_fetch_task.Result.Result.ToList()[0].StakeList[0].StakedSuiId.ToHex()
+                    stake_fetch_task.Result.Result.ToList()[0].Stakes[0].Stake.StakedSuiID
                 }
             );
             yield return new WaitUntil(() => stakes_by_id_task.IsCompleted);
 
             Assert.Greater(stake_fetch_task.Result.Result.ToList().Count, 0);
-            Assert.IsTrue(stakes_by_id_task.Result.Result.ToList()[0].StakeList[0].Equals(stake_fetch_task.Result.Result.ToList()[0].StakeList[0]));
+            Assert.IsTrue(stakes_by_id_task.Result.Result.ToList()[0].Stakes[0].Equals(stake_fetch_task.Result.Result.ToList()[0].Stakes[0]));
         }
 
         [UnityTest]
         public IEnumerator ValidatorFunctionFetchTest()
         {
-            Task<RpcResult<CommitteeInfo>> committee_info_task = this.Toolbox.Client.GetCommitteeInfo(0);
+            Task<RpcResult<CommitteeInfo>> committee_info_task = this.Toolbox.Client.GetCommitteeInfoAsync(0);
             yield return new WaitUntil(() => committee_info_task.IsCompleted);
 
             Assert.Greater(committee_info_task.Result.Result.Validators.Count(), 0);

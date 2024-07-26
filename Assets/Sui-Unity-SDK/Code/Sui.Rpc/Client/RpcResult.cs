@@ -3,7 +3,14 @@ using Sui.Utilities;
 
 namespace Sui.Rpc
 {
-    public class RpcResult<T> : ResultBase<T>
+    public interface RpcBase
+    {
+        public string Jsonrpc { get => "2.0"; }
+
+        public int Id { get; set; }
+    }
+
+    public class RpcResult<T> : ResultBase<T>, RpcBase
     {
         public string Jsonrpc { get => "2.0"; }
 

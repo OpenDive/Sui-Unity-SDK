@@ -21,10 +21,11 @@ using Sui.Transactions.Kinds;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using Sui.Rpc.Client;
+using Sui.Utilities;
 
 namespace Sui.Transactions
 {
-    public class TransactionBlockDataBuilderSerializer: ISerializable
+    public class TransactionBlockDataBuilderSerializer : ReturnBase, ISerializable
     {
         public static int TransactionDataMaxSize = 128 * 1_024;
 
@@ -72,7 +73,7 @@ namespace Sui.Transactions
             blake2b.BlockUpdate(data_with_tag.ToArray(), 0, data_with_tag.Count());
             blake2b.DoFinal(hashed_data, 0);
 
-            Base58Encoder base58Encoder = new Base58Encoder();
+            NBitcoin.DataEncoders.Base58Encoder base58Encoder = new NBitcoin.DataEncoders.Base58Encoder();
             return base58Encoder.EncodeData(hashed_data);
         }
 
@@ -81,7 +82,7 @@ namespace Sui.Transactions
             return new TransactionBlockDataBuilderSerializer(data);
         }
 
-        public RpcResult<byte[]> Build
+        public SuiResult<byte[]> Build
         (
             TransactionBlockDataBuilderSerializer overrides = null,
             bool? only_transaction_kind = null
@@ -100,7 +101,7 @@ namespace Sui.Transactions
                 .ToList();
 
             ProgrammableTransaction programmableTx
-                = new ProgrammableTransaction(inputs.ToArray(), Builder.Transactions);
+                = new ProgrammableTransaction(inputs.ToArray(), Builder.Transactions.ToArray());
 
             if (only_transaction_kind != null && only_transaction_kind == true)
             {
@@ -111,7 +112,7 @@ namespace Sui.Transactions
                 );
                 Serialization ser = new Serialization();
                 ser.Serialize(tx_block_kind);
-                return new RpcResult<byte[]>(ser.GetBytes());
+                return new SuiResult<byte[]>(ser.GetBytes());
             }
 
             TransactionExpiration Expiration;
@@ -132,16 +133,16 @@ namespace Sui.Transactions
             }
 
             if (Sender == null)
-                return RpcResult<byte[]>.GetErrorResult("Missing transaction sender");
+                return SuiResult<byte[]>.GetSuiErrorResult("Missing transaction sender");
 
             if (GasConfig.Budget == null)
-                return RpcResult<byte[]>.GetErrorResult("Missing gas budget");
+                return SuiResult<byte[]>.GetSuiErrorResult("Missing gas budget");
 
             if (GasConfig.Payment == null)
-                return RpcResult<byte[]>.GetErrorResult("Missing gas payment");
+                return SuiResult<byte[]>.GetSuiErrorResult("Missing gas payment");
 
             if (GasConfig.Price == null)
-                return RpcResult<byte[]>.GetErrorResult("Missing gas price");
+                return SuiResult<byte[]>.GetSuiErrorResult("Missing gas price");
 
             if (Builder.GasConfig.Owner != null)
                 GasConfig.Owner = Builder.GasConfig.Owner;
@@ -164,17 +165,17 @@ namespace Sui.Transactions
             Serialization serializer = new Serialization();
             serializer.Serialize(transaction_data);
 
-            return new RpcResult<byte[]>(serializer.GetBytes());
+            return new SuiResult<byte[]>(serializer.GetBytes());
         }
 
-        public RpcResult<string> GetDigest()
+        public SuiResult<string> GetDigest()
         {
-            RpcResult<byte[]> bytes = Build();
+            SuiResult<byte[]> bytes = this.Build();
 
             if (bytes.Error != null)
-                return RpcResult<string>.GetErrorResult(bytes.Error.Message);
+                return new SuiResult<string>(null, bytes.Error);
 
-            return new RpcResult<string>(TransactionBlockDataBuilderSerializer.GetDigestFromBytes(bytes.Result));
+            return new SuiResult<string>(TransactionBlockDataBuilderSerializer.GetDigestFromBytes(bytes.Result));
         }
 
         public TransactionBlockDataBuilder Snapshot()
@@ -310,91 +311,6 @@ namespace Sui.Transactions
         }
     }
 
-    public class ProtocolConfig
-    {
-        public Dictionary<string, ProtocolConfigValue> Attributes;
-        public Dictionary<string, bool> FeatureFlags;
-        public string MaxSupportedProtocolVersion;
-        public string MinSupportedProtocolVersion;
-        public string ProtocolVersion;
-
-        public ProtocolConfig
-        (
-            Dictionary<string, ProtocolConfigValue> Attributes,
-            Dictionary<string, bool> FeatureFlags,
-            string MaxSupportedProtocolVersion,
-            string MinSupportedProtocolVersion,
-            string ProtocolVersion
-        )
-        {
-            this.Attributes = Attributes;
-            this.FeatureFlags = FeatureFlags;
-            this.MaxSupportedProtocolVersion = MaxSupportedProtocolVersion;
-            this.MinSupportedProtocolVersion = MinSupportedProtocolVersion;
-            this.ProtocolVersion = ProtocolVersion;
-        }
-
-        public ProtocolConfig(Rpc.Models.ProtocolConfig config)
-        {
-            Dictionary<string, ProtocolConfigValue> attribute_dict = new Dictionary<string, ProtocolConfigValue>();
-            foreach (var (attribute, details) in config.Attributes)
-            {
-                if (details == null)
-                    continue;
-
-                ProtocolConfigValue detail_type;
-
-                if (details.F64 != null)
-                    detail_type = new ProtocolConfigValue.F64(double.Parse(details.F64));
-                else if (details.U64 != null)
-                    detail_type = new ProtocolConfigValue.U64(ulong.Parse(details.U64));
-                else if (details.U32 != null)
-                    detail_type = new ProtocolConfigValue.U32(uint.Parse(details.U32));
-                else if (details.U16 != null)
-                    detail_type = new ProtocolConfigValue.U16(ushort.Parse(details.U16));
-                else
-                    throw new Exception("Unable to Unwrap Attribute");
-
-                attribute_dict.Add(attribute, detail_type);
-            }
-
-            this.Attributes = attribute_dict;
-            this.FeatureFlags = config.FeatureFlags;
-            this.MaxSupportedProtocolVersion = config.MaxSupportedProtocolVersion;
-            this.MinSupportedProtocolVersion = config.MinSupportedProtocolVersion;
-            this.ProtocolVersion = config.ProtocolVersion;
-        }
-    }
-
-    public abstract class ProtocolConfigValue
-    {
-        private ProtocolConfigValue() { }
-
-        public sealed class U64 : ProtocolConfigValue
-        {
-            public ulong Value { get; }
-            public U64(ulong value) => Value = value;
-        }
-
-        public sealed class U32 : ProtocolConfigValue
-        {
-            public uint Value { get; }
-            public U32(uint value) => Value = value;
-        }
-
-        public sealed class F64 : ProtocolConfigValue
-        {
-            public double Value { get; }
-            public F64(double value) => Value = value;
-        }
-
-        public sealed class U16 : ProtocolConfigValue
-        {
-            public ushort Value { get; }
-            public U16(ushort value) => Value = value;
-        }
-    }
-
     /// <summary>
     /// A transaction block.
     /// </summary>
@@ -436,11 +352,6 @@ namespace Sui.Transactions
         /// in the `ITransaction` interface, e.g. `MoveCall`, `SplitCoins`.
         /// </summary> ✅
         public List<ITransaction> Transactions { get; set; }
-
-        /// <summary>
-        /// A list of object that we need to resolve by first querying the RPC API.
-        /// </summary> ✅
-        private List<ObjectToResolve> objectsToResolve = new List<ObjectToResolve>();
 
         /// <summary>
         /// Creates a TransactionBlock object from an existing TransactionBlock.
@@ -589,7 +500,7 @@ namespace Sui.Transactions
             TransactionBlockInput[] inserted_arr = BlockDataBuilder.Builder.Inputs.Where((input) => {
                 if (input.Value == null || input.Value.GetType() != typeof(BString))
                     return false;
-                return id == NormalizedTypeConverter.NormalizeSuiAddress(((BString)input.Value).Value);
+                return id == Utils.NormalizeSuiAddress(((BString)input.Value).Value);
             }).ToArray();
 
             if (inserted_arr.Count() != 0)
@@ -861,24 +772,37 @@ namespace Sui.Transactions
         /// <param name="key">A `LimitKey` representing the key for which the configuration value needs to be retrieved.</param>
         /// <param name="build_options">A `BuildOptions` object containing the build options including limits and protocolConfig.</param>
         /// <returns>An `int` representing the configuration value for the specified key.</returns>
-        private BigInteger GetConfig(LimitKey key, BuildOptions build_options)
+        private SuiResult<BigInteger?> GetConfig(LimitKey key, BuildOptions build_options)
         {
             if (build_options.Limits != null && build_options.Limits[BuildOptions.TransactionLimits[key]].HasValue)
             {
                 int? result = build_options.Limits[BuildOptions.TransactionLimits[key]];
-                return BigInteger.Parse(result.ToString());
+
+                if (result == null)
+                    return new SuiResult<BigInteger?>
+                    (
+                        null,
+                        new SuiError
+                        (
+                            0,
+                            $"Unable to find {key}, got {BuildOptions.TransactionLimits[key]} and {build_options.Limits[BuildOptions.TransactionLimits[key]]}.",
+                            null
+                        )
+                    );
+
+                return new SuiResult<BigInteger?>(new BigInteger((int)result));
             }
 
             if (build_options.ProtocolConfig == null)
-                return BigInteger.Parse(DefaultOfflineLimits[key].ToString());
+                return new SuiResult<BigInteger?>(new BigInteger(DefaultOfflineLimits[key]));
 
-            return build_options.ProtocolConfig.Attributes[BuildOptions.TransactionLimits[key]] switch
-            {
-                ProtocolConfigValue.F64 f64 => BigInteger.Parse(f64.Value.ToString()),
-                ProtocolConfigValue.U32 u32 => BigInteger.Parse(u32.Value.ToString()),
-                ProtocolConfigValue.U64 u64 => BigInteger.Parse(u64.Value.ToString()),
-                _ => throw new Exception("Cannot Find Attribute"),
-            };
+            AttributeValue attribute = build_options.ProtocolConfig.Attributes[BuildOptions.TransactionLimits[key]];
+            BigInteger? attribute_value = attribute.GetValue();
+
+            if (attribute_value == null)
+                return new SuiResult<BigInteger?>(null, (SuiError)attribute.Error);
+
+            return new SuiResult<BigInteger?>(attribute_value);
         }
 
         /// <summary>
@@ -886,12 +810,12 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="build_options">An instance of `BuildOptions` that contains the options passed for preparing the transaction block.</param>
         /// <returns>A `byte[]` object representing the built block.</returns>
-        public async Task<RpcResult<byte[]>> Build(BuildOptions build_options)
+        public async Task<SuiResult<byte[]>> Build(BuildOptions build_options)
         {
-            RpcError err = await Prepare(build_options);
+            ErrorBase err = await Prepare(build_options);
 
             if (err != null)
-                return new RpcResult<byte[]>(null, err);
+                return new SuiResult<byte[]>(null, err);
 
             return BlockDataBuilder.Build(null, build_options.OnlyTransactionKind);
         }
@@ -901,12 +825,12 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="build_options">An instance of `BuildOptions` that contains the options passed for preparing the transaction block.</param>
         /// <returns>A `string` representing the digest of the block.</returns>
-        public async Task<RpcResult<string>> GetDigest(BuildOptions build_options)
+        public async Task<SuiResult<string>> GetDigest(BuildOptions build_options)
         {
-            RpcError err = await Prepare(build_options);
+            ErrorBase err = await Prepare(build_options);
 
             if (err != null)
-                return new RpcResult<string>(null, err);
+                return new SuiResult<string>(null, err);
 
             return BlockDataBuilder.GetDigest();
         }
@@ -917,34 +841,35 @@ namespace Sui.Transactions
         /// <param name="only_transaction_kind">An optional `bool` representing whether only transaction kind should be considered.</param>
         /// <returns>A `bool` indicating whether the sender is missing.</returns>
         private bool IsMissingSender(bool? only_transaction_kind = null)
-        {
-            return only_transaction_kind.HasValue && only_transaction_kind == false && BlockDataBuilder.Builder.Sender == null;
-        }
+            => only_transaction_kind.HasValue && only_transaction_kind == false && BlockDataBuilder.Builder.Sender == null;
 
         /// <summary>
         /// Prepares gas payment for transactions.
         /// </summary> ✅
         /// <param name="options">A `BuildOptions` object that contains the `Provider` and `OnlyTransactionKind` members.</param>
         /// <returns>A `Task` object used for implementation with Coroutines.</returns>
-        public async Task<RpcError> PrepareGasPaymentAsync(BuildOptions options)
+        public async Task<ErrorBase> PrepareGasPaymentAsync(BuildOptions options)
         {
             if (IsMissingSender(options.OnlyTransactionKind))
-                return new RpcError(-1, "Sender Is Missing", null);
+                return new SuiError(0, "Sender Is Missing", null);
 
             if ((options.OnlyTransactionKind.HasValue && options.OnlyTransactionKind == true) || this.BlockDataBuilder.Builder.GasConfig.Payment != null)
                 return null;
 
             if (BlockDataBuilder.Builder.GasConfig.Owner == null && BlockDataBuilder.Builder.Sender == null)
-                return new RpcError(-1, "Gas Owner Cannot Be Found", null);
+                return new SuiError(0, "Gas Owner Cannot Be Found", null);
 
-            string gas_owner =
+            AccountAddress gas_owner =
                 BlockDataBuilder.Builder.GasConfig.Owner != null ?
-                BlockDataBuilder.Builder.GasConfig.Owner.ToHex() :
-                BlockDataBuilder.Builder.Sender.ToHex();
+                BlockDataBuilder.Builder.GasConfig.Owner :
+                BlockDataBuilder.Builder.Sender;
 
-            RpcResult<CoinPage> coins = await options.Provider.GetCoins(gas_owner, "0x2::sui::SUI");
+            RpcResult<CoinPage> coins = await options.Provider.GetCoinsAsync(gas_owner, new SuiStructTag("0x2::sui::SUI"));
 
-            IEnumerable<CoinDetails> filtered_coins = coins.Result.Data.Where((coin) => {
+            if (coins.Error != null)
+                return coins.Error;
+
+            List<CoinDetails> filtered_coins = coins.Result.Data.Where((coin) => {
                 return BlockDataBuilder.Builder.Inputs.Any((input) => {
                     if (input.Value.GetType() == typeof(CallArg))
                     {
@@ -955,29 +880,30 @@ namespace Sui.Transactions
                             if (object_arg.ObjectArg.Type == ObjectRefType.ImmOrOwned)
                             {
                                 return
-                                    coin.CoinObjectId ==
-                                    ((Sui.Types.SuiObjectRef)object_arg.ObjectArg.ObjectRef).ObjectID.ToHex();
+                                    coin.CoinObjectID ==
+                                    ((Sui.Types.SuiObjectRef)object_arg.ObjectArg.ObjectRef).ObjectID;
                             }
                         }
                     }
                     return false;
                 }) == false;
-            });
+            }).ToList();
 
             int coin_range_max = Math.Min(filtered_coins.Count(), (int)TransactionConstants.maxGasObjects);
-            var range = Enumerable.Range(0, coin_range_max);
+            List<int> range = Enumerable.Range(0, coin_range_max).ToList();
 
             IEnumerable<Sui.Types.SuiObjectRef> payment_coins = range.Select((idx) => {
                 CoinDetails coin = filtered_coins.ElementAt(idx);
-                return new Sui.Types.SuiObjectRef(
-                    AccountAddress.FromHex(coin.CoinObjectId),
-                    int.Parse(coin.Version),
+                return new Sui.Types.SuiObjectRef
+                (
+                    coin.CoinObjectID,
+                    coin.Version,
                     coin.Digest
                 );
             });
 
             if (payment_coins.Count() == 0)
-                return new RpcError(-1, "Owner Does Not Have Payment Coins", null);
+                return new SuiError(0, "Owner Does Not Have Payment Coins", null);
 
             SetGasPayment(payment_coins.ToArray());
 
@@ -989,15 +915,15 @@ namespace Sui.Transactions
         /// </summary> ✅
         /// <param name="options">A `BuildOptions` object that contains the `Provider` and `OnlyTransactionKind` members.</param>
         /// <returns>A `Task` object used for implementation with Coroutines.</returns>
-        public async Task<RpcError> PrepareGasPriceAsync(BuildOptions options)
+        public async Task<ErrorBase> PrepareGasPriceAsync(BuildOptions options)
         {
             if (IsMissingSender(options.OnlyTransactionKind))
-                return new RpcError(-1, "Sender Is Missing", null);
+                return new SuiError(-1, "Sender Is Missing", null);
 
-            RpcResult<ulong> gas_price = await options.Provider.GetReferenceGasPriceAsync();
+            RpcResult<BigInteger> gas_price = await options.Provider.GetReferenceGasPriceAsync();
 
             if (gas_price.Error != null)
-                return (RpcError)gas_price.Error;
+                return gas_price.Error;
 
             SetGasPrice(gas_price.Result);
 
@@ -1010,7 +936,7 @@ namespace Sui.Transactions
         /// <param name="options"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<RpcError> PrepareTransactions(BuildOptions options)
+        public async Task<ErrorBase> PrepareTransactions(BuildOptions options)
         {
             // The inputs in the `TransactionBlock`
             List<TransactionBlockInput> inputs              = this.BlockDataBuilder.Builder.Inputs;
@@ -1166,17 +1092,9 @@ namespace Sui.Transactions
             {
                 foreach(MoveCall moveCall in moveModulesToResolve)
                 {
-                    string packageId = moveCall.Target.Address.ToHex();
-                    string moduleName = moveCall.Target.Module;
-                    string functionName = moveCall.Target.Name;
-
                     #region RPC Call GetNormalizedMoveFunction
                     RpcResult<NormalizedMoveFunctionResponse> result
-                        = await options.Provider.GetNormalizedMoveFunction(
-                            packageId,
-                            moduleName,
-                            functionName
-                        );
+                        = await options.Provider.GetNormalizedMoveFunctionAsync(moveCall.Target);
 
                     NormalizedMoveFunctionResponse normalized = result.Result;
                     #endregion END - RPC Call
@@ -1189,8 +1107,8 @@ namespace Sui.Transactions
                     //// The list of parameters returned by the RPC call
                     List<SuiMoveNormalizedType> paramsList
                         = hasTxContext
-                        ? normalized.Parameters.Take(normalized.Parameters.Count - 1).ToList()
-                        : normalized.Parameters;
+                        ? normalized.Parameters.Take(normalized.Parameters.Count() - 1).ToList()
+                        : normalized.Parameters.ToList();
 
                     if (paramsList.Count != moveCall.Arguments.Length)
                         return new RpcError(-1, "Incorrect number of arguments.", null);
@@ -1234,6 +1152,7 @@ namespace Sui.Transactions
                 }
             }
             #endregion END - Resolve MoveModules
+
             #region Resolve objects
             if (objectsToResolve.Count > 0)
             {
@@ -1251,12 +1170,10 @@ namespace Sui.Transactions
                 List<ObjectDataResponse> objectsResponse = new List<ObjectDataResponse>();
                 foreach(List<string> objectIds in objectChunks)
                 {
-                    Debug.Log($"MARCUS::: INSIDE OBJECT CHUNK - {JsonConvert.SerializeObject(objectIds)}");
-
                     #region RPC Call MultiGetObjects
                     RpcResult<IEnumerable<ObjectDataResponse>> response
-                        = await options.Provider.MultiGetObjects(
-                            objectIds.Select((id) => AccountAddress.FromHex(id)).ToArray(),
+                        = await options.Provider.MultiGetObjectsAsync(
+                            objectIds.Select((id) => AccountAddress.FromHex(id)).ToList(),
                             new ObjectDataOptions(show_owner: true)
                     );
                     #endregion END - Call MultiGetObjects
@@ -1396,7 +1313,7 @@ namespace Sui.Transactions
         /// </summary>
         /// <param name="options_passed">An instance of `BuildOptions` that contains the options passed for preparing the transaction block.</param>
         /// <returns>A `Task` object used for implementations with async calls.</returns>
-        private async Task<RpcError> Prepare(BuildOptions options_passed)
+        private async Task<ErrorBase> Prepare(BuildOptions options_passed)
         {
             if (IsPrepared)
                 return null;
@@ -1405,50 +1322,59 @@ namespace Sui.Transactions
 
             if (options.ProtocolConfig == null)
             {
-                RpcResult<Rpc.Models.ProtocolConfig> protocol_config = await options.Provider.GetProtocolConfigAsync();
-                options.ProtocolConfig = new ProtocolConfig(protocol_config.Result);
+                RpcResult<ProtocolConfig> protocol_config = await options.Provider.GetProtocolConfigAsync();
+
+                if (protocol_config.Error != null)
+                    return protocol_config.Error;
+
+                options.ProtocolConfig = protocol_config.Result;
             }
 
-            RpcError gas_price_error = await PrepareGasPriceAsync(options);
+            ErrorBase gas_price_error = await PrepareGasPriceAsync(options);
 
             if (gas_price_error != null)
                 return gas_price_error;
 
-            RpcError prepare_transactions_error = await PrepareTransactions(options);
+            ErrorBase prepare_transactions_error = await PrepareTransactions(options);
 
             if (prepare_transactions_error != null)
                 return prepare_transactions_error;
 
             if (options.OnlyTransactionKind == null || (options.OnlyTransactionKind != null && options.OnlyTransactionKind == false))
             {
-                RpcError gas_payment_error = await this.PrepareGasPaymentAsync(options);
+                ErrorBase gas_payment_error = await this.PrepareGasPaymentAsync(options);
 
                 if (gas_payment_error != null)
                     return gas_payment_error;
 
                 if (this.BlockDataBuilder.Builder.GasConfig.Budget == null)
                 {
-                    Builder.GasData gas_config = new Builder.GasData();
+                    GasData gas_config = new GasData();
 
-                    gas_config.Budget = GetConfig(LimitKey.MaxTxGas, options);
+                    SuiResult<BigInteger?> gas_budget_result = GetConfig(LimitKey.MaxTxGas, options);
+
+                    if (gas_budget_result.Error != null)
+                        return gas_budget_result.Error;
+
+                    gas_config.Budget = gas_budget_result.Result;
                     gas_config.Payment = new Sui.Types.SuiObjectRef[] { };
                     gas_config.Price = BlockDataBuilder.Builder.GasConfig.Price;
                     gas_config.Owner = BlockDataBuilder.Builder.GasConfig.Owner;
 
                     TransactionBlockDataBuilderSerializer tx_block_data_builder = this.BlockDataBuilder;
 
-                    RpcResult<byte[]> build_result = tx_block_data_builder.Build(new TransactionBlockDataBuilderSerializer(new TransactionBlockDataBuilder(gasConfig: gas_config)));
+                    SuiResult<byte[]> build_result = tx_block_data_builder.Build(new TransactionBlockDataBuilderSerializer(new TransactionBlockDataBuilder(gasConfig: gas_config)));
 
                     if (build_result.Error != null)
-                        return (RpcError)build_result.Error;
+                        return build_result.Error;
 
-                    RpcResult<TransactionBlockResponse> dry_run_result = await options.Provider.DryRunTransactionBlock
+                    RpcResult<TransactionBlockResponse> dry_run_result = await options.Provider.DryRunTransactionBlockAsync
                     (
                         Convert.ToBase64String(build_result.Result)
                     );
 
                     if (dry_run_result.Error != null || dry_run_result.Result.Effects.Status.Status == ExecutionStatus.Failure)
-                        return (RpcError)dry_run_result.Error ?? new RpcError(-1, $"Transaction failed with message - {dry_run_result.Result.Effects.Status.Error}", null);
+                        return dry_run_result.Error ?? new SuiError(-1, $"Transaction failed with message - {dry_run_result.Result.Effects.Status.Error}", null);
 
                     int safe_overhead =
                         (int)TransactionConstants.gasSafeOverhead *
@@ -1468,7 +1394,7 @@ namespace Sui.Transactions
                         ) +
                         safe_overhead;
 
-                    var gas_budget =
+                    int gas_budget =
                         base_computation_cost_with_overhead +
                         int.Parse
                         (

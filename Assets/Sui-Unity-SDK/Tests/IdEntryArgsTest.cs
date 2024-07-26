@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using NUnit.Framework;
 using Sui.Rpc;
+using Sui.Rpc.Client;
 using Sui.Rpc.Models;
 using OpenDive.BCS;
 using Sui.Transactions.Types.Arguments;
@@ -23,10 +24,12 @@ namespace Sui.Tests
             this.Toolbox = new TestToolbox();
             yield return this.Toolbox.Setup();
 
-            Task<PublishedPackage> task = this.Toolbox.PublishPackage("id-entry-args");
-            yield return new WaitUntil(() => task.IsCompleted);
+            yield return this.Toolbox.PublishPackage("id-entry-args", (package_result) => {
+                if (package_result.Error != null)
+                    Assert.Fail(package_result.Error.Message);
 
-            this.PackageID = task.Result.PackageID;
+                this.PackageID = package_result.Result.PackageID;
+            });
         }
 
         private async Task ExecuteArg(SuiClient client, Account account, string target)
@@ -43,7 +46,7 @@ namespace Sui.Tests
             );
             TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true);
 
-            RpcResult<TransactionBlockResponse> call_tx_block_task = await client.SignAndExecuteTransactionBlock(tx_block, account, options);
+            RpcResult<TransactionBlockResponse> call_tx_block_task = await client.SignAndExecuteTransactionBlockAsync(tx_block, account, options);
 
             await client.WaitForTransaction(call_tx_block_task.Result.Digest);
 

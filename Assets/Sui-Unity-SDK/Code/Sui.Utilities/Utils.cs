@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Org.BouncyCastle.Crypto.Digests;
+using Sui.Rpc.Models;
 using UnityEngine;
 
 namespace Sui.Utilities
@@ -28,7 +30,7 @@ namespace Sui.Utilities
         /// Converts a hexadecimal string to an array of bytes.
         /// The input string can start with a `0x` or not.
         /// </summary>
-        /// <param name="input"></param> Valid hexadecimal string
+        /// <param name="input">Valid hexadecimal string</param>
         /// <returns>Byte array representation of hexadecimal string</returns>
         public static byte[] HexStringToByteArray(this string input)
         {
@@ -53,20 +55,41 @@ namespace Sui.Utilities
             return string.Join(", ", input);
         }
 
-        /// <summary>
-        /// Check if it's a valid hex address.
-        /// </summary>
-        /// <param name="walletAddress"></param>
-        /// <returns>true if is a valid hex address, false otherwise.</returns>
-        //public static bool IsValidHexAddress(string walletAddress)
-        //{
-        //    if (walletAddress[0..2].Equals("0x"))
-        //        walletAddress = walletAddress[2..];
+        public static bool IsValidSuiAddress(string address)
+        {
+            if (Utils.NormalizeSuiAddress(address) == null)
+                return false;
 
-        //    string pattern = @"[a-fA-F0-9]{64}$";
-        //    Regex rg = new Regex(pattern);
-        //    return rg.IsMatch(walletAddress);
-        //}
+            if (Regex.IsMatch(address, @"^(0x)?[0-9a-fA-F]{32,64}$") == false)
+                return false;
+
+            return true;
+        }
+
+        public static bool AreValidSuiAddresses(string[] addresses)
+            => addresses.ToList().All(address => Utils.IsValidSuiAddress(address));
+
+        public static bool AreValidSuiAddresses(List<string> addresses)
+            => addresses.All(address => Utils.IsValidSuiAddress(address));
+
+        public static bool IsValidTransactionDigest(string digest)
+        {
+            if (Utilities.Base58Encoder.IsValidEncoding(digest) == false)
+                return false;
+
+            NBitcoin.DataEncoders.Base58Encoder base58_encoder = new NBitcoin.DataEncoders.Base58Encoder();
+            byte[] digest_data = base58_encoder.DecodeData(digest);
+
+            return digest_data.Count() == 32;
+        }
+
+        public static bool AreValidTransactionDigests(string[] digests)
+            => digests.ToList().All(digest => Utils.IsValidTransactionDigest(digest)) &&
+               digests.Distinct().Count() == digests.Count();
+
+        public static bool AreValidTransactionDigests(List<string> digests)
+            => digests.All(digest => Utils.IsValidTransactionDigest(digest)) &&
+               digests.Distinct().Count() == digests.Count();
 
         public static bool IsValidHexKey(string privateKey)
         {
@@ -121,6 +144,23 @@ namespace Sui.Utilities
             blake2b.DoFinal(result, 0);
 
             return result;
+        }
+
+        public static string NormalizeSuiAddress(string address, bool forceAdd0x = false)
+        {
+            // If the address starts with "0x", remove it
+            if (address.StartsWith("0x") && !forceAdd0x)
+                address = address[2..];
+
+            // Ensure the address is not longer than the desired length
+            if (address.Length > 64)
+                return null;
+
+            // Pad the address with zeros to reach 64 characters
+            string paddedAddress = address.PadLeft(64, '0');
+
+            // Return the normalized address with "0x" prefix
+            return "0x" + paddedAddress;
         }
     }
 }

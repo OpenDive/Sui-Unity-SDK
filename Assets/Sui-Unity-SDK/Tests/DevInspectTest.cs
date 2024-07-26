@@ -9,7 +9,8 @@ using Sui.Accounts;
 using Sui.Transactions.Types.Arguments;
 using System.Collections.Generic;
 using OpenDive.BCS;
-using Newtonsoft.Json;
+using Sui.Rpc.Client;
+using Sui.Utilities;
 
 namespace Sui.Tests
 {
@@ -17,6 +18,20 @@ namespace Sui.Tests
     {
         TestToolbox Toolbox;
         string PackageID;
+
+        [UnitySetUp]
+        public IEnumerator SetUp()
+        {
+            this.Toolbox = new TestToolbox();
+            yield return this.Toolbox.Setup();
+
+            yield return this.Toolbox.PublishPackage("serializer", (package_result) => {
+                if (package_result.Error != null)
+                    Assert.Fail(package_result.Error.Message);
+
+                this.PackageID = package_result.Result.PackageID;
+            });
+        }
 
         private IEnumerator ValidateDevInspectTransaction
         (
@@ -26,23 +41,11 @@ namespace Sui.Tests
             ExecutionStatus status
         )
         {
-            Task<RpcResult<DevInspectResponse>> result_task = client.DevInspectTransactionBlock(signer, transaction_block);
+            Task<RpcResult<DevInspectResponse>> result_task = client.DevInspectTransactionBlockAsync(signer, transaction_block);
             yield return new WaitUntil(() => result_task.IsCompleted);
 
             if (result_task.Result.Result == null || status != result_task.Result.Result.Effects.Status.Status)
                 Assert.Fail("Status does not match");
-        }
-
-        [UnitySetUp]
-        public IEnumerator SetUp()
-        {
-            this.Toolbox = new TestToolbox();
-            yield return this.Toolbox.Setup();
-
-            Task<PublishedPackage> task = this.Toolbox.PublishPackage("serializer");
-            yield return new WaitUntil(() => task.IsCompleted);
-
-            this.PackageID = task.Result.PackageID;
         }
 
         [UnityTest]
@@ -79,7 +82,7 @@ namespace Sui.Tests
                 new SerializableTypeTag[] { new SerializableTypeTag(SuiStructTag.FromStr("0x2::coin::Coin<0x2::sui::SUI>")) },
                 new SuiTransactionArgument[]
                 {
-                        tx_block.AddObjectInput(coin_0.CoinObjectId)
+                        tx_block.AddObjectInput(coin_0.CoinObjectID.KeyHex)
                 }
             );
             tx_block.AddTransferObjectsTx(obj.ToArray(), this.Toolbox.Account.SuiAddress());

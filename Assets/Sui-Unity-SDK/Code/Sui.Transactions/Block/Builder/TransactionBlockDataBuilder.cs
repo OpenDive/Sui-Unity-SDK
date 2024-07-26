@@ -87,7 +87,7 @@ namespace Sui.Transactions.Builder
             this.Sender = v1_transaction.Sender;
             this.Expiration = v1_transaction.Expiration;
             this.GasConfig = v1_transaction.GasData;
-            this.Transactions = program_tx.Transactions;
+            this.Transactions = program_tx.Transactions.ToList();
 
             this.Inputs = program_tx.Inputs
                 .Select((input, index) => new { Input = input, Index = index })

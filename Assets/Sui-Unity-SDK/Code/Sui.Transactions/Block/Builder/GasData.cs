@@ -92,10 +92,10 @@ namespace Sui.Transactions.Builder
     [JsonConverter(typeof(GasDataConverter))]
     public class GasData : ISerializable
     {
-        [JsonProperty("budget")]
+        [JsonProperty("budget", NullValueHandling = NullValueHandling.Include)]
         public BigInteger? Budget { get; set; }
 
-        [JsonProperty("price")]
+        [JsonProperty("price", NullValueHandling = NullValueHandling.Include)]
         public BigInteger? Price { get; set; }
 
         [JsonProperty("payment")]

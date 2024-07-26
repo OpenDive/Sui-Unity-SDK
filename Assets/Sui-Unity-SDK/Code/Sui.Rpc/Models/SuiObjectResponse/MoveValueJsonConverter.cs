@@ -25,7 +25,7 @@ namespace Sui.Rpc.Models
                 }
                 else if (jo["fields"] != null)
                 {
-                    return new MoveStructMoveValue { Value = jo.ToObject<MoveStruct>(serializer) };
+                    return new MoveStructMoveValue { Value = jo };
                 }
                 else if (jo.Type == JTokenType.Array)
                 {
@@ -50,7 +50,7 @@ namespace Sui.Rpc.Models
                 else if (reader.TokenType == JsonToken.String)
                 {
                     // Check if string can be converted to SuiAddress
-                    var str = reader.Value as string;
+                    string str = reader.Value as string;
                     if (ObjectId.IsValid(str))
                     {
                         return new SuiAddressMoveValue { Value = str };

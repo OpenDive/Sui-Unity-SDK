@@ -2,6 +2,7 @@
 using Sui.Accounts;
 using Sui.Rpc.Models;
 using Sui.Types;
+using Sui.Utilities;
 
 namespace Sui.Transactions
 {
@@ -25,7 +26,7 @@ namespace Sui.Transactions
 				ObjectRefType.Shared,
 				new SharedObjectRef
 				(
-					AccountAddress.FromHex(NormalizedTypeConverter.NormalizeSuiAddress(shared_object_ref.ObjectID.ToHex())),
+					AccountAddress.FromHex(Utils.NormalizeSuiAddress(shared_object_ref.ObjectID.ToHex())),
 					shared_object_ref.InitialSharedVersion,
 					shared_object_ref.Mutable
 				)
@@ -38,10 +39,10 @@ namespace Sui.Transactions
             {
 				case ObjectRefType.ImmOrOwned:
 					AccountAddress object_id_immutable = ((Sui.Types.SuiObjectRef)arg.Input.ObjectRef).ObjectID;
-					return NormalizedTypeConverter.NormalizeSuiAddress(object_id_immutable.ToHex());
+					return Utils.NormalizeSuiAddress(object_id_immutable.ToHex());
 				case ObjectRefType.Shared:
 					AccountAddress object_id_shared = ((Sui.Types.SharedObjectRef)arg.Input.ObjectRef).ObjectID;
-					return NormalizedTypeConverter.NormalizeSuiAddress(object_id_shared.ToHex());
+					return Utils.NormalizeSuiAddress(object_id_shared.ToHex());
 				default:
 					throw new Exception("Not Implemented");
 			}
@@ -53,7 +54,7 @@ namespace Sui.Transactions
 				return GetIDFromCallArg((CallArgTransactionObjectInput)value);
 
 			if (value.Type == TransactionObjectInputType.stringArgument)
-				return NormalizedTypeConverter.NormalizeSuiAddress(((StringTransactionObjectInput)value).Input);
+				return Utils.NormalizeSuiAddress(((StringTransactionObjectInput)value).Input);
 
 			throw new Exception("Not Implemented");
 		}
