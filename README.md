@@ -1,54 +1,338 @@
-# Sui Unity SDK
-A fully featured implementation of the Sui SDK for developing Unity games
-
-# Developing
-The OpenDive Sui Unity SDK, defines a set of abstractions to make it easier to manage wallet creation, signing, transactions and RPC calls.   
-
-The architecture of the OpenDive Sui Unity SDK differ's from the Sui TypeScript SDK in various ways, but the functionality provided is the same. 
-
-For example, of coupling private public key pairs into one class, private and public keys are their own separate classes with their own respective concerns and are kept clean of any Sui specific details. A higher level abstractions, an `Account`, is provided that allows developers to leverage a `PrivateKey` and `PublicKey` for any Sui specific interfaces related to signing of messages and verification of signature, etc.   
-
-Rather than injecting an RPC provider or coupling networking functionality into cryptographic classes, we separate this into a separate classes related to networking.
-
-Below, we provide further details into these abstractions and the architecture of the SDK.
-
-## Wallets
-An implementation of a hierchical deterministic (HD) wallet is provided. This wallet supports importing seed phrases, generation of seed phrases, and account / key derivation from the parent seed phrase.
-
-## Accounts
-An `Account` is an public private key pair abstraction. It makes it easier to handle creation of keypair of any given cryptographic curve or signature scheme.   
-An account has the following core properties:
-- Signature scheme
-- Private Key
-- Public Key
-These can be accessed by it's respective accessor functions.   
-
-Bothe private and public keys can be accesses as base64 or Hex encoded strings, or as byte arrays.
-
-One can also derive a Sui address from an account, similarly as a base64 or hex encoded stirng, from the following property
-- SuiAddress, returns an `AccountAddress` and by default a base64 string. It can also be parsed to a hex string using one of it's functions.
+<p align="center">
+	<img src="./Resources/SuiLogo.png" alt="SuiUnitySDKLogo" width="515" height="214" />
+</p>
 
 
-An account has the following functions:   
-- Sign an arbitrary raw message using it's respective private key
-- Sui specific signing, e.g. with Intent, TransactionBlock, etc
-- Verifying a given signature using it's respective public key
+# Sui-Unity-SDK #
 
-## Private and Public Keys
-An `Account` is composed of a private public key pair, but these can also be individually generated or instantiated. The `PrivateKey` and `PublicKey` classes are only concerned with doing cryptographic stuff nothing more, deriving a sui address is left up to the `Account` and `AccountAddress` classes.   
+## 		Sui Made Easy in Unity
 
-Internally a `PrivateKey` may leverage a particular curve to generate a key.   
+[![Made with Unity](https://img.shields.io/badge/Made%20with-Unity-57b9d3.svg?style=flat&logo=unity)](https://unity3d.com) [![](https://dcbadge.vercel.app/api/server/sui)](https://discord.gg/sui)
 
-All cryptographic curves have their own respective `PrivateKey` implementation, but have an underlying set of base functions and properties -- this can be found in `PrivateKeyBase`.
+Sui-Unity-SDK is a Unity package written in C# to help developers integrate Sui blockchain technology into their projects.
 
-## Account Address / Sui Address
-An `AccountAddress` is a Sui address abstraction. A Sui address is derived from a public key plus the appending of a signature flag and a blake2 hash.   
+- [Features](#features)
+- [Requirements](#requirements)
+- [Dependencies](#dependencies)
+- [Installation](#installation)
+  - [Unity Package Importer](#unity-package-importer)
+- [Test Suite](#test-suite)
+- [Using Sui-Unity-SDK](#using-sui-unity-sdk)
+  - [SuiClient](#suiclient)
+  - [FaucetClient](#faucetclient)
+  - [TransactionBlock](#transactionblock)
+  - [Account](#account)
+- [License](#license)
 
-By default, an `AccountAddress` resolves to a base64 string, but it can also be parsed to a hex string.
+### Features ###
 
-It has the following properties
-- Account address bytes
+- [x] Create new accounts using the ED25519 Key Standard.
+- [x] Simulate and submit transaction.
+- [x] Transferring objects.
+- [x] Transfer Sui.
+- [x] Air drop Sui tokens.
+- [x] Merge and Split coins.
+- [x] Publish modules.
+- [x] Transfer objects.
+- [x] Execute move calls.
+- [x] Retrieving objects, transactions, checkpoints, coins, and events.
+- [x] Local Transaction Building.
+- [x] Local, custom, dev, test, and main net compatiblity.
+- [x] Comprehensive Unit and Integration Test coverage.
 
-It has the following functions:
-- To hex, which returns the address as a hex string
+### Make Account Transfer Quickly and Easily! ###
 
+With how easy the library is to use, Sui-Unity-SDK gives you the power to quickly setup a Sui account and be able to transfer coins in only a few lines of code:
+```c#
+// Initialize Accounts.
+Account alice = new Account();
+Account bob = new Account();
+
+// Initialize Client and Transaction Block
+SuiClient client = new SuiClient(Constants.LocalnetConnection);
+TransactionBlock tx_block = new TransactionBlock();
+
+// Call Transfer Objects
+tx_block.AddTransferObjectsTx(new SuiTransactionArgument[] { tx_block.gas }, bob.SuiAddress());
+
+// Call SignAndExecuteTransactionBlockAsync
+RpcResult<TransactionBlockResponse> published_tx_block = await client.SignAndExecuteTransactionBlockAsync
+(
+    tx_block,
+    alice
+);
+
+// Return the TransactionBlockResponse
+return published_tx_block.Result;
+```
+
+### Requirements ###
+
+| Platforms                              | Unity Version | Installation           | Status       |
+| -------------------------------------- | ------------- | ---------------------- | ------------ |
+| Windows /  Mac / iOS / Android / WebGL | 2021.3.x      | Unity Package Importer | Fully Tested |
+| Windows /  Mac / iOS / Android / WebGL | 2022.2.x      | Unity Package Importer | Fully Tested |
+
+### Dependencies
+- [Chaos.NaCl.Standard](https://www.nuget.org/packages/Chaos.NaCl.Standard/)
+- Microsoft.Extensions.Logging.Abstractions.1.0.0 — required by NBitcoin.7.0.22
+- Newtonsoft.Json
+- NBitcoin.7.0.22
+- [Portable.BouncyCastle](https://www.nuget.org/packages/Portable.BouncyCastle)
+
+### Installation ###
+
+#### Unity Package Importer ####
+
+- Download the latest `sui-unity-sdk-xx.unitypackage` file from [Release](https://github.com/OpenDive/Sui-Unity-SDK/releases)
+- Inside Unity, Click on `Assets` → `Import Packages` → `Custom Package.` and select the downloaded file.
+
+​	**NOTE:**  As of Unity 2021.x.x, Newtonsoft Json is a common dependency. Prior versions of Unity require installing Newtonsoft.
+
+### Test Suite
+The SDK's test suite can be found in the following directory: `Assets/Sui-Unity-SDK/Tests`.   
+
+The test suite covers:
+- Account - private / public keys, signatures and verification
+- Transactions - creation, signing, serialization, and deserialization
+	- Coin Querying
+	- Extended API
+	- Governance API
+	- Move Utilities
+	- Read API
+	- Write API
+- BCS serialization and deserialization
+
+### Using Sui-Unity-SDK ###
+
+Sui-Unity-SDK is designed to be very easy to integrate into your own Unity projects. The main functionality comes from several key classes: `SuiClient`, `FacetClient`, `TransactionBlock`, and `Account`.   
+
+There are four core classes:
+- **SuiClient** - used to query the sui blockchain
+- **FaucetClient** - used to request for airdrops
+- **TransactionBlock** - used to represent a transaction block object
+- **Account** - used for representing sui accounts
+
+#### SuiClient ####
+
+The RPC Client provides you with the fundamental transaction endpoints needed for interacting with the Sui Blockchain. The following showcases how to initialize the `SuiClient`.
+
+```c#
+// Initialize Client with a local network connection
+SuiClient client = new SuiClient(Constants.LocalnetConnection);
+```
+
+As shown before, it only take a few lines of code to initialize a transfer for Sui coins. This is the main class developers will be leveraging to interact directly with the Sui Blockchain via RPC Client calls. Here's another example showing how to publish a package:
+
+```c#
+// Initialize Account
+Account alice = new Account();
+
+// Initialize Client and Transaction Block
+SuiClient client = new SuiClient(Constants.LocalnetConnection);
+TransactionBlock tx_block = new TransactionBlock();
+
+// Initialize Modules and Dependencies
+//
+// Note: Please utilize an outside tool for
+// importing compiled packages as JSON files.
+string[] modules = new string[] { "..." };
+string[] dependencies = new string[] { "..." };
+
+// Call Publish and Transfer Object
+List<SuiTransactionArgument> cap = tx_block.AddPublishTx
+(
+    modules,
+    dependencies
+);
+tx_block.AddTransferObjectsTx(cap.ToArray(), alice.SuiAddress());
+
+// Call SignAndExecuteTransactionBlockAsync
+RpcResult<TransactionBlockResponse> published_tx_block = await this.Client.SignAndExecuteTransactionBlockAsync(tx_block, alice);
+
+// Return the TransactionBlockResponse
+return published_tx_block.Result;
+```
+
+Here's also how to do various other calls:
+
+```csharp
+// Initialize Account
+Account alice = new Account();
+
+// Initialize Client and coins
+SuiClient client = new SuiClient(Constants.LocalnetConnection);
+SuiStructTag sui_coin = new SuiStructTag("0x2::sui::SUI");
+SuiStructTag coin = new SuiStructTag("0x2::coin::Coin");
+
+// Get coin metadata and print the name
+RpcResult<CoinMetadata> coin_metadata = await client.GetCoinMetadataAsync(sui_coin);
+Debug.Log($"Sui coin name: {coin_metadata.Name}");
+
+// Get account balance
+RpcResult<Balance> alice_balance = await client.GetBalanceAsync(alice, sui_coin);
+Debug.Log($"Alice's current Sui coin balance: {alice_balance.TotalBalance}'");
+
+// Get coin
+RpcResult<CoinPage> alice_sui_coins = await client.GetCoinsAsync(alice, sui_coin);
+Debug.Log($"Alice's Sui coin object ID - {alice_sui_coins.Result.Data[0].CoinObjectID.ToString()}");
+
+// Get Move structs
+RpcResult<SuiMoveNormalizedStruct> coin_move_struct = await client.GetNormalizedMoveStructAsync
+(
+    coin_struct
+);
+Debug.Log($"Coin struct fields: {Utils.ToReadableString(coin_move_struct.Fields)}");
+
+// Get Objects
+CoinDetails gas_coin = alice_sui_coins.Result.Data[0];
+ObjectData details = gas_coin.ToSuiObjectData();
+RpcResult<ObjectDataResponse> coin_object = await client.GetObjectAsync
+(
+    details.ObjectID
+);
+Debug.Log($"Sui coin object type: {coin_object.Result.Data.Type.ToString()}");
+```
+
+#### FaucetClient ####
+
+The Faucet Client allows the developer to leverage the ability to fund wallets on any of the non-main networks within the Sui Blockchain. This can easily speed up development times through automating the process of funding accounts. Here's an example on how to use the Faucet Client:
+
+```csharp
+// Initialize Account
+Account alice = Account.Generate();
+
+// Initialize Funding Request
+FaucetClient faucet = new FaucetClient(Constants.LocalnetConnection);
+bool result = await faucet.AirdropGasAsync(alice.SuiAddress());
+```
+
+#### TransactionBlock ####
+
+The Transaction Block is a local object that helps developers build out the serialized representation of transaction data. This is the core of utilizing offline transaction building, along with building out interactions with on-chain objects. Here is an example to build out a simple Move call:
+
+```c#
+// Initialize Account
+Account alice = Account.Generate();
+
+// Initialize a transaction block
+TransactionBlock tx_block = new TransactionBlock();
+
+// Call to create a Move call
+tx_block.AddMoveCallTx
+(
+    SuiMoveNormalizedStructType.FromStr("0x2::pay::split"),
+    new SerializableTypeTag[] { new SerializableTypeTag("0x2::sui::SUI") },
+    new SuiTransactionArgument[]
+    {
+            tx_block.AddObjectInput("COIN-OBJECT-ID"),  // Insert coin object ID here
+            tx_block.AddPure(new U64(100))  // Insert split amount here
+    }
+);
+
+// Sign and execute transaction block
+Task<RpcResult<TransactionBlockResponse>> result_task = client.SignAndExecuteTransactionBlockAsync
+(
+    tx_block,
+    alice
+);
+```
+
+As well, developers can utilize any arbitrary move calls published to the network. Here is an example using a serializer to set a value:
+
+```c#
+// Initialize Account
+Account alice = Account.Generate();
+
+// Initialize a transaction block
+TransactionBlock tx_block = new TransactionBlock();
+
+// Call to create a Move call, specifically setting a value
+tx_block.AddMoveCallTx
+(
+    SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::value"),
+    new SerializableTypeTag[] { },
+    new SuiTransactionArgument[]
+    {
+            tx_block.AddObjectInput("SHARED-OBJECT-ID")
+    }
+);
+tx_block.AddMoveCallTx
+(
+    SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::set_value"),
+    new SerializableTypeTag[] { },
+    new SuiTransactionArgument[]
+    {
+            tx_block.AddObjectInput("SHARED-OBJECT-ID")
+    }
+);
+
+// Sign and execute transaction block
+Task<RpcResult<TransactionBlockResponse>> result_task = client.SignAndExecuteTransactionBlockAsync
+(
+    tx_block,
+    alice
+);
+```
+
+#### Account ####
+
+Accounts within the SDK represent a Sui user's account, that give ease of access to the needed information you'd need for communicating with the Sui Blockchain. Here are some example initializations of accounts:
+
+```c#
+// Generate Random Account.
+alice = Account.Generate();
+
+// Initialize Account Using Hexadecimal Private Key.
+const string PrivateKeyHex = "0x64f57603b58af16907c18a866123286e1cbce89790613558dc1775abb3fc5c8c";
+bob = Account.LoadKey(PrivateKeyHex);
+
+// Initialize Account Using Private and Public Key Bytes.
+private static readonly byte[] PrivateKeyBytes = {
+	100, 245, 118, 3, 181, 138, 241, 105,
+	7, 193, 138, 134, 97, 35, 40, 110,
+	28, 188, 232, 151, 144, 97, 53, 88,
+	220, 23, 117, 171, 179, 252, 92, 140
+};
+private static readonly byte[] PublicKeyBytes = {
+	88, 110, 60, 141, 68, 125, 118, 121,
+	34, 46, 19, 144, 51, 227, 130, 2,
+	53, 227, 61, 165, 9, 30, 155, 11,
+	184, 241, 161, 18, 207, 12, 143, 245
+};
+
+// Initialize the account
+Account chad = new Account(PrivateKeyBytes, PublicKeyBytes);
+```
+
+From there, you're able to retrieve the byte array of the private and public keys, along with signing and verifying messages and transactions, as the core function of an Account object, as shown here:
+
+```csharp
+// Retrieve Private Key.
+Ed25519.PrivateKey privateKey = chad.PrivateKey;
+
+// Retrieve Public Key.
+Ed25519.PublicKey publicKey = chad.PublicKey;
+```
+
+The developer can now use the Account to sign various messages and transactions for interacting with the Sui Blockchain, as shown here:
+
+```c#
+// Create a Signature Object Storing the Signature of the Signed Message.
+private static readonly byte[] MessageUt8Bytes = {
+	87, 69, 76, 67, 79, 77, 69, 32,
+	84, 79, 32, 65, 80, 84, 79, 83, 33 
+};
+SignatureBase signature = privateKey.Sign(MessageUt8Bytes);
+```
+
+Developers can also verify the integrity of the message using the public key, as shown here:
+
+```c#
+// Initiailize Verified Bool Object.
+bool verified = chad.Verify(MessageUt8Bytes, signature);
+```
+
+### License ###
+
+Sui-Unity-SDK is released under the Apache 2.0 license. [See LICENSE](https://github.com/OpenDive/Sui-Unity-SDK/LICENSE) for details.
