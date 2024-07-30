@@ -28,7 +28,6 @@ using System.Linq;
 using Chaos.NaCl;
 using Org.BouncyCastle.Crypto.Digests;
 using Sui.Rpc.Client;
-using Sui.Rpc.Models;
 using Sui.Utilities;
 using static Sui.Cryptography.SignatureUtils;
 
