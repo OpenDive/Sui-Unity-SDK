@@ -9,9 +9,15 @@
 
 [![Made with Unity](https://img.shields.io/badge/Made%20with-Unity-57b9d3.svg?style=flat&logo=unity)](https://unity3d.com) [![](https://dcbadge.vercel.app/api/server/sui)](https://discord.gg/sui)
 
-The OpenDive Sui Unity SDK is the first fully-featured Unity SDK with offline transaction building. This means that games built with our SDK can directly craft custom Move calls without relying Sui's "unsafe" RPC calls under the [**Transaction Builder API**](https://docs.sui.io/sui-api-ref#transaction-builder-api) -- which in turn reduces the number of RPC / Network requests.
+The OpenDive Sui Unity SDK is the first fully-featured Unity SDK with offline transaction building. 
+
+This means that games built with our SDK can directly craft custom Move calls without relying Sui's "unsafe" RPC calls under the [**Transaction Builder API**](https://docs.sui.io/sui-api-ref#transaction-builder-api) -- which in turn reduces the number of RPC / Network requests.
 
 Our SDK fully supports mobile, desktop and WebGL application built with the Unity game engine.
+
+- [About the Project](#about-the-project)
+  - [Motivation](#motivation)
+  - [Our Vision](#our-vision)
 
 
 - [Features](#features)
@@ -26,6 +32,18 @@ Our SDK fully supports mobile, desktop and WebGL application built with the Unit
   - [TransactionBlock](#transactionblock)
   - [Account](#account)
 - [License](#license)
+
+## About the Project
+
+**Sui-Unity-SDK** is a C# Unity SDK designed to provide Unity developers with a seamless and efficient way to interact with the Sui Blockchain. Our aim is to lower the barrier for Unity developers, enabling them to leverage and integrate Sui's vast and versatile ecosystem into their games without having to delve deep into the complexities of the ecosystem.
+
+### Motivation
+
+With the rise of Web3 technologies being leveraged for games of all genres, it is very vital that developers have access to the necessary tools to simplify the process of leveraging such technologies. While Sui has an incredible suite of capabilities, there was a clear need for a C# Unity SDK that aligns with the idiomatic practices of the engine and language, along with the expectations of such development tools.
+
+### Out Vision
+
+We envision a tool that not only provides the flexibility and customization for experienced Sui developers, but also provides an easy entry point for novice and beginner developers who aren't as familiar with the various complex concepts that come with Web3 development. Our ultimate goal is to foster innovation by providing Unity developers with the right tools to integrate Sui's capabilities into their applications effortlessly.
 
 ### Features ###
 
@@ -111,7 +129,7 @@ The test suite covers:
 Sui-Unity-SDK is designed to be very easy to integrate into your own Unity projects. The main functionality comes from several key classes: `SuiClient`, `FacetClient`, `TransactionBlock`, and `Account`.   
 
 There are four core classes:
-- **SuiClient** - used to query the sui blockchain
+- **SuiClient** - used to query the Sui blockchain
 - **FaucetClient** - used to request for airdrops
 - **TransactionBlock** - used to represent a transaction block object
 - **Account** - used for representing sui accounts
@@ -139,8 +157,8 @@ TransactionBlock tx_block = new TransactionBlock();
 //
 // Note: Please utilize an outside tool for
 // importing compiled packages as JSON files.
-string[] modules = new string[] { "..." };
-string[] dependencies = new string[] { "..." };
+string[] modules = new string[] { "MODULE-BASE-64" };
+string[] dependencies = new string[] { "DEPENDENCIES-HEXADECIMAL" };
 
 // Call Publish and Transfer Object
 List<SuiTransactionArgument> cap = tx_block.AddPublishTx
@@ -250,23 +268,25 @@ Account alice = Account.Generate();
 // Initialize a transaction block
 TransactionBlock tx_block = new TransactionBlock();
 
+string package_id = "PACKAGE-ID";  // Insert Package ID here
+
 // Call to create a Move call, specifically setting a value
 tx_block.AddMoveCallTx
 (
-    SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::value"),
+    SuiMoveNormalizedStructType.FromStr($"{package_id}::serializer_tests::value"),
     new SerializableTypeTag[] { },
     new SuiTransactionArgument[]
     {
-            tx_block.AddObjectInput("SHARED-OBJECT-ID")
+            tx_block.AddObjectInput("SHARED-OBJECT-ID")  // Insert shared object ID here
     }
 );
 tx_block.AddMoveCallTx
 (
-    SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::set_value"),
+    SuiMoveNormalizedStructType.FromStr($"{package_id}::serializer_tests::set_value"),
     new SerializableTypeTag[] { },
     new SuiTransactionArgument[]
     {
-            tx_block.AddObjectInput("SHARED-OBJECT-ID")
+            tx_block.AddObjectInput("SHARED-OBJECT-ID")  // Insert shared object ID here
     }
 );
 
@@ -283,14 +303,14 @@ Task<RpcResult<TransactionBlockResponse>> result_task = client.SignAndExecuteTra
 Accounts within the SDK represent a Sui user's account, that give ease of access to the needed information you'd need for communicating with the Sui Blockchain. Here are some example initializations of accounts:
 
 ```c#
-// Generate Random Account.
+// Generate Random Account
 alice = Account.Generate();
 
-// Initialize Account Using Hexadecimal Private Key.
+// Initialize Account Using Hexadecimal Private Key
 const string PrivateKeyHex = "0x64f57603b58af16907c18a866123286e1cbce89790613558dc1775abb3fc5c8c";
 bob = Account.LoadKey(PrivateKeyHex);
 
-// Initialize Account Using Private and Public Key Bytes.
+// Initialize Account Using Private and Public Key Bytes
 private static readonly byte[] PrivateKeyBytes = {
 	100, 245, 118, 3, 181, 138, 241, 105,
 	7, 193, 138, 134, 97, 35, 40, 110,
@@ -311,17 +331,17 @@ Account chad = new Account(PrivateKeyBytes, PublicKeyBytes);
 From there, you're able to retrieve the byte array of the private and public keys, along with signing and verifying messages and transactions, as the core function of an Account object, as shown here:
 
 ```csharp
-// Retrieve Private Key.
+// Retrieve Private Key
 Ed25519.PrivateKey privateKey = chad.PrivateKey;
 
-// Retrieve Public Key.
+// Retrieve Public Key
 Ed25519.PublicKey publicKey = chad.PublicKey;
 ```
 
 The developer can now use the Account to sign various messages and transactions for interacting with the Sui Blockchain, as shown here:
 
 ```c#
-// Create a Signature Object Storing the Signature of the Signed Message.
+// Create a Signature Object Storing the Signature of the Signed Message
 private static readonly byte[] MessageUt8Bytes = {
 	87, 69, 76, 67, 79, 77, 69, 32,
 	84, 79, 32, 65, 80, 84, 79, 83, 33 
@@ -332,7 +352,7 @@ SignatureBase signature = privateKey.Sign(MessageUt8Bytes);
 Developers can also verify the integrity of the message using the public key, as shown here:
 
 ```c#
-// Initiailize Verified Bool Object.
+// Initiailize Verified Bool Object
 bool verified = chad.Verify(MessageUt8Bytes, signature);
 ```
 
