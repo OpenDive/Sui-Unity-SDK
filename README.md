@@ -9,7 +9,10 @@
 
 [![Made with Unity](https://img.shields.io/badge/Made%20with-Unity-57b9d3.svg?style=flat&logo=unity)](https://unity3d.com) [![](https://dcbadge.vercel.app/api/server/sui)](https://discord.gg/sui)
 
-Sui-Unity-SDK is a Unity package written in C# to help developers integrate Sui blockchain technology into their projects.
+The OpenDive Sui Unity SDK is the first fully-featured Unity SDK with offline transaction building. This means that games built with our SDK can directly craft custom Move calls without relying Sui's "unsafe" RPC calls under the [**Transaction Builder API**](https://docs.sui.io/sui-api-ref#transaction-builder-api) -- which in turn reduces the number of RPC / Network requests.
+
+Our SDK fully supports mobile, desktop and WebGL application built with the Unity game engine.
+
 
 - [Features](#features)
 - [Requirements](#requirements)
