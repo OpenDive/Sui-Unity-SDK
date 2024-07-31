@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using System.Collections;
 using OpenDive.BCS;
 using Sui.Utilities;
+using Sui.Types;
 
 namespace Sui.Tests
 {
@@ -224,7 +225,7 @@ namespace Sui.Tests
             while (is_initializing)
             {
                 FaucetClient faucet = new FaucetClient(this.Client.Connection);
-                Task<bool> result = faucet.AirdropGasAsync(this.Account.SuiAddress());
+                Task<bool> result = faucet.AirdropGasAsync(this.Account);
                 yield return new WaitUntil(() => result.IsCompleted);
 
                 if (result.Result)

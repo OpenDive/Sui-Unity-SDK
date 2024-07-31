@@ -5,7 +5,7 @@ using UnityEngine;
 using NUnit.Framework;
 using Sui.Rpc;
 using Sui.Rpc.Models;
-using OpenDive.BCS;
+using Sui.Types;
 
 namespace Sui.Tests
 {

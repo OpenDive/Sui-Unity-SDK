@@ -23,7 +23,7 @@
 //  THE SOFTWARE.
 //
 
-using Sui.Rpc.Client;
+using Sui.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -92,12 +92,12 @@ namespace OpenDive.BCS
         public byte[] FixedBytes(int length) => this.Read(length);
 
         /// <summary>
-        /// Deserializes a `BCSMap` dictionary, where the key is a string, and the value is a serializable value.
+        /// Deserializes a `BcsMap` dictionary, where the key is a string, and the value is a serializable value.
         /// </summary>
         /// <param name="key_type">The value type of the key.</param>
         /// <param name="value_type">The value type of the value.</param>
         /// <returns>A deserialized `BCSMap` object containing the `Dictionary<ISerializable, ISerializable>` value.</returns>
-        public BCSMap DeserializeMap(Type key_type, Type value_type)
+        public BcsMap DeserializeMap(Type key_type, Type value_type)
         {
             int length = DeserializeUleb128();
             Dictionary<ISerializable, ISerializable> sorted_map = new Dictionary<ISerializable, ISerializable>();
@@ -111,7 +111,7 @@ namespace OpenDive.BCS
                 sorted_map.Add(key, value);
             }
 
-            return new BCSMap(sorted_map);
+            return new BcsMap(sorted_map);
         }
 
         /// <summary>

@@ -27,10 +27,21 @@ using Newtonsoft.Json;
 
 namespace Sui.Clients.Faucet.Request
 {
+    /// <summary>
+    /// The amount of SUI coins to request with the faucet call.
+    /// </summary>
     [JsonObject]
     public class FixedAmountRequest
     {
+        /// <summary>
+        /// The recipient account for the fauceted coins.
+        /// </summary>
         [JsonProperty("recipient")]
         public string Recipient { get; set; }
+
+        public FixedAmountRequest(string recipient)
+        {
+            this.Recipient = recipient;
+        }
     }
 }

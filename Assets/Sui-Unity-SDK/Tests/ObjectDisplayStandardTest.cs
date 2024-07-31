@@ -6,7 +6,6 @@ using NUnit.Framework;
 using Sui.Rpc;
 using Sui.Rpc.Models;
 using Sui.Accounts;
-using Sui.Utilities;
 
 namespace Sui.Tests
 {
@@ -32,7 +31,7 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator DisplayFieldErrorTest()
         {
-            Task<RpcResult<PaginatedObjectsResponse>> resp_task = this.Toolbox.Client.GetOwnedObjectsAsync
+            Task<RpcResult<PaginatedObjectDataResponse>> resp_task = this.Toolbox.Client.GetOwnedObjectsAsync
             (
                 this.Toolbox.Account,
                 new ObjectQuery

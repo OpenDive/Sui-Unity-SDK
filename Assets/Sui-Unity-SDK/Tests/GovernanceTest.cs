@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using OpenDive.BCS;
 using System.Linq;
 using Sui.Utilities;
+using Sui.Types;
 
 namespace Sui.Tests
 {
@@ -34,7 +35,7 @@ namespace Sui.Tests
 
             RpcResult<SuiSystemSummary> info_task = await client.GetLatestSuiSystemStateAsync();
 
-            AccountAddress active_validator = AccountAddress.FromHex(info_task.Result.ActiveValidators[0].SuiAddress);
+            AccountAddress active_validator = info_task.Result.ActiveValidators[0].SuiAddress;
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             List<SuiTransactionArgument> coins_tx = tx_block.AddSplitCoinsTx(tx_block.gas, new SuiTransactionArgument[]
             {

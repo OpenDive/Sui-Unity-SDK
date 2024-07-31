@@ -7,7 +7,7 @@ using Sui.Rpc;
 using Sui.Rpc.Models;
 using System.Linq;
 using System.Collections.Generic;
-using OpenDive.BCS;
+using Sui.Types;
 using Sui.Accounts;
 
 namespace Sui.Tests

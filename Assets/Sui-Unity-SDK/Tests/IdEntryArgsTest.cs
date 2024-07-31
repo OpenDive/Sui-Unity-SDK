@@ -9,6 +9,7 @@ using Sui.Rpc.Models;
 using OpenDive.BCS;
 using Sui.Transactions.Types.Arguments;
 using Sui.Accounts;
+using Sui.Types;
 
 namespace Sui.Tests
 {

@@ -28,7 +28,7 @@ namespace Sui.Tests
                 this.PackageID = package_result.Result.PackageID;
             });
 
-            Task<RpcResult<PaginatedObjectsResponse>> owned_objects_task = this.Toolbox.Client.GetOwnedObjectsAsync
+            Task<RpcResult<PaginatedObjectDataResponse>> owned_objects_task = this.Toolbox.Client.GetOwnedObjectsAsync
             (
                 this.Toolbox.Account,
                 new ObjectQuery
@@ -45,7 +45,7 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator DynamicFieldsFetchTest()
         {
-            Task<RpcResult<DynamicFieldPage>> dynamic_fields_task = this.Toolbox.Client.GetDynamicFieldsAsync(this.ParentObjectID);
+            Task<RpcResult<PaginatedDynamicFieldInfo>> dynamic_fields_task = this.Toolbox.Client.GetDynamicFieldsAsync(this.ParentObjectID);
             yield return new WaitUntil(() => dynamic_fields_task.IsCompleted);
 
             Assert.IsTrue(dynamic_fields_task.Result.Result.Data.Length == 2);
@@ -54,7 +54,7 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator DynamicFieldsLimitedFetchTest()
         {
-            Task<RpcResult<DynamicFieldPage>> dynamic_fields_task = this.Toolbox.Client.GetDynamicFieldsAsync(this.ParentObjectID, new ObjectQuery(limit: 1));
+            Task<RpcResult<PaginatedDynamicFieldInfo>> dynamic_fields_task = this.Toolbox.Client.GetDynamicFieldsAsync(this.ParentObjectID, new ObjectQuery(limit: 1));
             yield return new WaitUntil(() => dynamic_fields_task.IsCompleted);
 
             Assert.IsTrue(dynamic_fields_task.Result.Result.Data.Length == 1);
@@ -64,12 +64,12 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator DynamicFieldsNextPageFetchTest()
         {
-            Task<RpcResult<DynamicFieldPage>> dynamic_fields_task = this.Toolbox.Client.GetDynamicFieldsAsync(this.ParentObjectID, new ObjectQuery(limit: 1));
+            Task<RpcResult<PaginatedDynamicFieldInfo>> dynamic_fields_task = this.Toolbox.Client.GetDynamicFieldsAsync(this.ParentObjectID, new ObjectQuery(limit: 1));
             yield return new WaitUntil(() => dynamic_fields_task.IsCompleted);
 
             Assert.NotNull(dynamic_fields_task.Result.Result.NextCursor);
 
-            Task<RpcResult<DynamicFieldPage>> dynamic_fields_cursor_task = this.Toolbox.Client.GetDynamicFieldsAsync(
+            Task<RpcResult<PaginatedDynamicFieldInfo>> dynamic_fields_cursor_task = this.Toolbox.Client.GetDynamicFieldsAsync(
                 this.ParentObjectID,
                 new ObjectQuery(cursor: dynamic_fields_task.Result.Result.NextCursor)
             );
@@ -81,7 +81,7 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator DynamicObjectFieldFetchTest()
         {
-            Task<RpcResult<DynamicFieldPage>> dynamic_fields_task = this.Toolbox.Client.GetDynamicFieldsAsync(this.ParentObjectID);
+            Task<RpcResult<PaginatedDynamicFieldInfo>> dynamic_fields_task = this.Toolbox.Client.GetDynamicFieldsAsync(this.ParentObjectID);
             yield return new WaitUntil(() => dynamic_fields_task.IsCompleted);
 
             foreach (DynamicFieldInfo field in dynamic_fields_task.Result.Result.Data)

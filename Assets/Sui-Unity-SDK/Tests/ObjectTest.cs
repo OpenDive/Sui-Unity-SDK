@@ -9,9 +9,7 @@ using System.Linq;
 using Sui.Accounts;
 using System.Collections.Generic;
 using Sui.Utilities;
-using OpenDive.BCS;
-using System.Numerics;
-using Newtonsoft.Json;
+using Sui.Types;
 
 namespace Sui.Tests
 {
@@ -32,7 +30,7 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator OwnedObjectFetchTest()
         {
-            Task<RpcResult<PaginatedObjectsResponse>> gas_object_task = this.Toolbox.Client.GetOwnedObjectsAsync(this.Toolbox.Account);
+            Task<RpcResult<PaginatedObjectDataResponse>> gas_object_task = this.Toolbox.Client.GetOwnedObjectsAsync(this.Toolbox.Account);
             yield return new WaitUntil(() => gas_object_task.IsCompleted);
             Assert.Greater(gas_object_task.Result.Result.Data.Length, 0);
         }

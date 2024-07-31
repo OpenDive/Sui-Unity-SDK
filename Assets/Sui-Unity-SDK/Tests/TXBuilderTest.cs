@@ -13,6 +13,7 @@ using System.Linq;
 using UnityEngine.TestTools;
 using Sui.Rpc.Models;
 using Sui.Utilities;
+using Sui.Types;
 
 namespace Sui.Tests
 {

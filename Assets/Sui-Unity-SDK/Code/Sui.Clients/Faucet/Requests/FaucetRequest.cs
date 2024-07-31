@@ -27,15 +27,23 @@ using Newtonsoft.Json;
 
 namespace Sui.Clients.Faucet.Request
 {
+    /// <summary>
+    /// Represents a Faucet Request object used for the Faucet Client.
+    /// </summary>
     public class FaucetRequest
     {
+        /// <summary>
+        /// The recipient of the fauceted coins.
+        /// </summary>
         [JsonProperty("FixedAmountRequest")]
         public FixedAmountRequest FixedAmountRequest { get; set; }
 
         public FaucetRequest(string recipient)
         {
-            FixedAmountRequest = new FixedAmountRequest();
-            FixedAmountRequest.Recipient = recipient;
+            this.FixedAmountRequest = new FixedAmountRequest
+            (
+                recipient
+            );
         }
     }
 }

@@ -62,17 +62,17 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator BulkCheckpointFetchTest()
         {
-            Task<RpcResult<Checkpoints>> resp = this.Toolbox.Client.GetCheckpointsAsync(new SuiRpcFilter(limit: 1, order: SortOrder.Ascending));
+            Task<RpcResult<PaginatedCheckpoint>> resp = this.Toolbox.Client.GetCheckpointsAsync(new SuiRpcFilter(limit: 1, order: SortOrder.Ascending));
             yield return new WaitUntil(() => resp.IsCompleted);
-            Checkpoints checkpoints = resp.Result.Result;
+            PaginatedCheckpoint checkpoints = resp.Result.Result;
 
             Assert.True(checkpoints.NextCursor == "0");
             Assert.True(checkpoints.Data.Length == 1);
             Assert.True(checkpoints.HasNextPage);
 
-            Task<RpcResult<Checkpoints>> resp_1 = this.Toolbox.Client.GetCheckpointsAsync(new SuiRpcFilter(limit: 1, cursor: checkpoints.NextCursor, order: SortOrder.Ascending));
+            Task<RpcResult<PaginatedCheckpoint>> resp_1 = this.Toolbox.Client.GetCheckpointsAsync(new SuiRpcFilter(limit: 1, cursor: checkpoints.NextCursor, order: SortOrder.Ascending));
             yield return new WaitUntil(() => resp_1.IsCompleted);
-            Checkpoints checkpoints_1 = resp_1.Result.Result;
+            PaginatedCheckpoint checkpoints_1 = resp_1.Result.Result;
 
             Assert.True(checkpoints_1.NextCursor == "1");
             Assert.True(checkpoints_1.Data.Length == 1);

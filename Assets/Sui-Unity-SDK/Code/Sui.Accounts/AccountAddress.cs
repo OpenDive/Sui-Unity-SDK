@@ -23,14 +23,13 @@
 //  THE SOFTWARE.
 //
 
-using OpenDive.BCS;
 using Org.BouncyCastle.Crypto.Digests;
-using Sui.Cryptography;
 using Newtonsoft.Json;
+using OpenDive.BCS;
+using Sui.Cryptography;
 using Sui.Rpc.Models;
-using Sui.Rpc.Client;
-using static Sui.Cryptography.SignatureUtils;
 using Sui.Utilities;
+using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Accounts
 {
@@ -45,7 +44,7 @@ namespace Sui.Accounts
     /// and MultiSig with corresponding flag bytes of 0x00, 0x01, 0x02, and 0x03, respectively.
     /// https://docs.sui.io/learn/cryptography/sui-wallet-specs#address-format
     /// </summary>
-    [JsonConverter(typeof(SuiAddressJsonConverter))]
+    [JsonConverter(typeof(AccountAddressConverter))]
     public class AccountAddress : AccountAddressBase
     {
         public override int KeyLength { get => 32; }

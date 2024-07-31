@@ -3,8 +3,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenDive.BCS;
-using Sui.Rpc.Client;
-using UnityEngine;
+using Sui.Utilities;
 
 namespace Sui.Transactions.Types.Arguments
 {

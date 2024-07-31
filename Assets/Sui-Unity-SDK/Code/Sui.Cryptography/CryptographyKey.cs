@@ -23,7 +23,7 @@
 //  THE SOFTWARE.
 //
 
-using Sui.Rpc.Client;
+using Sui.Utilities;
 using System.Linq;
 
 namespace Sui.Cryptography

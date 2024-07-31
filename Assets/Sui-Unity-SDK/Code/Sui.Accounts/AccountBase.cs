@@ -24,7 +24,7 @@
 //
 
 using Sui.Cryptography;
-using Sui.Rpc.Client;
+using Sui.Utilities;
 
 namespace Sui.Accounts
 {

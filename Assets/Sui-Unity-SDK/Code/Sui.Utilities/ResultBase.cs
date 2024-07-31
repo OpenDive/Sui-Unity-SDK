@@ -1,6 +1,4 @@
-﻿using Sui.Rpc.Client;
-
-namespace Sui.Utilities
+﻿namespace Sui.Utilities
 {
     public abstract class ResultBase<T>
     {

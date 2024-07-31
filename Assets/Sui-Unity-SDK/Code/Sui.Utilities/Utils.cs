@@ -109,15 +109,8 @@ namespace Sui.Utilities
         public static bool IsBase64String(string base64)
         {
             Span<byte> buffer = new(new byte[base64.Length]);
-            return Convert.TryFromBase64String(base64, buffer, out int bytesParsed);
+            return Convert.TryFromBase64String(base64, buffer, out _);
         }
-
-        /// <summary>
-        /// Print a byte array into a readeable string
-        /// </summary>
-        /// <param name="input">An input array of any object.</param>
-        /// <returns>A string of the array's representation.</returns>
-        public static string ToReadableString(object[] input) => $"[{string.Join(", ", input)}]";
 
         public static IEnumerator WaitForSecondsCoroutine(int seconds)
         {

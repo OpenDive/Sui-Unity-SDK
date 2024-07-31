@@ -22,7 +22,7 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator EventFetchTest()
         {
-            Task<RpcResult<EventPage>> event_task = this.Toolbox.Client.QueryEventsAsync();
+            Task<RpcResult<PaginatedEvent>> event_task = this.Toolbox.Client.QueryEventsAsync();
             yield return new WaitUntil(() => event_task.IsCompleted);
 
             Assert.Greater(event_task.Result.Result.Data.Length, 0);
@@ -31,7 +31,7 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator EventPageFetchTest()
         {
-            Task<RpcResult<EventPage>> page_1_task = this.Toolbox.Client.QueryEventsAsync(new EventQuery(limit: 2));
+            Task<RpcResult<PaginatedEvent>> page_1_task = this.Toolbox.Client.QueryEventsAsync(new EventQuery(limit: 2));
             yield return new WaitUntil(() => page_1_task.IsCompleted);
 
             Assert.IsTrue(page_1_task.Result.Result.NextCursor.EventSequence != "");
@@ -41,7 +41,7 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator EventSenderPaginationFetchTest()
         {
-            Task<RpcResult<EventPage>> query_1_task = this.Toolbox.Client.QueryEventsAsync
+            Task<RpcResult<PaginatedEvent>> query_1_task = this.Toolbox.Client.QueryEventsAsync
             (
                 new EventQuery
                 (

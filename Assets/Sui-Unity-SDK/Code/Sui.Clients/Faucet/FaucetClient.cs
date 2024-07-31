@@ -27,24 +27,23 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Sui.Accounts;
 using Sui.Clients.Faucet.Request;
+using Sui.Cryptography;
 using Sui.Rpc;
 
 namespace Sui.Clients
 {
     /// <summary>
-    /// <code>
-    ///     curl --location --request POST 'https://faucet.devnet.sui.io/gas' \
-    ///     --header 'Content-Type: application/json' \
-    ///     --data-raw '{
-    ///         "FixedAmountRequest": {
-    ///             "recipient": "<YOUR SUI ADDRESS>"
-    ///         }
-    ///     }'
-    /// </code>
+    /// The client used to faucet SUI coins to a Sui account.
     /// </summary>
     public class FaucetClient
     {
+        /// <summary>
+        /// The connection used for fauceting the account.
+        ///
+        /// NOTE: The connection must have a Faucet endpoint.
+        /// </summary>
         public Connection Connection;
 
         public FaucetClient(Connection connection)
@@ -52,15 +51,69 @@ namespace Sui.Clients
             this.Connection = connection;
         }
 
-        public async Task<bool> AirdropGasAsync(string recipient)
+        /// <summary>
+        /// Airdrops a set amount of SUI tokens to the recipient account.
+        /// </summary>
+        /// <param name="recipient">The recipient of the fauceted tokens.</param>
+        /// <returns>An asynchronous value that represents a bool of whether the faucet suceeded or not.</returns>
+        public async Task<bool> AirdropGasAsync(AccountAddress recipient)
         {
             HttpClient client = new HttpClient();
-            FaucetRequest req = new FaucetRequest(recipient);
+            FaucetRequest req = new FaucetRequest(recipient.KeyHex);
 
-            string reqJson = JsonConvert.SerializeObject(req);
-            StringContent content = new StringContent(reqJson, Encoding.UTF8, "application/json");
+            StringContent content = new StringContent
+            (
+                JsonConvert.SerializeObject(req),
+                Encoding.UTF8,
+                "application/json"
+            );
 
-            HttpResponseMessage response = await client.PostAsync(Connection.FAUCET, content);
+            HttpResponseMessage response = await client.PostAsync(this.Connection.FAUCET, content);
+
+            return response.IsSuccessStatusCode;
+        }
+
+        /// <summary>
+        /// Airdrops a set amount of SUI tokens to the recipient account.
+        /// </summary>
+        /// <param name="recipient">The recipient of the fauceted tokens.</param>
+        /// <returns>An asynchronous value that represents a bool of whether the faucet suceeded or not.</returns>
+        public async Task<bool> AirdropGasAsync(SuiPublicKeyBase recipient)
+        {
+            HttpClient client = new HttpClient();
+            FaucetRequest req = new FaucetRequest(recipient.ToSuiAddress());
+
+            StringContent content = new StringContent
+            (
+                JsonConvert.SerializeObject(req),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            HttpResponseMessage response = await client.PostAsync(this.Connection.FAUCET, content);
+
+            return response.IsSuccessStatusCode;
+        }
+
+        /// <summary>
+        /// Airdrops a set amount of SUI tokens to the recipient account.
+        /// </summary>
+        /// <param name="recipient">The recipient of the fauceted tokens.</param>
+        /// <returns>An asynchronous value that represents a bool of whether the faucet suceeded or not.</returns>
+        public async Task<bool> AirdropGasAsync(Account recipient)
+        {
+            HttpClient client = new HttpClient();
+            FaucetRequest req = new FaucetRequest(recipient.SuiAddress());
+
+            StringContent content = new StringContent
+            (
+                JsonConvert.SerializeObject(req),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            HttpResponseMessage response = await client.PostAsync(this.Connection.FAUCET, content);
+
             return response.IsSuccessStatusCode;
         }
     }

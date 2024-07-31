@@ -23,7 +23,7 @@
 //  THE SOFTWARE.
 //
 
-using Sui.Rpc.Client;
+using Sui.Utilities;
 using System;
 using System.IO;
 using System.Numerics;

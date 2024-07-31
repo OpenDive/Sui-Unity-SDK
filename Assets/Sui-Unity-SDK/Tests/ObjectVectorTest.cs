@@ -10,7 +10,7 @@ using Sui.Transactions.Types.Arguments;
 using System.Linq;
 using System.Collections.Generic;
 using Sui.Accounts;
-using Sui.Utilities;
+using Sui.Types;
 
 namespace Sui.Tests
 {
