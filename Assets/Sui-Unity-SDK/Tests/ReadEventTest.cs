@@ -45,7 +45,7 @@ namespace Sui.Tests
             (
                 new EventQuery
                 (
-                    event_filter: new SenderEventFilter(this.Toolbox.Address()),
+                    event_filter: new SenderEventFilter(this.Toolbox.Address().KeyHex),
                     limit: 2
                 )
             );

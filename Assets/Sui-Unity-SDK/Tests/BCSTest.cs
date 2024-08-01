@@ -1,19 +1,16 @@
 ﻿using NUnit.Framework;
 using OpenDive.BCS;
 using Sui.Accounts;
-using Sui.Transactions.Builder;
-using Sui.Transactions.Kinds;
 using UnityEngine;
 using Sui.Utilities;
-using Sui.Transactions.Types;
-using Sui.Transactions.Types.Arguments;
 using Sui.Types;
 using System.Linq;
 using System.Numerics;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
-    public class BCSTest : MonoBehaviour
+    public class BCSTest
     {
         [Test]
         public void BoolTrueSerAndDerTest()
@@ -197,12 +194,12 @@ namespace Sui.Tests
             MoveCall moveCallTransaction = new MoveCall(
                 new SuiMoveNormalizedStructType(suiAddress, "display", "new", new System.Collections.Generic.List<Rpc.Models.SuiMoveNormalizedType>()), // TODO: THIS IS A NORMALIZED STRUCT
                 new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(capyAddress, "capy", "Capy", new System.Collections.Generic.List<SerializableTypeTag>())) },
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
-                    new SuiTransactionArgument(TransactionArgumentKind.GasCoin, null),
-                    new SuiTransactionArgument(TransactionArgumentKind.NestedResult, new NestedResult(0, 1)),
-                    new SuiTransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(3)),
-                    new SuiTransactionArgument(TransactionArgumentKind.Result, new Result(1))
+                    new TransactionArgument(TransactionArgumentKind.GasCoin, null),
+                    new TransactionArgument(TransactionArgumentKind.NestedResult, new NestedResult(0, 1)),
+                    new TransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(3)),
+                    new TransactionArgument(TransactionArgumentKind.Result, new Result(1))
                 }
             );
 

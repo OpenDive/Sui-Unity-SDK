@@ -76,7 +76,7 @@ namespace Sui.Rpc.Models
                 return false;
 
             SuiMoveNormalizedType possibly_tx_context = this.Parameters.Last();
-            SuiMoveNormalziedTypeStruct struct_tag = Serializer.ExtractStructType(possibly_tx_context);
+            SuiMoveNormalziedTypeStruct struct_tag = NormalizedUtilities.ExtractStructType(possibly_tx_context);
 
             if (struct_tag == null)
                 return false;

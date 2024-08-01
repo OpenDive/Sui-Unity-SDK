@@ -8,9 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Sui.Types;
 using OpenDive.BCS;
-using Sui.Transactions.Types.Arguments;
 using Sui.Accounts;
-using Sui.Utilities;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
@@ -39,16 +38,19 @@ namespace Sui.Tests
             });
         }
 
-        private IEnumerator SerializeAndDeserialize(Transactions.TransactionBlock tx_block, List<bool> mutable)
+        private IEnumerator SerializeAndDeserialize(TransactionBlock tx_block, List<bool> mutable)
         {
-            tx_block.SetSender(this.Toolbox.Address());
+            tx_block.SetSender(this.Toolbox.Account);
 
-            Task<SuiResult<byte[]>> tx_build_task = tx_block.Build(new Transactions.BuildOptions(this.Toolbox.Client));
+            Task<byte[]> tx_build_task = tx_block.Build(new BuildOptions(this.Toolbox.Client));
             yield return new WaitUntil(() => tx_build_task.IsCompleted);
 
-            byte[] tx_build_bytes = tx_build_task.Result.Result;
-            Transactions.TransactionBlockDataBuilderSerializer deserialized_txn_builder =
-                new Transactions.TransactionBlockDataBuilderSerializer(tx_build_bytes);
+            if (tx_block.Error != null)
+                Assert.Fail(tx_block.Error.Message);
+
+            byte[] tx_build_bytes = tx_build_task.Result;
+            TransactionBlockDataBuilderSerializer deserialized_txn_builder =
+                new TransactionBlockDataBuilderSerializer(tx_build_bytes);
 
             List<bool> mutable_compare = deserialized_txn_builder.Builder.Inputs.Where
             (input => {
@@ -65,23 +67,26 @@ namespace Sui.Tests
 
             Assert.IsTrue(mutable_compare.SequenceEqual(mutable));
 
-            Transactions.TransactionBlock reserialized_tx_block = new Transactions.TransactionBlock(deserialized_txn_builder);
+            TransactionBlock reserialized_tx_block = new TransactionBlock(deserialized_txn_builder);
 
-            Task<SuiResult<byte[]>> tx_rebuild_task = reserialized_tx_block.Build(new Transactions.BuildOptions(this.Toolbox.Client));
+            Task<byte[]> tx_rebuild_task = reserialized_tx_block.Build(new BuildOptions(this.Toolbox.Client));
             yield return new WaitUntil(() => tx_rebuild_task.IsCompleted);
 
-            Assert.IsTrue(tx_rebuild_task.Result.Result.SequenceEqual(tx_build_bytes));
+            if (reserialized_tx_block.Error != null)
+                Assert.Fail(reserialized_tx_block.Error.Message);
+
+            Assert.IsTrue(tx_rebuild_task.Result.SequenceEqual(tx_build_bytes));
         }
 
         [UnityTest]
         public IEnumerator SerAndDerMoveSharedObjectWithImmutableReferenceTest()
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+            TransactionBlock tx_block = new TransactionBlock();
             tx_block.AddMoveCallTx
             (
                 SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::value"),
                 new SerializableTypeTag[] { },
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
                         tx_block.AddObjectInput(this.SharedObjectID.KeyHex)
                 }
@@ -92,12 +97,12 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator SerAndDerMoveSharedObjectWithImmutableAndMutableReferencesTest()
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+            TransactionBlock tx_block = new TransactionBlock();
             tx_block.AddMoveCallTx
             (
                 SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::value"),
                 new SerializableTypeTag[] { },
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
                         tx_block.AddObjectInput(this.SharedObjectID.KeyHex)
                 }
@@ -106,7 +111,7 @@ namespace Sui.Tests
             (
                 SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::set_value"),
                 new SerializableTypeTag[] { },
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
                         tx_block.AddObjectInput(this.SharedObjectID.KeyHex)
                 }
@@ -117,7 +122,7 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator TransactionExpirationSerAndDerTest()
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+            TransactionBlock tx_block = new TransactionBlock();
             tx_block.SetExpiration(new TransactionExpiration(100));
             yield return this.SerializeAndDeserialize(tx_block, new List<bool> { });
         }

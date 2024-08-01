@@ -25,7 +25,7 @@
 
 using Newtonsoft.Json;
 using Sui.Accounts;
-using Sui.Transactions.Builder;
+using Sui.Transactions;
 
 namespace Sui.Rpc.Models
 {
@@ -57,6 +57,6 @@ namespace Sui.Rpc.Models
         /// A `TransactionBlockKind` representing the kind or type of the transaction block.
         /// </summary>
         [JsonProperty("transaction")]
-        public Transactions.Kinds.TransactionBlockKind Transaction { get; internal set; }
+        public TransactionKind Transaction { get; internal set; }
     }
 }

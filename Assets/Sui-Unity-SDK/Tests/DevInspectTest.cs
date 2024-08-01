@@ -6,11 +6,11 @@ using NUnit.Framework;
 using Sui.Rpc;
 using Sui.Rpc.Models;
 using Sui.Accounts;
-using Sui.Transactions.Types.Arguments;
 using System.Collections.Generic;
 using OpenDive.BCS;
 using Sui.Rpc.Client;
 using Sui.Types;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
@@ -37,7 +37,7 @@ namespace Sui.Tests
         (
             SuiClient client,
             Account signer,
-            Transactions.TransactionBlock transaction_block,
+            TransactionBlock transaction_block,
             ExecutionStatus status
         )
         {
@@ -51,11 +51,11 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator DevInspectSplitAndTransferTest()
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
-            List<SuiTransactionArgument> coin = tx_block.AddSplitCoinsTx
+            TransactionBlock tx_block = new TransactionBlock();
+            List<TransactionArgument> coin = tx_block.AddSplitCoinsTx
             (
                 tx_block.gas,
-                new SuiTransactionArgument[] { tx_block.AddPure(new U64(10)) }
+                new TransactionArgument[] { tx_block.AddPure(new U64(10)) }
             );
             tx_block.AddTransferObjectsTx(coin.ToArray(), this.Toolbox.Account.SuiAddress());
             yield return ValidateDevInspectTransaction
@@ -74,13 +74,13 @@ namespace Sui.Tests
             yield return new WaitUntil(() => coins_task.IsCompleted);
             CoinPage coins = coins_task.Result.Result;
 
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+            TransactionBlock tx_block = new TransactionBlock();
             CoinDetails coin_0 = coins.Data[0];
-            List<SuiTransactionArgument> obj = tx_block.AddMoveCallTx
+            List<TransactionArgument> obj = tx_block.AddMoveCallTx
             (
                 SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::return_struct"),
                 new SerializableTypeTag[] { new SerializableTypeTag(SuiStructTag.FromStr("0x2::coin::Coin<0x2::sui::SUI>")) },
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
                         tx_block.AddObjectInput(coin_0.CoinObjectID.KeyHex)
                 }
@@ -99,12 +99,12 @@ namespace Sui.Tests
         [UnityTest]
         public IEnumerator MoveCallFailedDevInspectTest()
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+            TransactionBlock tx_block = new TransactionBlock();
             tx_block.AddMoveCallTx
             (
                 SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::serializer_tests::test_abort"),
                 new SerializableTypeTag[] { },
-                new SuiTransactionArgument[] { }
+                new TransactionArgument[] { }
             );
 
             yield return ValidateDevInspectTransaction

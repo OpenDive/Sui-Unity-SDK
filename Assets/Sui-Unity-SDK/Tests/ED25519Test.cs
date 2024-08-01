@@ -142,7 +142,7 @@ namespace Sui.Tests.Cryptography
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             SuiClient client = new SuiClient(Constants.LocalnetConnection);
 
-            tx_block.SetSender(AccountAddress.FromHex(account.SuiAddress()));
+            tx_block.SetSender(account.SuiAddress());
             tx_block.SetGasPrice(5);
             tx_block.SetGasBudget(100);
             byte[] digest = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -153,12 +153,11 @@ namespace Sui.Tests.Cryptography
                 new System.Random().Next() * 10000,
                 base58Encoder.EncodeData(digest)
             ) });
-            SuiResult<byte[]> bytes_result = await tx_block.Build(new BuildOptions(client));
+            byte[] bytes = await tx_block.Build(new BuildOptions(client));
 
-            if (bytes_result.Error != null)
-                Assert.Fail(bytes_result.Error.Message);
+            if (tx_block.Error != null)
+                Assert.Fail(tx_block.Error.Message);
 
-            byte[] bytes = bytes_result.Result;
             SignatureBase serialized_signature = account.SignTransactionBlock(bytes);
             Assert.IsTrue(account.VerifyTransactionBlock(bytes, serialized_signature));
         }
@@ -287,7 +286,7 @@ namespace Sui.Tests.Cryptography
         {
             Account account = new Account();
             byte[] data = System.Text.Encoding.UTF8.GetBytes("hello world");
-            Sui.Cryptography.SignatureBase signature = account.Sign(data);
+            SignatureBase signature = account.Sign(data);
 
             Assert.IsTrue(account.Verify(data, signature));
         }
@@ -296,7 +295,7 @@ namespace Sui.Tests.Cryptography
         public IEnumerator TransactionBlockSigningTest()
         {
             Account account = new Account();
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+            TransactionBlock tx_block = new TransactionBlock();
             SuiClient client = new SuiClient(Constants.LocalnetConnection);
 
             tx_block.SetSender(account.SuiAddress());
@@ -318,12 +317,15 @@ namespace Sui.Tests.Cryptography
                 }
             );
 
-            Task<SuiResult<byte[]>> result = tx_block.Build(new Transactions.BuildOptions(client));
+            Task<byte[]> result = tx_block.Build(new BuildOptions(client));
             yield return new WaitUntil(() => result.IsCompleted);
 
-            Sui.Cryptography.SignatureBase serialized_signature = account.SignTransactionBlock(result.Result.Result);
+            if (tx_block.Error != null)
+                Assert.Fail(tx_block.Error.Message);
 
-            Assert.IsTrue(account.VerifyTransactionBlock(result.Result.Result, serialized_signature));
+            SignatureBase serialized_signature = account.SignTransactionBlock(result.Result);
+
+            Assert.IsTrue(account.VerifyTransactionBlock(result.Result, serialized_signature));
         }
     }
 }

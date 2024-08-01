@@ -7,9 +7,9 @@ using Sui.Rpc;
 using Sui.Rpc.Client;
 using Sui.Rpc.Models;
 using OpenDive.BCS;
-using Sui.Transactions.Types.Arguments;
 using Sui.Accounts;
 using Sui.Types;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
@@ -35,12 +35,12 @@ namespace Sui.Tests
 
         private async Task ExecuteArg(SuiClient client, Account account, string target)
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+            TransactionBlock tx_block = new TransactionBlock();
             tx_block.AddMoveCallTx
             (
                 SuiMoveNormalizedStructType.FromStr(target),
                 new SerializableTypeTag[] { },
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
                         tx_block.AddPure(AccountAddress.FromHex(this.DefaultAddress))
                 }

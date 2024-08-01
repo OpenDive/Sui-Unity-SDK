@@ -25,7 +25,6 @@
 
 using System;
 using Sui.Cryptography;
-using Sui.Rpc.Client;
 using Sui.Utilities;
 using static Sui.Cryptography.SignatureUtils;
 
@@ -37,14 +36,6 @@ namespace Sui.Accounts
         /// Signature scheme of the account.
         /// </summary>
         public SignatureScheme SignatureScheme { get; }
-
-        /// <summary>
-        /// Represents an AccoutAddress object.
-        /// </summary>
-        public AccountAddress AccountAddress
-        {
-            get => AccountAddress.FromHex(this.PublicKey.ToSuiAddress());
-        }
 
         public Account(string private_key, string public_key, SignatureScheme signature_scheme)
         {
@@ -130,7 +121,7 @@ namespace Sui.Accounts
         /// Derives a Sui address from the account's public key.
         /// </summary>
         /// <returns>A string representing the Sui Address.</returns>
-        public string SuiAddress()
+        public AccountAddress SuiAddress()
             => ((SuiPublicKeyBase)this.PublicKey).ToSuiAddress();
 
         /// <summary>

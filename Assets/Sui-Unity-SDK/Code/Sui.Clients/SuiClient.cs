@@ -530,8 +530,8 @@ namespace Sui.Rpc.Client
                    )
                );
 
-        public async Task<RpcResult<Models.ProtocolConfig>> GetProtocolConfigAsync(BigInteger? version = null)
-            => await this._rpc_client.SendRpcRequestAsync<Models.ProtocolConfig>
+        public async Task<RpcResult<ProtocolConfig>> GetProtocolConfigAsync(BigInteger? version = null)
+            => await this._rpc_client.SendRpcRequestAsync<ProtocolConfig>
                (
                    Methods.sui_getProtocolConfig.ToString(),
                    ArgumentBuilder.BuildArguments(version == null ? null : version.ToString())
@@ -593,20 +593,20 @@ namespace Sui.Rpc.Client
         public async Task<RpcResult<DevInspectResponse>> DevInspectTransactionBlockAsync
         (
             Account sender,
-            Transactions.TransactionBlock transaction_block,
+            TransactionBlock transaction_block,
             BigInteger? gas_price = null,
             BigInteger? epoch = null,
             DevInspectArgs additional_args = null
         )
         {
-            string sender_address = sender.SuiAddress();
+            string sender_address = sender.SuiAddress().KeyHex;
             transaction_block.SetSenderIfNotSet(AccountAddress.FromHex(sender_address));
-            SuiResult<byte[]> tx_bytes = await transaction_block.Build(new BuildOptions(this, null, true));
+            byte[] tx_bytes = await transaction_block.Build(new BuildOptions(this, null, true));
 
-            if (tx_bytes.Error != null)
-                return RpcResult<DevInspectResponse>.GetErrorResult(tx_bytes.Error.Message);
+            if (transaction_block.Error != null)
+                return RpcResult<DevInspectResponse>.GetErrorResult(transaction_block.Error.Message);
 
-            string dev_inspect_tx_bytes = CryptoBytes.ToBase64String(tx_bytes.Result);
+            string dev_inspect_tx_bytes = CryptoBytes.ToBase64String(tx_bytes);
             return await this._rpc_client.SendRpcRequestAsync<DevInspectResponse>
             (
                 Methods.sui_devInspectTransactionBlock.ToString(),
@@ -655,19 +655,19 @@ namespace Sui.Rpc.Client
         /// <returns>An asynchronous task object containing the wrapped result of a `TransactionBlockResponse` object.</returns>
         public async Task<RpcResult<TransactionBlockResponse>> SignAndExecuteTransactionBlockAsync
         (
-            Transactions.TransactionBlock transaction_block,
+            TransactionBlock transaction_block,
             Account account,
             TransactionBlockResponseOptions options = null,
             RequestType? request_type = null
         )
         {
-            transaction_block.SetSenderIfNotSet(AccountAddress.FromHex(account.SuiAddress()));
-            SuiResult<byte[]> tx_bytes = await transaction_block.Build(new BuildOptions(this));
+            transaction_block.SetSenderIfNotSet(AccountAddress.FromHex(account.SuiAddress().KeyHex));
+            byte[] tx_bytes = await transaction_block.Build(new BuildOptions(this));
 
-            if (tx_bytes.Error != null)
-                return RpcResult<TransactionBlockResponse>.GetErrorResult(tx_bytes.Error.Message);
+            if (transaction_block.Error != null)
+                return RpcResult<TransactionBlockResponse>.GetErrorResult(transaction_block.Error.Message);
 
-            SignatureBase signature = account.SignTransactionBlock(tx_bytes.Result);
+            SignatureBase signature = account.SignTransactionBlock(tx_bytes);
             SuiResult<string> signature_result = account.ToSerializedSignature(signature);
 
             if (signature_result.Error != null)
@@ -675,7 +675,7 @@ namespace Sui.Rpc.Client
 
             return await this.ExecuteTransactionBlockAsync
             (
-                tx_bytes.Result,
+                tx_bytes,
                 new List<string> { signature_result.Result },
                 options,
                 request_type

@@ -9,13 +9,13 @@ using Newtonsoft.Json.Linq;
 using System.IO;
 using Sui.Rpc.Client;
 using System.Linq;
-using Sui.Transactions.Types.Arguments;
 using Sui.Rpc.Models;
 using System.Text.RegularExpressions;
 using System.Collections;
 using OpenDive.BCS;
 using Sui.Utilities;
 using Sui.Types;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
@@ -35,7 +35,7 @@ namespace Sui.Tests
     {
         public int DefaultGasBudget = 10_000_000;
         public int DefaultSendAmount = 1_000;
-        public string DefaultRecipient = "0x0c567ffdf8162cb6d51af74be0199443b92e823d4ba6ced24de5c6c463797d46";
+        public AccountAddress DefaultRecipient = AccountAddress.FromHex("0x0c567ffdf8162cb6d51af74be0199443b92e823d4ba6ced24de5c6c463797d46");
 
         private readonly string customResourcePath = Path.Combine(Application.dataPath, "Sui-Unity-SDK/Tests/Resources");
 
@@ -58,10 +58,7 @@ namespace Sui.Tests
             this.Client = new SuiClient(Constants.LocalnetConnection);
         }
 
-        public string Address()
-        {
-            return this.Account.SuiAddress();
-        }
+        public AccountAddress Address() => this.Account.SuiAddress();
 
         public async Task<RpcResult<CoinPage>> GetAllCoins()
         {
@@ -79,10 +76,10 @@ namespace Sui.Tests
             return system.Result.ActiveValidators.ToList();
         }
 
-        public IEnumerator PublishPackage(string name, System.Action<SuiResult<PublishedPackage>> callback)
+        public IEnumerator PublishPackage(string name, Action<SuiResult<PublishedPackage>> callback)
         {
             JObject file_data = GetModule(name);
-            Transactions.TransactionBlock tx = new Transactions.TransactionBlock();
+            TransactionBlock tx = new TransactionBlock();
 
             JArray modules_jarray = (JArray)file_data["modules"];
             JArray dependencies_jarray = (JArray)file_data["dependencies"];
@@ -96,7 +93,7 @@ namespace Sui.Tests
             foreach (JToken jtoken in dependencies_jarray.Values())
                 dependencies.Add((string)jtoken);
 
-            List<SuiTransactionArgument> cap = tx.AddPublishTx
+            List<TransactionArgument> cap = tx.AddPublishTx
             (
                 modules.ToArray(),
                 dependencies.ToArray()
@@ -141,19 +138,19 @@ namespace Sui.Tests
             callback(new SuiResult<PublishedPackage>(new PublishedPackage(package_id, published_tx_block.Result.Result)));
         }
 
-        public string[] GetRandomAddresses(int amount) => Enumerable.Range(0, amount).Select(_ => new Account().SuiAddress()).ToArray();
+        public AccountAddress[] GetRandomAddresses(int amount) => Enumerable.Range(0, amount).Select(_ => new Account().SuiAddress()).ToArray();
 
         public async Task<RpcResult<TransactionBlockResponse>> PaySui
         (
             int num_recipients = 1,
-            string[] recipients = null,
+            AccountAddress[] recipients = null,
             int[] amounts = null,
             AccountAddress coin_id = null
         )
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+            TransactionBlock tx_block = new TransactionBlock();
 
-            string[] recipients_tx = recipients ??= this.GetRandomAddresses(num_recipients);
+            AccountAddress[] recipients_tx = recipients ?? this.GetRandomAddresses(num_recipients);
             int[] amounts_tx =
                 amounts ??=
                 Enumerable.Range(0, num_recipients).Select(_ => this.DefaultSendAmount).ToArray();
@@ -163,12 +160,12 @@ namespace Sui.Tests
 
             AccountAddress coin_id_tx = coin_id ??= (await this.Client.GetCoinsAsync(this.Account, new SuiStructTag("0x2::sui::SUI"))).Result.Data[0].CoinObjectID;
 
-            foreach (Tuple<int, string> recipient in recipients_tx.Select((rec, i) => new Tuple<int, string>(i, rec)))
+            foreach (Tuple<int, AccountAddress> recipient in recipients_tx.Select((rec, i) => new Tuple<int, AccountAddress>(i, rec)))
             {
-                List<SuiTransactionArgument> coin = tx_block.AddSplitCoinsTx
+                List<TransactionArgument> coin = tx_block.AddSplitCoinsTx
                 (
                     tx_block.AddObjectInput(coin_id_tx.KeyHex),
-                    new SuiTransactionArgument[]
+                    new TransactionArgument[]
                     {
                         tx_block.AddPure(new U64((ulong)amounts_tx[recipient.Item1]))
                     }
@@ -192,11 +189,11 @@ namespace Sui.Tests
             return published_tx_block;
         }
 
-        public async Task<RpcResult<IEnumerable<TransactionBlockResponse>>> ExecutePaySuiNTimes
+        public async Task<SuiResult<IEnumerable<TransactionBlockResponse>>> ExecutePaySuiNTimes
         (
             int n_times,
             int num_recipients_per_txn = 1,
-            string[] recipients = null,
+            AccountAddress[] recipients = null,
             int[] amounts = null
         )
         {
@@ -207,7 +204,7 @@ namespace Sui.Tests
                 RpcResult<TransactionBlockResponse> tx_response = await this.PaySui(num_recipients_per_txn, recipients, amounts);
 
                 if (tx_response.Error != null || tx_response.Result.Effects.Status.Status == ExecutionStatus.Failure)
-                    return RpcResult<IEnumerable<TransactionBlockResponse>>.GetErrorResult
+                    return SuiResult<IEnumerable<TransactionBlockResponse>>.GetSuiErrorResult
                     (
                         $"One of the Transactions failed with message: {tx_response.Error.Message ?? tx_response.Result.Effects.Status.Error}"
                     );
@@ -216,7 +213,7 @@ namespace Sui.Tests
                 txns.Add(tx_response.Result);
             }
 
-            return new RpcResult<IEnumerable<TransactionBlockResponse>>(txns);
+            return new SuiResult<IEnumerable<TransactionBlockResponse>>(txns);
         }
 
         public IEnumerator Setup()

@@ -81,7 +81,7 @@ namespace Sui.Clients
         public async Task<bool> AirdropGasAsync(SuiPublicKeyBase recipient)
         {
             HttpClient client = new HttpClient();
-            FaucetRequest req = new FaucetRequest(recipient.ToSuiAddress());
+            FaucetRequest req = new FaucetRequest(recipient.ToSuiAddress().KeyHex);
 
             StringContent content = new StringContent
             (
@@ -103,7 +103,7 @@ namespace Sui.Clients
         public async Task<bool> AirdropGasAsync(Account recipient)
         {
             HttpClient client = new HttpClient();
-            FaucetRequest req = new FaucetRequest(recipient.SuiAddress());
+            FaucetRequest req = new FaucetRequest(recipient.SuiAddress().KeyHex);
 
             StringContent content = new StringContent
             (

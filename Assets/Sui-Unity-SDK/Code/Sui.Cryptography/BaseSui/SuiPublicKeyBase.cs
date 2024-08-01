@@ -27,6 +27,7 @@ using System;
 using System.Linq;
 using Chaos.NaCl;
 using Org.BouncyCastle.Crypto.Digests;
+using Sui.Accounts;
 using Sui.Utilities;
 using static Sui.Cryptography.SignatureUtils;
 
@@ -197,7 +198,7 @@ namespace Sui.Cryptography
         /// (SIGNATURE_SCHEME_FLAG (byte) | Public Key Bytes)
         /// </summary>
         /// <returns>The string value of the Sui Address.</returns>
-        public string ToSuiAddress()
+        public AccountAddress ToSuiAddress()
         {
             // Set up address byte arrays.
             byte[] prehash_address = this.ToSuiBytes();
@@ -210,7 +211,7 @@ namespace Sui.Cryptography
 
             // Convert to hex and normalize address.
             string address_hex = CryptoBytes.ToHexStringLower(hashed_address);
-            return Utils.NormalizeSuiAddress(address_hex);
+            return AccountAddress.FromHex(address_hex);
         }
 
         /// <summary>

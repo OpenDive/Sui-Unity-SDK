@@ -5,26 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Org.BouncyCastle.Crypto.Digests;
-using Sui.Rpc.Models;
+using Sui.Types;
 using UnityEngine;
 
 namespace Sui.Utilities
 {
     public static class Utils
     {
-        public static bool Equals(this byte[] lhs, byte[] rhs)
-        {
-            if (lhs.Length != rhs.Length) return false;
-#if !DOTNET35
-            for(int i = 0; i < lhs.Length; i++)
-            {
-                if (lhs[i] != rhs[i]) return false;
-            }
-            return true;
-#else
-            return lhs.SequenceEqual(rhs);
-#endif
-        }
+        public readonly static SuiStructTag SuiCoinStruct = new SuiStructTag("0x2::sui::SUI");
 
         /// <summary>
         /// Converts a hexadecimal string to an array of bytes.
@@ -48,7 +36,6 @@ namespace Sui.Utilities
             }
             return output;
         }
-
 
         public static string ByteArrayToString(this byte[] input)
         {

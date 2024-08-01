@@ -8,8 +8,8 @@ using Sui.Rpc.Models;
 using System.Linq;
 using Sui.Accounts;
 using System.Collections.Generic;
-using Sui.Utilities;
 using Sui.Types;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
@@ -149,8 +149,8 @@ namespace Sui.Tests
             Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
             tx_block.AddTransferObjectsTx
             (
-                new Transactions.Types.Arguments.SuiTransactionArgument[] { tx_block.gas },
-                Utils.NormalizeSuiAddress("0x2")
+                new TransactionArgument[] { tx_block.gas },
+                AccountAddress.FromHex("0x2")
             );
 
             Task<RpcResult<TransactionBlockResponse>> tx_block_sign_task = this.Toolbox.Client.SignAndExecuteTransactionBlockAsync(tx_block, this.Toolbox.Account);

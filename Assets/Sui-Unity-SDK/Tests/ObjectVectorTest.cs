@@ -6,11 +6,12 @@ using NUnit.Framework;
 using Sui.Rpc;
 using Sui.Rpc.Models;
 using OpenDive.BCS;
-using Sui.Transactions.Types.Arguments;
 using System.Linq;
 using System.Collections.Generic;
 using Sui.Accounts;
 using Sui.Types;
+using Sui.Utilities;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
@@ -43,12 +44,12 @@ namespace Sui.Tests
 
         private async Task<AccountAddress> MintObject(int val, TestToolbox toolbox)
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
+            TransactionBlock tx_block = new TransactionBlock();
             tx_block.AddMoveCallTx
             (
                 SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::entry_point_vector::mint"),
                 new SerializableTypeTag[] { },
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
                     tx_block.AddPure(new U64((ulong)val))
                 }
@@ -68,8 +69,8 @@ namespace Sui.Tests
 
         private IEnumerator DestroyObject(string[] objects, TestToolbox toolbox, bool with_type = false)
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
-            List<SuiTransactionArgument> vec = tx_block.AddMakeMoveVecTx
+            TransactionBlock tx_block = new TransactionBlock();
+            List<TransactionArgument> vec = tx_block.AddMakeMoveVecTx
             (
                 objects.Select((obj) => tx_block.AddObjectInput(obj)).ToArray(),
                 with_type ? SuiStructTag.FromStr($"{this.PackageID}::entry_point_vector::Obj") : null
@@ -126,10 +127,10 @@ namespace Sui.Tests
 
             CoinDetails coin = coin_task.Result.Result.Data[3];
             string[] coin_ids = coin_task.Result.Result.Data.Select((coin) => coin.CoinObjectID.KeyHex).ToArray();
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
-            List<SuiTransactionArgument> vec = tx_block.AddMakeMoveVecTx
+            TransactionBlock tx_block = new TransactionBlock();
+            List<TransactionArgument> vec = tx_block.AddMakeMoveVecTx
             (
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
                     tx_block.AddObjectInput(coin_ids[1]),
                     tx_block.AddObjectInput(coin_ids[2])
@@ -138,14 +139,14 @@ namespace Sui.Tests
             tx_block.AddMoveCallTx
             (
                 SuiMoveNormalizedStructType.FromStr("0x2::pay::join_vec"),
-                new SerializableTypeTag[] { new SerializableTypeTag(SuiStructTag.FromStr("0x2::sui::SUI")) },
-                new SuiTransactionArgument[]
+                new SerializableTypeTag[] { new SerializableTypeTag(Utils.SuiCoinStruct) },
+                new TransactionArgument[]
                 {
                     tx_block.AddObjectInput(coin_ids[0]),
                     vec[0]
                 }
             );
-            tx_block.SetGasPayment(new Types.SuiObjectRef[] { coin.ToSuiObjectRef() });
+            tx_block.SetGasPayment(new SuiObjectRef[] { coin.ToSuiObjectRef() });
 
             Task<RpcResult<TransactionBlockResponse>> tx_sign_task = this.Toolbox.Client.SignAndExecuteTransactionBlockAsync
             (

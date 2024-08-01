@@ -56,7 +56,7 @@ namespace Sui.Tests
             System.Collections.Generic.Dictionary<string, string> display = display_full.Data;
 
             Assert.IsTrue(display["age"] == "10");
-            Assert.IsTrue(display["buyer"] == this.Toolbox.Address());
+            Assert.IsTrue(display["buyer"] == this.Toolbox.Address().KeyHex);
             Assert.IsTrue(display["creator"] == "Chris");
             Assert.IsTrue(display["description"] == $"Unique Boar from the Boars collection with First Boar and {boar_id}");
             Assert.IsTrue(display["img_url"] == "https://get-a-boar.com/first.png");

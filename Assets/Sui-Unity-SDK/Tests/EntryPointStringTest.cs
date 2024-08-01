@@ -5,11 +5,11 @@ using UnityEngine;
 using NUnit.Framework;
 using Sui.Rpc;
 using Sui.Rpc.Models;
-using Sui.Transactions.Types.Arguments;
 using System.Collections.Generic;
 using OpenDive.BCS;
 using System.Linq;
 using Sui.Types;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
@@ -39,12 +39,12 @@ namespace Sui.Tests
             string func_name
         )
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
-            List<SuiTransactionArgument> obj = tx_block.AddMoveCallTx
+            TransactionBlock tx_block = new TransactionBlock();
+            List<TransactionArgument> obj = tx_block.AddMoveCallTx
             (
                 SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::entry_point_types::{func_name}"),
                 new SerializableTypeTag[] { },
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
                         tx_block.AddPure(new BString(str)),
                         tx_block.AddPure(new U64((ulong)len))
@@ -69,12 +69,12 @@ namespace Sui.Tests
             string func_name
         )
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
-            List<SuiTransactionArgument> obj = tx_block.AddMoveCallTx
+            TransactionBlock tx_block = new TransactionBlock();
+            List<TransactionArgument> obj = tx_block.AddMoveCallTx
             (
                 SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::entry_point_types::{func_name}"),
                 new SerializableTypeTag[] { },
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
                         tx_block.AddPure(new Sequence(str.Select((val) => new BString(val)).ToArray())),
                         tx_block.AddPure(new U64((ulong)len))

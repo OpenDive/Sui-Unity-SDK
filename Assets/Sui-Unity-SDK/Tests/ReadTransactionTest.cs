@@ -8,11 +8,11 @@ using Sui.Rpc.Models;
 using System.Collections.Generic;
 using Sui.Rpc.Client;
 using System.Linq;
-using Sui.Transactions.Types.Arguments;
 using OpenDive.BCS;
 using System.Numerics;
-using Newtonsoft.Json;
 using System;
+using Sui.Utilities;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
@@ -32,7 +32,7 @@ namespace Sui.Tests
 
         private async Task<RpcError> InitializePaySui()
         {
-            RpcResult<IEnumerable<TransactionBlockResponse>> txns = await this.Toolbox.ExecutePaySuiNTimes(this.NumTransactions);
+            SuiResult<IEnumerable<TransactionBlockResponse>> txns = await this.Toolbox.ExecutePaySuiNTimes(this.NumTransactions);
 
             if (txns.Error != null)
                 return (RpcError)txns.Error;
@@ -44,11 +44,11 @@ namespace Sui.Tests
 
         private async Task<RpcResult<TransactionBlockResponse>> SetupTransaction(TestToolbox toolbox)
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
-            List<SuiTransactionArgument> coin = tx_block.AddSplitCoinsTx
+            TransactionBlock tx_block = new TransactionBlock();
+            List<TransactionArgument> coin = tx_block.AddSplitCoinsTx
             (
                 tx_block.gas,
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
                     tx_block.AddPure(new U64(1))
                 }
@@ -187,8 +187,8 @@ namespace Sui.Tests
             );
             yield return new WaitUntil(() => transaction_block_task.IsCompleted);
 
-            Transactions.Kinds.TransactionBlockKind tx_kind = transaction_block_task.Result.Result.Transaction.Data.Transaction;
-            Assert.IsTrue(tx_kind.Type == Sui.Transactions.Kinds.SuiTransactionKindType.Genesis);
+            TransactionKind tx_kind = transaction_block_task.Result.Result.Transaction.Data.Transaction;
+            Assert.IsTrue(tx_kind.Type == TransactionKindType.Genesis);
         }
     }
 }

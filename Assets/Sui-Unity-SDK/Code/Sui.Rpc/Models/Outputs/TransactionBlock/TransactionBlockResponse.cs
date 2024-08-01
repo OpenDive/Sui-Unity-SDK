@@ -23,6 +23,7 @@
 //  THE SOFTWARE.
 //
 
+using System.Numerics;
 using Newtonsoft.Json;
 
 namespace Sui.Rpc.Models
@@ -61,7 +62,7 @@ namespace Sui.Rpc.Models
         /// An optional `string` representing the timestamp of the transaction block response in milliseconds.
         /// </summary>
         [JsonProperty("timestampMs", NullValueHandling = NullValueHandling.Include)]
-        public string TimestampMs { get; internal set; }
+        public BigInteger TimestampMs { get; internal set; }
 
         /// <summary>
         /// A `string` representing the digest of the transaction block response.

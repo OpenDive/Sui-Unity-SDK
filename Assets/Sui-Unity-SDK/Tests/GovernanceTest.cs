@@ -6,13 +6,13 @@ using NUnit.Framework;
 using Sui.Rpc;
 using Sui.Rpc.Models;
 using Sui.Accounts;
-using Sui.Transactions.Types.Arguments;
 using Sui.Rpc.Client;
 using System.Collections.Generic;
 using OpenDive.BCS;
 using System.Linq;
 using Sui.Utilities;
 using Sui.Types;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
@@ -36,8 +36,8 @@ namespace Sui.Tests
             RpcResult<SuiSystemSummary> info_task = await client.GetLatestSuiSystemStateAsync();
 
             AccountAddress active_validator = info_task.Result.ActiveValidators[0].SuiAddress;
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
-            List<SuiTransactionArgument> coins_tx = tx_block.AddSplitCoinsTx(tx_block.gas, new SuiTransactionArgument[]
+            TransactionBlock tx_block = new TransactionBlock();
+            List<TransactionArgument> coins_tx = tx_block.AddSplitCoinsTx(tx_block.gas, new TransactionArgument[]
             {
                 tx_block.AddPure(new U64((ulong)this.DefaultStakeAmount))
             });
@@ -46,7 +46,7 @@ namespace Sui.Tests
             (
                 SuiMoveNormalizedStructType.FromStr($"0x3::sui_system::request_add_stake"),
                 new SerializableTypeTag[] { },
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
                         tx_block.AddObjectInput(this.StateObjectID),
                         coins_tx[0],
