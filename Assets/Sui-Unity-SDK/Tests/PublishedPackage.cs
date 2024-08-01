@@ -1,5 +1,5 @@
 ﻿//
-//  ProtocolConfigTest.cs
+//  PublishedPackage.cs
 //  Sui-Unity-SDK
 //
 //  Copyright (c) 2024 OpenDive
@@ -23,35 +23,19 @@
 //  THE SOFTWARE.
 //
 
-using System.Collections;
-using System.Threading.Tasks;
-using UnityEngine.TestTools;
-using UnityEngine;
-using NUnit.Framework;
-using Sui.Rpc;
 using Sui.Rpc.Models;
-using System.Numerics;
 
 namespace Sui.Tests
 {
-    public class ProtocolConfigTest
+    public class PublishedPackage
     {
-        TestToolbox Toolbox;
+        public string PackageID;
+        public TransactionBlockResponse PublishedTX;
 
-        [UnitySetUp]
-        public IEnumerator SetUp()
+        public PublishedPackage(string package_id, TransactionBlockResponse published_tx)
         {
-            this.Toolbox = new TestToolbox();
-            yield return this.Toolbox.Setup();
-        }
-
-        [UnityTest]
-        public IEnumerator ProtocolConfigFetchTest()
-        {
-            Task<RpcResult<ProtocolConfig>> config_task = this.Toolbox.Client.GetProtocolConfigAsync();
-            yield return new WaitUntil(() => config_task.IsCompleted);
-
-            Assert.IsTrue(config_task.Result.Result.ProtocolVersion != new BigInteger());
+            this.PackageID = package_id;
+            this.PublishedTX = published_tx;
         }
     }
 }

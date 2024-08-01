@@ -1,3 +1,28 @@
+//
+//  TransactionsTest.cs
+//  Sui-Unity-SDK
+//
+//  Copyright (c) 2024 OpenDive
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
 using NUnit.Framework;
 using OpenDive.BCS;
 using Sui.Accounts;
@@ -22,23 +47,17 @@ namespace Sui.Tests
         {
             AccountAddress suiAddress = AccountAddress.FromHex(suiAddressHex);
 
-            // ////////////////////////////////////////
-            // Programmable Transaction Block -- Inputs
             SuiObjectRef paymentRef = new SuiObjectRef(AccountAddress.FromHex(objectId), version, digest);
             CallArg[] inputs = new CallArg[] { new CallArg(CallArgumentType.Object, new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef))) };
 
             MoveCall moveCallTransaction = new MoveCall(
-                new SuiMoveNormalizedStructType(suiAddress, "display", "new", new List<Rpc.Models.SuiMoveNormalizedType>()), // TODO: THIS IS A NORMALIZED STRUCT
+                new SuiMoveNormalizedStructType(suiAddress, "display", "new", new List<Rpc.Models.SuiMoveNormalizedType>()),
                 new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(suiAddress, "capy", "Capy", new List<SerializableTypeTag>())) },
-                new TransactionArgument[] { new TransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(0)) } // TODO: We should not use this abstract, this should be a "pure" or an "object.
+                new TransactionArgument[] { new TransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(0)) }
             );
 
             List<Command> transactions = new List<Command> { new Command(CommandKind.MoveCall, moveCallTransaction) };
 
-            ////////////////////////////////////////
-            //Programmable Transaction Block--  Transactions
-            // This is createdi in "build"
-            ////////////////////////////////////////
             TransactionData transactionData = new TransactionData
             (
                 TransactionType.V1,
