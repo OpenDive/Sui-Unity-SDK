@@ -123,7 +123,7 @@ namespace Sui.Tests
         public IEnumerator TransactionExpirationSerAndDerTest()
         {
             TransactionBlock tx_block = new TransactionBlock();
-            tx_block.SetExpiration(new TransactionExpiration(100));
+            tx_block.SetExpiration(new TransactionExpiration(ExpirationType.Epoch, 100));
             yield return this.SerializeAndDeserialize(tx_block, new List<bool> { });
         }
     }

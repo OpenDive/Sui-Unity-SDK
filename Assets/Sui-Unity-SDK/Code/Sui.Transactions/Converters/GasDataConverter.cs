@@ -26,8 +26,10 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sui.Accounts;
+using Sui.Types;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace Sui.Transactions
 {
@@ -43,14 +45,14 @@ namespace Sui.Transactions
             string price = gas_data["price"].Value<string>();
             string budget = gas_data["budget"].Value<string>();
 
-            List<Sui.Types.SuiObjectRef> objects = new List<Sui.Types.SuiObjectRef>();
+            List<SuiObjectRef> objects = new List<SuiObjectRef>();
             foreach (JObject payment_object in (JArray)gas_data["payment"])
                 objects.Add
                 (
-                    new Sui.Types.SuiObjectRef
+                    new SuiObjectRef
                     (
-                        payment_object["objectId"].Value<string>(),
-                        payment_object["version"].Value<int>(),
+                        payment_object["objectId"].ToObject<AccountAddress>(),
+                        new BigInteger(payment_object["version"].Value<int>()),
                         payment_object["digest"].Value<string>()
                     )
                 );
@@ -87,7 +89,7 @@ namespace Sui.Transactions
                 writer.WritePropertyName("payment");
                 writer.WriteStartArray();
 
-                foreach (Sui.Types.SuiObjectRef payment in gas_data.Payment)
+                foreach (SuiObjectRef payment in gas_data.Payment)
                 {
                     writer.WriteStartObject();
                     writer.WritePropertyName("objectId");
