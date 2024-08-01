@@ -1,5 +1,5 @@
 ﻿//
-//  ResultBase.cs
+//  SuiResult.cs
 //  Sui-Unity-SDK
 //
 //  Copyright (c) 2024 OpenDive
@@ -26,29 +26,19 @@
 namespace Sui.Utilities
 {
     /// <summary>
-    /// Represents a returned variable with an additional error if the execution failed.
+    /// Represents a return value within the Sui SDK.
     /// </summary>
-    /// <typeparam name="T">Any given result value.</typeparam>
-    public abstract class ResultBase<T>
+    /// <typeparam name="T">Any given return value.</typeparam>
+    public class SuiResult<T> : ResultBase<T>
     {
-        /// <summary>
-        /// The result object.
-        /// </summary>
-        public T Result { get; }
+        public SuiResult(T result, ErrorBase error = null) : base(result, error) { }
 
         /// <summary>
-        /// The error if the execution failed.
+        /// Return an error Sui result.
         /// </summary>
-        public ErrorBase Error { get; }
-
-        public ResultBase
-        (
-            T result,
-            ErrorBase error
-        )
-        {
-            this.Result = result;
-            this.Error = error;
-        }
+        /// <param name="message">The message of the error.</param>
+        /// <returns>A `SuiResult<T>` object with an error object.</returns>
+        public static SuiResult<T> GetSuiErrorResult(string message)
+            => new SuiResult<T>(default, new SuiError(-1, message, null));
     }
 }

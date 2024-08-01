@@ -210,7 +210,7 @@ namespace Sui.Tests
 
             Assert.AreEqual(expected, actual,
                 "ACTUAL LENGHT: " + actual.Length + "\n"
-                + "EXPECTED LENGTH: " + expected.Length + "\n" + actual.ByteArrayToString());
+                + "EXPECTED LENGTH: " + expected.Length + "\n" + actual.ToReadableString());
         }
     }
 }

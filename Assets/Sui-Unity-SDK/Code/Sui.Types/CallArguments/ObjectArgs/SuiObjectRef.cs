@@ -24,6 +24,7 @@
 //
 
 using System.Numerics;
+using NBitcoin.DataEncoders;
 using Newtonsoft.Json;
 using OpenDive.BCS;
 using Sui.Accounts;

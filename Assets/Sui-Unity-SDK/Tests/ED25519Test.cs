@@ -10,6 +10,7 @@ using UnityEngine;
 using System.Threading.Tasks;
 using Sui.Transactions;
 using Sui.Cryptography;
+using NBitcoin.DataEncoders;
 
 namespace Sui.Tests.Cryptography
 {

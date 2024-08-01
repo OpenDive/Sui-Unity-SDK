@@ -1,5 +1,5 @@
 ﻿//
-//  ResultBase.cs
+//  ArrayExtensions.cs
 //  Sui-Unity-SDK
 //
 //  Copyright (c) 2024 OpenDive
@@ -25,30 +25,13 @@
 
 namespace Sui.Utilities
 {
-    /// <summary>
-    /// Represents a returned variable with an additional error if the execution failed.
-    /// </summary>
-    /// <typeparam name="T">Any given result value.</typeparam>
-    public abstract class ResultBase<T>
+    public static class ArrayExtensions
     {
         /// <summary>
-        /// The result object.
+        /// Print a byte array into a readeable string
         /// </summary>
-        public T Result { get; }
-
-        /// <summary>
-        /// The error if the execution failed.
-        /// </summary>
-        public ErrorBase Error { get; }
-
-        public ResultBase
-        (
-            T result,
-            ErrorBase error
-        )
-        {
-            this.Result = result;
-            this.Error = error;
-        }
+        /// <param name="input">An input array of any object.</param>
+        /// <returns>A string of the array's representation.</returns>
+        public static string ToReadableString<T>(this T[] input) => $"[{string.Join(", ", input)}]";
     }
 }

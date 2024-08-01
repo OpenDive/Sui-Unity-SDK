@@ -29,6 +29,7 @@ using System.Threading.Tasks;
 using Sui.Accounts;
 using Sui.Rpc;
 using Sui.Rpc.Models;
+using Sui.Utilities;
 
 namespace Sui.Clients.Api
 {
