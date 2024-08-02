@@ -23,24 +23,21 @@ jobs:
           - 8080:8080
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
     
     - name: Setup Rust
       run: |
         curl https://sh.rustup.rs -sSf | sh -s -- -y
         source $HOME/.cargo/env
 
-    - name: Cache Cargo registry
-      uses: actions/cache@v2
+    - uses: actions/cache@v2
       with:
         path: ~/.cargo/registry
         key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-cargo-registry-
 
-    - name: Cache Cargo index
-      uses: actions/cache@v2
+    - uses: actions/cache@v2
       with:
         path: ~/.cargo/git
         key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
@@ -53,8 +50,7 @@ jobs:
         cd /tmp/sui
         cargo build --release
 
-    - name: Cache Sui Build
-      uses: actions/cache@v2
+    - uses: actions/cache@v2
       with:
         path: /tmp/sui/target
         key: ${{ runner.os }}-sui-build-${{ hashFiles('/tmp/sui/Cargo.toml') }}
@@ -65,8 +61,7 @@ jobs:
       run: |
         nohup /tmp/sui/target/release/sui-test-validator &
 
-    - name: Cache Unity Library
-      uses: actions/cache@v2
+    - uses: actions/cache@v2
       with:
         path: Library
         key: ${{ runner.os }}-unity-library-${{ hashFiles('**/Packages/manifest.json') }}
@@ -74,15 +69,16 @@ jobs:
           ${{ runner.os }}-unity-library-
 
     - uses: game-ci/unity-test-runner@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          unityVersion: 2021.3.6f1
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          testMode: PlayMode
-          customParameters: -quit -batchmode -nographics -excludeCategory ExcludeFromCI -testResults /tmp/test-results.xml
+      id: tests
+      env:
+        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+        UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      with:
+        unityVersion: 2021.3.6f1
+        githubToken: ${{ secrets.GITHUB_TOKEN }}
+        testMode: PlayMode
+        customParameters: -quit -batchmode -nographics -excludeCategory ExcludeFromCI -testResults /tmp/test-results.xml
 
     - uses: actions/upload-artifact@v2
       if: always()
