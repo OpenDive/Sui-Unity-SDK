@@ -57,7 +57,7 @@ namespace Sui.Tests
 
             // Wrong Batch Request
             List<string> digests = new List<string> { "AQ7FA8JTGs368CvMkXj2iFz2WUWwzP6AAWgsLpPLxUmr", "wrong" };
-            Task<RpcResult<System.Collections.Generic.IEnumerable<TransactionBlockResponse>>> wrong_digest_batch_task = this.Toolbox.Client.MultiGetTransactionBlocksAsync(digests);
+            Task<RpcResult<IEnumerable<TransactionBlockResponse>>> wrong_digest_batch_task = this.Toolbox.Client.MultiGetTransactionBlocksAsync(digests);
             yield return new WaitUntil(() => wrong_digest_batch_task.IsCompleted);
 
             Assert.IsNull(wrong_digest_batch_task.Result.Result);

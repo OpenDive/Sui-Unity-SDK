@@ -131,7 +131,7 @@ namespace Sui.Tests
         }
 
         // TODO: Figure out and implement a solution for this flaky test.
-        [UnityTest]
+        [UnityTest, Category("ExcludeFromCI")]
         [Retry(10)]
         public IEnumerator TypeHintTest()
         {

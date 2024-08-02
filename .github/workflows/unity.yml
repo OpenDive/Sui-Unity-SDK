@@ -1,0 +1,99 @@
+name: Unity Tests on Sui Localnet
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  setup-and-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      sui-localnet:
+        image: rust:1.75
+        options: --privileged
+        env:
+          RUST_LOG: "off,sui_node=info"
+        volumes:
+          - /tmp/sui:/tmp/sui
+        ports:
+          - 8080:8080
+        run: |
+          apt-get update
+          apt-get install -y cargo
+          git clone https://github.com/MystenLabs/sui /tmp/sui
+          cd /tmp/sui
+          cargo build --release
+          nohup cargo run --bin sui-test-validator &
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Cache Cargo registry
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+
+    - name: Cache Cargo index
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-index-
+
+    - name: Cache Sui Build
+      uses: actions/cache@v2
+      with:
+        path: /tmp/sui/target
+        key: ${{ runner.os }}-sui-build-${{ hashFiles('/tmp/sui/Cargo.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-sui-build-
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 5.0.x
+
+    - name: Cache Unity Library
+      uses: actions/cache@v2
+      with:
+        path: Library
+        key: ${{ runner.os }}-unity-library-${{ hashFiles('**/Packages/manifest.json') }}
+        restore-keys: |
+          ${{ runner.os }}-unity-library-
+
+    - name: Setup Unity
+      uses: game-ci/unity-actions@v2.0.0
+      with:
+        version: 2021.3.6f1
+
+    - name: Activate Unity
+      uses: game-ci/unity-activate@v2.0.0
+      env:
+        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+        UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+
+    - name: Install Unity Test Framework
+      run: |
+        unity -quit -batchmode -nographics -logFile /dev/stdout -projectPath . -executeMethod UnityEditor.TestTools.TestRunner.Api.execute -testPlatform playmode -testResults /tmp/test-results.xml
+
+    - name: Run Unity Tests
+      run: |
+        unity -quit -batchmode -nographics -logFile /dev/stdout -projectPath ./Sui-Unity-SDK/Assets/Sui-Unity-SDK/Tests -runTests -testPlatform playmode -excludeCategory ExcludeFromCI -testResults /tmp/test-results.xml
+
+    - name: Publish Test Results
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-results
+        path: /tmp/test-results.xml
