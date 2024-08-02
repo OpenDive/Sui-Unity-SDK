@@ -1,4 +1,29 @@
-﻿using System;
+﻿//
+//  TestToolbox.cs
+//  Sui-Unity-SDK
+//
+//  Copyright (c) 2024 OpenDive
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
+using System;
 using UnityEngine;
 using Sui.Accounts;
 using Sui.Rpc;
@@ -7,33 +32,24 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using System.IO;
-using Sui.Transactions;
+using Sui.Rpc.Client;
 using System.Linq;
-using Sui.Transactions.Types.Arguments;
 using Sui.Rpc.Models;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
 using System.Collections;
+using OpenDive.BCS;
+using Sui.Utilities;
+using Sui.Types;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
-    public class PublishedPackage
-    {
-        public string PackageID;
-        public TransactionBlockResponse PublishedTX;
-
-        public PublishedPackage(string package_id, TransactionBlockResponse published_tx)
-        {
-            this.PackageID = package_id;
-            this.PublishedTX = published_tx;
-        }
-    }
-
-    public class TestToolbox: MonoBehaviour
+    public class TestToolbox
     {
         public int DefaultGasBudget = 10_000_000;
         public int DefaultSendAmount = 1_000;
-        string DefaultRecipient = "0x0c567ffdf8162cb6d51af74be0199443b92e823d4ba6ced24de5c6c463797d46";
+        public AccountAddress DefaultRecipient = AccountAddress.FromHex("0x0c567ffdf8162cb6d51af74be0199443b92e823d4ba6ced24de5c6c463797d46");
+
         private readonly string customResourcePath = Path.Combine(Application.dataPath, "Sui-Unity-SDK/Tests/Resources");
 
         public Account Account;
@@ -55,31 +71,28 @@ namespace Sui.Tests
             this.Client = new SuiClient(Constants.LocalnetConnection);
         }
 
-        public string Address()
-        {
-            return this.Account.SuiAddress();
-        }
+        public AccountAddress Address() => this.Account.SuiAddress();
 
         public async Task<RpcResult<CoinPage>> GetAllCoins()
         {
-            return await this.Client.GetAllCoins(this.Account.SuiAddress(), 50);
+            return await this.Client.GetAllCoinsAsync(this.Account, new SuiRpcFilter(limit: 50));
         }
 
         public async Task<RpcResult<CoinPage>> GetCoins()
         {
-            return await this.Client.GetCoins(this.Account.SuiAddress(), "0x2::sui::SUI");
+            return await this.Client.GetCoinsAsync(this.Account, new SuiStructTag("0x2::sui::SUI"));
         }
 
-        public async Task<List<Validator>> GetActiveValidators()
+        public async Task<List<SuiValidatorSummary>> GetActiveValidators()
         {
-            RpcResult<SuiSystemSummary> system = await this.Client.GetLatestSuiSystemState();
-            return system.Result.ActiveValidators;
+            RpcResult<SuiSystemSummary> system = await this.Client.GetLatestSuiSystemStateAsync();
+            return system.Result.ActiveValidators.ToList();
         }
 
-        public async Task<PublishedPackage> PublishPackage(string name)
+        public IEnumerator PublishPackage(string name, Action<SuiResult<PublishedPackage>> callback)
         {
             JObject file_data = GetModule(name);
-            Transactions.TransactionBlock tx = new Transactions.TransactionBlock();
+            TransactionBlock tx = new TransactionBlock();
 
             JArray modules_jarray = (JArray)file_data["modules"];
             JArray dependencies_jarray = (JArray)file_data["dependencies"];
@@ -93,7 +106,7 @@ namespace Sui.Tests
             foreach (JToken jtoken in dependencies_jarray.Values())
                 dependencies.Add((string)jtoken);
 
-            List<SuiTransactionArgument> cap = tx.AddPublishTx
+            List<TransactionArgument> cap = tx.AddPublishTx
             (
                 modules.ToArray(),
                 dependencies.ToArray()
@@ -103,34 +116,117 @@ namespace Sui.Tests
 
             TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true, showObjectChanges: true);
 
-            RpcResult<TransactionBlockResponse> published_tx_block = await this.Client.SignAndExecuteTransactionBlock(tx, this.Account, options);
+            Task<RpcResult<TransactionBlockResponse>> published_tx_block = this.Client.SignAndExecuteTransactionBlockAsync(tx, this.Account, options);
+            yield return new WaitUntil(() => published_tx_block.IsCompleted);
 
-            if(published_tx_block.Result.Effects.Status.Status == ExecutionStatus.Failure)
-                throw new Exception("Transaction Failed");
+            if (published_tx_block.Result.Error != null)
+                callback(new SuiResult<PublishedPackage>(null, published_tx_block.Result.Error));
 
-            await this.Client.WaitForTransaction(published_tx_block.Result.Digest);
+            if (published_tx_block.Result.Result.Effects.Status.Status == ExecutionStatus.Failure)
+                callback(new SuiResult<PublishedPackage>(null, new SuiError(0, $"Transaction failed with message - {published_tx_block.Result.Result.Effects.Status.Error}", null)));
 
-            if (published_tx_block.Result.ObjectChanges == null) 
-                throw new Exception("Objects Change was not Queried");
+            Task<RpcResult<TransactionBlockResponse>> transaction_wait = this.Client.WaitForTransaction(published_tx_block.Result.Result.Digest, options);
+            yield return new WaitUntil(() => transaction_wait.IsCompleted);
 
-            List<ObjectChange> object_changes = published_tx_block.Result.ObjectChanges;
+            if (transaction_wait.Result.Result.ObjectChanges == null)
+                callback(new SuiResult<PublishedPackage>(null, new SuiError(0, "Objects Change was not queried.", transaction_wait.Result)));
 
-            List<PublishedObjectChange> package_ids = object_changes.Select((obj) =>
+            List<ObjectChange> object_changes = transaction_wait.Result.Result.ObjectChanges.ToList();
+
+            List<ObjectChangePublished> package_ids = object_changes.Select((obj) =>
             {
-                if (obj.GetType() == typeof(PublishedObjectChange))
-                    return (PublishedObjectChange)obj;
+                if (obj.Change.GetType() == typeof(ObjectChangePublished))
+                    return (ObjectChangePublished)obj.Change;
                 else
                     return null;
             }).Where((value) => value != null).ToList();
 
             if (package_ids.Count() == 0)
-                throw new Exception("Package ID cannot be found");
+                callback(new SuiResult<PublishedPackage>(null, new SuiError(0, "Package ID cannot be found.", object_changes)));
 
-            string package_id = Regex.Replace(package_ids[0].PackageId, "^(0x)(0+)", "0x");
+            string package_id = Regex.Replace(package_ids[0].PackageID.KeyHex, "^(0x)(0+)", "0x");
 
             Debug.Log($"Published package {package_id} from address {this.Address()}");
 
-            return new PublishedPackage(package_id, published_tx_block.Result);
+            callback(new SuiResult<PublishedPackage>(new PublishedPackage(package_id, published_tx_block.Result.Result)));
+        }
+
+        public AccountAddress[] GetRandomAddresses(int amount) => Enumerable.Range(0, amount).Select(_ => new Account().SuiAddress()).ToArray();
+
+        public async Task<RpcResult<TransactionBlockResponse>> PaySui
+        (
+            int num_recipients = 1,
+            AccountAddress[] recipients = null,
+            int[] amounts = null,
+            AccountAddress coin_id = null
+        )
+        {
+            TransactionBlock tx_block = new TransactionBlock();
+
+            AccountAddress[] recipients_tx = recipients ?? this.GetRandomAddresses(num_recipients);
+            int[] amounts_tx =
+                amounts ??=
+                Enumerable.Range(0, num_recipients).Select(_ => this.DefaultSendAmount).ToArray();
+
+            if (recipients_tx.Count() != amounts_tx.Count())
+                return RpcResult<TransactionBlockResponse>.GetErrorResult("Recipients and amounts do not match.");
+
+            AccountAddress coin_id_tx = coin_id ??= (await this.Client.GetCoinsAsync(this.Account, new SuiStructTag("0x2::sui::SUI"))).Result.Data[0].CoinObjectID;
+
+            foreach (Tuple<int, AccountAddress> recipient in recipients_tx.Select((rec, i) => new Tuple<int, AccountAddress>(i, rec)))
+            {
+                List<TransactionArgument> coin = tx_block.AddSplitCoinsTx
+                (
+                    tx_block.AddObjectInput(coin_id_tx.KeyHex),
+                    new TransactionArgument[]
+                    {
+                        tx_block.AddPure(new U64((ulong)amounts_tx[recipient.Item1]))
+                    }
+                );
+                tx_block.AddTransferObjectsTx(coin.ToArray(), recipient.Item2);
+            }
+
+            RpcResult<TransactionBlockResponse> published_tx_block = await this.Client.SignAndExecuteTransactionBlockAsync
+            (
+                tx_block,
+                this.Account,
+                new TransactionBlockResponseOptions(showEffects: true, showObjectChanges: true)
+            );
+
+            if (published_tx_block.Error != null || published_tx_block.Result.Effects.Status.Status == ExecutionStatus.Failure)
+                return RpcResult<TransactionBlockResponse>.GetErrorResult
+                (
+                    $"Transaction failed with message: {published_tx_block.Error.Message ?? published_tx_block.Result.Effects.Status.Error}"
+                );
+
+            return published_tx_block;
+        }
+
+        public async Task<SuiResult<IEnumerable<TransactionBlockResponse>>> ExecutePaySuiNTimes
+        (
+            int n_times,
+            int num_recipients_per_txn = 1,
+            AccountAddress[] recipients = null,
+            int[] amounts = null
+        )
+        {
+            List<TransactionBlockResponse> txns = new List<TransactionBlockResponse>();
+
+            for (int i = 0; i < n_times; ++i)
+            {
+                RpcResult<TransactionBlockResponse> tx_response = await this.PaySui(num_recipients_per_txn, recipients, amounts);
+
+                if (tx_response.Error != null || tx_response.Result.Effects.Status.Status == ExecutionStatus.Failure)
+                    return SuiResult<IEnumerable<TransactionBlockResponse>>.GetSuiErrorResult
+                    (
+                        $"One of the Transactions failed with message: {tx_response.Error.Message ?? tx_response.Result.Effects.Status.Error}"
+                    );
+
+                await this.Client.WaitForTransaction(tx_response.Result.Digest);
+                txns.Add(tx_response.Result);
+            }
+
+            return new SuiResult<IEnumerable<TransactionBlockResponse>>(txns);
         }
 
         public IEnumerator Setup()
@@ -139,7 +235,7 @@ namespace Sui.Tests
             while (is_initializing)
             {
                 FaucetClient faucet = new FaucetClient(this.Client.Connection);
-                Task<bool> result = faucet.AirdropGasAsync(this.Account.SuiAddress());
+                Task<bool> result = faucet.AirdropGasAsync(this.Account);
                 yield return new WaitUntil(() => result.IsCompleted);
 
                 if (result.Result)
@@ -152,7 +248,7 @@ namespace Sui.Tests
             }
         }
 
-        public JObject GetModule(string name)
+        private JObject GetModule(string name)
         {
             try
             {

@@ -1,14 +1,40 @@
-﻿using System.Collections;
+﻿//
+//  EntryPointStringTest.cs
+//  Sui-Unity-SDK
+//
+//  Copyright (c) 2024 OpenDive
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
+using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine.TestTools;
 using UnityEngine;
 using NUnit.Framework;
 using Sui.Rpc;
 using Sui.Rpc.Models;
-using Sui.Transactions.Types.Arguments;
 using System.Collections.Generic;
 using OpenDive.BCS;
 using System.Linq;
+using Sui.Types;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
@@ -23,10 +49,12 @@ namespace Sui.Tests
             this.Toolbox = new TestToolbox();
             yield return this.Toolbox.Setup();
 
-            Task<PublishedPackage> task = this.Toolbox.PublishPackage("entry-point-types");
-            yield return new WaitUntil(() => task.IsCompleted);
+            yield return this.Toolbox.PublishPackage("entry-point-types", (package_result) => {
+                if (package_result.Error != null)
+                    Assert.Fail(package_result.Error.Message);
 
-            this.PackageID = task.Result.PackageID;
+                this.PackageID = package_result.Result.PackageID;
+            });
         }
 
         private IEnumerator CallWithString
@@ -36,20 +64,20 @@ namespace Sui.Tests
             string func_name
         )
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
-            List<SuiTransactionArgument> obj = tx_block.AddMoveCallTx
+            TransactionBlock tx_block = new TransactionBlock();
+            List<TransactionArgument> obj = tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"{this.PackageID}::entry_point_types::{func_name}"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::entry_point_types::{func_name}"),
                 new SerializableTypeTag[] { },
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
-                        new SuiTransactionArgument(tx_block.AddPure(new BString(str))),
-                        new SuiTransactionArgument(tx_block.AddPure(new U64((ulong)len)))
+                        tx_block.AddPure(new BString(str)),
+                        tx_block.AddPure(new U64((ulong)len))
                 }
             );
             TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true);
 
-            Task<RpcResult<TransactionBlockResponse>> call_tx_block_task = this.Toolbox.Client.SignAndExecuteTransactionBlock(tx_block, this.Toolbox.Account, options);
+            Task<RpcResult<TransactionBlockResponse>> call_tx_block_task = this.Toolbox.Client.SignAndExecuteTransactionBlockAsync(tx_block, this.Toolbox.Account, options);
             yield return new WaitUntil(() => call_tx_block_task.IsCompleted);
 
             Task tx_task = this.Toolbox.Client.WaitForTransaction(call_tx_block_task.Result.Result.Digest);
@@ -66,20 +94,20 @@ namespace Sui.Tests
             string func_name
         )
         {
-            Transactions.TransactionBlock tx_block = new Transactions.TransactionBlock();
-            List<SuiTransactionArgument> obj = tx_block.AddMoveCallTx
+            TransactionBlock tx_block = new TransactionBlock();
+            List<TransactionArgument> obj = tx_block.AddMoveCallTx
             (
-                new SuiMoveNormalizedStructType(SuiStructTag.FromStr($"{this.PackageID}::entry_point_types::{func_name}"), new SuiMoveNormalizedType[] { }),
+                SuiMoveNormalizedStructType.FromStr($"{this.PackageID}::entry_point_types::{func_name}"),
                 new SerializableTypeTag[] { },
-                new SuiTransactionArgument[]
+                new TransactionArgument[]
                 {
-                        new SuiTransactionArgument(tx_block.AddPure(new Sequence(str.Select((val) => new BString(val)).ToArray()))),
-                        new SuiTransactionArgument(tx_block.AddPure(new U64((ulong)len)))
+                        tx_block.AddPure(new Sequence(str.Select((val) => new BString(val)).ToArray())),
+                        tx_block.AddPure(new U64((ulong)len))
                 }
             );
             TransactionBlockResponseOptions options = new TransactionBlockResponseOptions(showEffects: true);
 
-            Task<RpcResult<TransactionBlockResponse>> call_tx_block_task = this.Toolbox.Client.SignAndExecuteTransactionBlock(tx_block, this.Toolbox.Account, options);
+            Task<RpcResult<TransactionBlockResponse>> call_tx_block_task = this.Toolbox.Client.SignAndExecuteTransactionBlockAsync(tx_block, this.Toolbox.Account, options);
             yield return new WaitUntil(() => call_tx_block_task.IsCompleted);
 
             Task tx_task = this.Toolbox.Client.WaitForTransaction(call_tx_block_task.Result.Result.Digest);

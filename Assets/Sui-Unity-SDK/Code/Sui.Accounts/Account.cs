@@ -1,136 +1,128 @@
+//
+//  Account.cs
+//  Sui-Unity-SDK
+//
+//  Copyright (c) 2024 OpenDive
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
 using System;
-using Chaos.NaCl;
-using Org.BouncyCastle.Crypto.Digests;
 using Sui.Cryptography;
+using Sui.Utilities;
 using static Sui.Cryptography.SignatureUtils;
 
 namespace Sui.Accounts
 {
-    // TODO: Implement toSerializedSignature for Public Keys
-    public class Account
+    public class Account : AccountBase<SuiPrivateKeyBase, SuiPublicKeyBase>
     {
         /// <summary>
         /// Signature scheme of the account.
         /// </summary>
-        public SignatureScheme SignatureScheme { get; set; }
+        public SignatureScheme SignatureScheme { get; }
 
-        /// <summary>
-        /// Represents a PrivateKey object.
-        /// </summary>
-        public PrivateKeyBase PrivateKey { get; set; }
-
-        /// <summary>
-        /// Represents a PublicKey object.
-        /// </summary>
-        public PublicKeyBase PublicKey { get; set; }
-
-        /// <summary>
-        /// Represents an AccoutAddress object.
-        /// </summary>
-        public AccountAddress AccountAddress { get { return AccountAddress.FromHex(PublicKey.ToSuiAddress()); } set => AccountAddress = value; }
-
-        /// <summary>
-        /// Private key as 32-byte array
-        /// </summary>
-        public byte[] PrivateKeyShort { get; }
-
-        public Account(string privateKey, string publicKey, SignatureScheme signatureScheme)
+        public Account(string private_key, string public_key, SignatureScheme signature_scheme)
         {
-            SignatureScheme = signatureScheme;
-        }
-
-        public Account(byte[] privateKey, byte[] publicKey, SignatureScheme signatureScheme)
-        {
-            SignatureScheme = signatureScheme;
-        }
-
-        public Account(byte[] privateKey, SignatureScheme signatureScheme)
-        {
-            SignatureScheme = signatureScheme;
-
-            switch (signatureScheme)
+            switch (signature_scheme)
             {
                 case SignatureScheme.ED25519:
-                    PrivateKey = new Cryptography.Ed25519.PrivateKey(privateKey);
-                    PublicKey = PrivateKey.PublicKey();
+                    this.PrivateKey = new Cryptography.Ed25519.PrivateKey(private_key);
+                    this.PublicKey = new Cryptography.Ed25519.PublicKey(public_key);
                     break;
-                case SignatureScheme.Secp256k1:
-                    throw new NotImplementedException();
-                    //break;
-                case SignatureScheme.Secp256r1:
-                    throw new NotImplementedException();
-                    //break;
-                case SignatureScheme.MultiSig:
-                    throw new NotImplementedException();
-                    //break;
-                case SignatureScheme.Zk:
-                    throw new NotImplementedException();
-                    //break;
+                default:
+                    this.SetError<Account, SuiError>(null, "Cryptography signature not implemented yet.", signature_scheme);
+                    return;
             }
+
+            this.SignatureScheme = signature_scheme;
         }
 
-        /// <summary>
-        /// Generates an account from a random seed.
-        /// </summary>
-        /// <param name="signatureScheme"></param>
-        public Account(SignatureScheme signatureScheme = SignatureScheme.ED25519)
+        public Account(byte[] private_key, byte[] public_key, SignatureScheme signature_scheme)
         {
-            SignatureScheme = signatureScheme;
-
-            switch (signatureScheme)
+            switch (signature_scheme)
             {
                 case SignatureScheme.ED25519:
-                    PrivateKey = Cryptography.Ed25519.PrivateKey.Random();
-                    PublicKey = PrivateKey.PublicKey();
+                    this.PrivateKey = new Cryptography.Ed25519.PrivateKey(private_key);
+                    this.PublicKey = new Cryptography.Ed25519.PublicKey(public_key);
                     break;
-                case SignatureScheme.Secp256k1:
-                    throw new NotImplementedException();
-                    //break;
-                case SignatureScheme.Secp256r1:
-                    throw new NotImplementedException();
-                    //break;
-                case SignatureScheme.MultiSig:
-                    throw new NotImplementedException();
-                    //break;
-                case SignatureScheme.Zk:
-                    throw new NotImplementedException();
-                    //break;
+                default:
+                    this.SetError<Account, SuiError>(null, "Cryptography signature not implemented yet.", signature_scheme);
+                    return;
             }
+
+            this.SignatureScheme = signature_scheme;
         }
 
-        /// <summary>
-        /// Generate an Account of given signature scheme
-        /// </summary>
-        /// <param name="signatureScheme"></param>
-        /// <returns></returns>
-        public static Account Generate(SignatureScheme signatureScheme = SignatureScheme.ED25519)
+        public Account(byte[] private_key, SignatureScheme signature_scheme = SignatureScheme.ED25519)
         {
-            return new Account(signatureScheme);
+            switch (signature_scheme)
+            {
+                case SignatureScheme.ED25519:
+                    this.PrivateKey = new Cryptography.Ed25519.PrivateKey(private_key);
+                    this.PublicKey = (SuiPublicKeyBase)this.PrivateKey.PublicKey();
+                    break;
+                default:
+                    this.SetError<Account, SuiError>(null, "Cryptography signature not implemented yet.", signature_scheme);
+                    return;
+            }
+
+            this.SignatureScheme = signature_scheme;
         }
 
-        /// <summary>
-        /// Verifies a given signature.
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="signature"></param>
-        /// <returns></returns>
-        public bool Verify(byte[] message, SignatureBase signature)
+        public Account(string private_key, SignatureScheme signature_scheme = SignatureScheme.ED25519)
         {
-            return PublicKey.Verify(message, signature);
+            switch (signature_scheme)
+            {
+                case SignatureScheme.ED25519:
+                    this.PrivateKey = new Cryptography.Ed25519.PrivateKey(private_key);
+                    this.PublicKey = (SuiPublicKeyBase)this.PrivateKey.PublicKey();
+                    break;
+                default:
+                    this.SetError<Account, SuiError>(null, "Cryptography signature not implemented yet.", signature_scheme);
+                    return;
+            }
+
+            this.SignatureScheme = signature_scheme;
         }
 
-        /// <summary>
-        /// Signs a message with the account's private key.
-        /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        public SignatureBase Sign(byte[] message) => PrivateKey.Sign(message);
+        public Account(SignatureScheme signature_scheme = SignatureScheme.ED25519)
+        {
+            switch (signature_scheme)
+            {
+                case SignatureScheme.ED25519:
+                    this.PrivateKey = new Cryptography.Ed25519.PrivateKey();
+                    this.PublicKey = (SuiPublicKeyBase)this.PrivateKey.PublicKey();
+                    break;
+                default:
+                    this.SetError<Account, SuiError>(null, "Cryptography signature not implemented yet.", signature_scheme);
+                    return;
+            }
+
+            this.SignatureScheme = signature_scheme;
+        }
 
         /// <summary>
         /// Derives a Sui address from the account's public key.
         /// </summary>
-        /// <returns></returns>
-        public string SuiAddress() => PublicKey.ToSuiAddress();
+        /// <returns>A string representing the Sui Address.</returns>
+        public AccountAddress SuiAddress()
+            => ((SuiPublicKeyBase)this.PublicKey).ToSuiAddress();
 
         /// <summary>
         /// Sign messages with a specific intent. By combining
@@ -138,55 +130,50 @@ namespace Sui.Accounts
         /// it ensures that a signed message is tied to a specific purpose
         /// and domain separator is provided
         /// </summary>
-        /// <param name="bytes"></param>
-        /// <param name="intent"></param>
-        /// <returns></returns>
+        /// <param name="bytes">The intent message itself to sign.</param>
+        /// <param name="intent">The intent scope of the message.</param>
+        /// <returns>A `SignatureBase` object representing the signature.</returns>
         public SignatureBase SignWithIntent(byte[] bytes, IntentScope intent)
-        {
-            byte[] intentMessage = CreateMessageWithIntent(intent, bytes);
+            => ((SuiPrivateKeyBase)this.PrivateKey).SignWithIntent(bytes, intent);
 
-            // BLAKE2b hash
-            byte[] digest = new byte[32];
-            Blake2bDigest blake2b = new(256);
-            blake2b.BlockUpdate(intentMessage, 0, intentMessage.Length);
-            blake2b.DoFinal(digest, 0);
-            return this.Sign(digest);
-        }
+        /// <summary>
+        /// Create a serialized signature from:
+        /// signature scheme, signature, and public key.
+        /// </summary>
+        /// <param name="signature">The `SignatureBase` object that represents the inputted signature values.</param>
+        /// <returns>The serialized signature as a string wrapped in a result.</returns>
+        public SuiResult<string> ToSerializedSignature(SignatureBase signature)
+            => SignatureUtils.ToSerializedSignature
+               (
+                   new SerializeSignatureInput
+                   (
+                       this.SignatureScheme,
+                       signature.SignatureBytes,
+                       (SuiPublicKeyBase)this.PublicKey
+                    )
+               );
 
-        public string ToSerializedSignature(SignatureBase signature)
-        {
-            SerializeSignatureInput serializedSigInput = new SerializeSignatureInput();
-            serializedSigInput.Signature = signature.Data();
-            serializedSigInput.SignatureScheme = SignatureScheme;
-            serializedSigInput.PublicKey = PublicKey;
-
-            return SignatureBase.ToSerializedSignature(serializedSigInput);
-        }
-
+        /// <summary>
+        /// Verifies a Sui Transaction Block with the corresponding Public Key.
+        /// </summary>
+        /// <param name="transaction_block">The transaction block as a byte array.</param>
+        /// <param name="signature">The signature created by the corresponding Public Key.</param>
+        /// <returns>A bool representing whether or not the transaction block inputted corresponds to the inputted signature.</returns>
         public bool VerifyTransactionBlock(byte[] transaction_block, SignatureBase signature)
-        {
-            return PublicKey.VerifyTransactionBlock(transaction_block, signature);
-        }
+            => ((SuiPublicKeyBase)this.PublicKey).VerifyTransactionBlock(transaction_block, signature);
 
         /// <summary>
         /// Signs provided transaction block by calling `signWithIntent()`
         /// with a `TransactionData` provided as intent scope
         /// </summary>
-        /// <param name="bytes"></param>
-        /// <returns></returns>
+        /// <param name="bytes">The intent message as a byte array.</param>
+        /// <returns>A `SignatureBase` object representing the signature.</returns>
         public SignatureBase SignTransactionBlock(byte[] bytes)
-        {
-            return SignWithIntent(bytes, IntentScope.TransactionData);
-        }
+            => this.SignWithIntent(bytes, IntentScope.TransactionData);
 
-        /// <summary>
-        /// TODO: Implement SignPersonalMessage
-        /// https://github.com/MystenLabs/sui/blob/a7c64653f084983c369baf12517992fb5c192aec/sdk/typescript/src/cryptography/keypair.ts#L59
-        /// </summary>
-        /// <returns></returns>
+        // TODO: Implement SignPersonalMessage
+        // https://github.com/MystenLabs/sui/blob/a7c64653f084983c369baf12517992fb5c192aec/sdk/typescript/src/cryptography/keypair.ts#L59
         public SignatureWithBytes SignPersonalMessage(byte[] bytes)
-        {
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
     }
 }

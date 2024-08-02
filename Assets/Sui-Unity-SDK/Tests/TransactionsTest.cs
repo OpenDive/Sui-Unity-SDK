@@ -1,18 +1,40 @@
+//
+//  TransactionsTest.cs
+//  Sui-Unity-SDK
+//
+//  Copyright (c) 2024 OpenDive
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
 using NUnit.Framework;
 using OpenDive.BCS;
 using Sui.Accounts;
-using Sui.Transactions.Builder;
-using Sui.Transactions.Kinds;
-using UnityEngine;
+using Sui.Transactions.Data;
 using Sui.Utilities;
-using Sui.Transactions.Types;
-using Sui.Transactions.Types.Arguments;
 using Sui.Types;
 using System.Collections.Generic;
+using Sui.Transactions;
 
 namespace Sui.Tests
 {
-    public class TransactionsTest : MonoBehaviour
+    public class TransactionsTest
     {
         string test             = "0x0000000000000000000000000000000000000000000000000000000000000BAD";
         string objectId         = "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -25,35 +47,38 @@ namespace Sui.Tests
         {
             AccountAddress suiAddress = AccountAddress.FromHex(suiAddressHex);
 
-            // ////////////////////////////////////////
-            // Programmable Transaction Block -- Inputs
             SuiObjectRef paymentRef = new SuiObjectRef(AccountAddress.FromHex(objectId), version, digest);
-            ICallArg[] inputs = new ICallArg[] { new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef)) };
+            CallArg[] inputs = new CallArg[] { new CallArg(CallArgumentType.Object, new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef))) };
 
             MoveCall moveCallTransaction = new MoveCall(
-                new SuiMoveNormalizedStructType(new SuiStructTag(suiAddress, "display", "new", new SerializableTypeTag[0]), new Rpc.Models.SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
-                new SerializableTypeTag[] { new SerializableTypeTag(new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[0])) },
-                new SuiTransactionArgument[] { new SuiTransactionArgument(new TransactionBlockInput(0)) } // TODO: We should not use this abstract, this should be a "pure" or an "object.
+                new SuiMoveNormalizedStructType(suiAddress, "display", "new", new List<Rpc.Models.SuiMoveNormalizedType>()),
+                new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(suiAddress, "capy", "Capy", new List<SerializableTypeTag>())) },
+                new TransactionArgument[] { new TransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(0)) }
             );
 
-            List<Sui.Transactions.Types.SuiTransaction> transactions = new List<Sui.Transactions.Types.SuiTransaction> { new SuiTransaction(moveCallTransaction) };
+            List<Command> transactions = new List<Command> { new Command(CommandKind.MoveCall, moveCallTransaction) };
 
-            ////////////////////////////////////////
-            //Programmable Transaction Block--  Transactions
-            // This is createdi in "build"
-            ////////////////////////////////////////
-            Transactions.Builder.TransactionDataV1 transactionData = new(
-                AccountAddress.FromHex(test),
-                new TransactionExpirationNone(),
-                new GasConfig(
-                    "1000000",
-                    "1",
-                    new SuiObjectRef[] { paymentRef },
-                    suiAddress
-                ),
-                new ProgrammableTransaction(
-                    inputs,
-                    transactions
+            TransactionData transactionData = new TransactionData
+            (
+                TransactionType.V1,
+                new TransactionDataV1
+                (
+                    AccountAddress.FromHex(test),
+                    new TransactionExpiration(),
+                    new GasData(
+                        "1000000",
+                        "1",
+                        new SuiObjectRef[] { paymentRef },
+                        suiAddress
+                    ),
+                    new TransactionKind
+                    (
+                        TransactionKindType.ProgrammableTransaction, new ProgrammableTransaction
+                        (
+                            inputs,
+                            transactions.ToArray()
+                        )
+                    )
                 )
             );
 
@@ -64,7 +89,7 @@ namespace Sui.Tests
 
             Assert.AreEqual(expected, actual,
                 "ACTUAL LENGHT: " + actual.Length + "\n"
-                + "EXPECTED LENGTH: " + expected.Length + "\n" + actual.ByteArrayToString());
+                + "EXPECTED LENGTH: " + expected.Length + "\n" + actual.ToReadableString());
         }
 
         [Test]
@@ -73,7 +98,7 @@ namespace Sui.Tests
             string test = "0x0000000000000000000000000000000000000000000000000000000000000BAD";
 
             AccountAddress sender = AccountAddress.FromHex(test);
-            ITransactionExpiration expiration = new TransactionExpirationNone();
+            TransactionExpiration expiration = new TransactionExpiration();
 
             SuiObjectRef paymentRef = new SuiObjectRef(
                 AccountAddress.FromHex("0x1000000000000000000000000000000000000000000000000000000000000000"),
@@ -84,37 +109,39 @@ namespace Sui.Tests
             string sui = "0x0000000000000000000000000000000000000000000000000000000000000002";
             AccountAddress suiAddress = AccountAddress.FromHex(sui);
 
-            GasConfig gasData = new GasConfig(
+            GasData gasData = new GasData(
                 "1000000",
                 "1",
                 new SuiObjectRef[] { paymentRef },
                 suiAddress
             );
 
-            ICallArg[] inputs = new ICallArg[] { new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef)) };
+            CallArg[] inputs = new CallArg[] { new CallArg(CallArgumentType.Object, new ObjectCallArg(new ObjectArg(ObjectRefType.ImmOrOwned, paymentRef))) };
 
             MoveCall moveCallTransaction = new MoveCall(
-                new SuiMoveNormalizedStructType(new SuiStructTag(suiAddress, "display", "new", new SerializableTypeTag[0]), new Rpc.Models.SuiMoveNormalizedType[] { }), // TODO: THIS IS A NORMALIZED STRUCT
-                new SerializableTypeTag[] { new SerializableTypeTag(new StructTag(suiAddress, "capy", "Capy", new ISerializableTag[0])) },
-                new SuiTransactionArgument[]
+                new SuiMoveNormalizedStructType(suiAddress, "display", "new", new List<Rpc.Models.SuiMoveNormalizedType>()), // TODO: THIS IS A NORMALIZED STRUCT
+                new SerializableTypeTag[] { new SerializableTypeTag(new SuiStructTag(suiAddress, "capy", "Capy", new List<SerializableTypeTag>())) },
+                new TransactionArgument[]
                 {
-                    new SuiTransactionArgument(new TransactionBlockInput(0)),
-                    new SuiTransactionArgument(new TransactionBlockInput(1)),
-                    new SuiTransactionArgument(new Result(2))
+                    new TransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(0)),
+                    new TransactionArgument(TransactionArgumentKind.Input, new TransactionBlockInput(1)),
+                    new TransactionArgument(TransactionArgumentKind.Result, new Result(2))
                 }
             );
 
-            List<Sui.Transactions.Types.SuiTransaction> transactions = new List<Sui.Transactions.Types.SuiTransaction> { new SuiTransaction(moveCallTransaction) };
+            List<Command> transactions = new List<Command> { new Command(CommandKind.MoveCall, moveCallTransaction) };
 
-            ProgrammableTransaction programmableTransaction
-                = new(inputs, transactions);
-
-            Transactions.Builder.TransactionDataV1 transactionData = new(
+            TransactionDataV1 transactionDataV1 = new TransactionDataV1(
                 sender,
                 expiration,
                 gasData,
-                programmableTransaction
+                new TransactionKind(TransactionKindType.ProgrammableTransaction, new ProgrammableTransaction(
+                    inputs,
+                    transactions.ToArray()
+                ))
             );
+
+            TransactionData transactionData = new TransactionData(TransactionType.V1, transactionDataV1);
 
             Serialization serializer = new Serialization();
             transactionData.Serialize(serializer);
@@ -124,7 +151,7 @@ namespace Sui.Tests
 
             Assert.AreEqual(expected, actual,
                 "ACTUAL LENGHT: " + actual.Length + "\n"
-                + "EXPECTED LENGTH: " + expected.Length + "\n" + actual.ByteArrayToString());
+                + "EXPECTED LENGTH: " + expected.Length + "\n" + actual.ToReadableString());
         }
     }
 }

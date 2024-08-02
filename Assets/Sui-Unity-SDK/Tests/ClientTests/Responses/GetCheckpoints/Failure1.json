@@ -1,7 +1,0 @@
-﻿{
-    "jsonrpc": "2.0",
-    "error": {
-        "code": -32602,
-        "message": "invalid value: integer `-1`, expected usize at line 1 column 2"
-    }
-}

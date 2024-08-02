@@ -1,7 +1,0 @@
-﻿{
-  "jsonrpc": "2.0",
-  "error": {
-    "code": -32700,
-    "message": "Network error: Could not connect to the server."
-  }
-}

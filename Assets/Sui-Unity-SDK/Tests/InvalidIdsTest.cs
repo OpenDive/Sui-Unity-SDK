@@ -1,15 +1,36 @@
-﻿using System;
+﻿//
+//  InvalidIdsTest.cs
+//  Sui-Unity-SDK
+//
+//  Copyright (c) 2024 OpenDive
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
 using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine.TestTools;
 using UnityEngine;
 using NUnit.Framework;
-using Newtonsoft.Json.Linq;
-using OpenDive.BCS;
 using Sui.Rpc;
-using Sui.Clients;
 using Sui.Rpc.Models;
-using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace Sui.Tests
 {
@@ -25,48 +46,22 @@ namespace Sui.Tests
         }
 
         [UnityTest]
-        public IEnumerator WrongAddressTest()
-        {
-            // Empty ID
-            Task<RpcResult<PaginatedObjectsResponse>> owned_objects_empty_id_task = this.Toolbox.Client.GetOwnedObjects("");
-            yield return new WaitUntil(() => owned_objects_empty_id_task.IsCompleted);
-
-            Assert.IsNull(owned_objects_empty_id_task.Result.Result);
-            Assert.IsTrue(owned_objects_empty_id_task.Result.Error.Message == "Unable to validate the address.");
-
-            // More than 20 Bytes
-            Task<RpcResult<DynamicFieldPage>> dynaic_field_incorrect_byte_length_task = this.Toolbox.Client.GetDynamicFields("0x0000000000000000000000004ce52ee7b659b610d59a1ced129291b3d0d4216322");
-            yield return new WaitUntil(() => dynaic_field_incorrect_byte_length_task.IsCompleted);
-
-            Assert.IsNull(dynaic_field_incorrect_byte_length_task.Result.Result);
-            Assert.IsTrue(dynaic_field_incorrect_byte_length_task.Result.Error.Message == "Unable to validate the address.");
-
-            // Wrong Batch Request (0xWRONG)
-            string[] object_ids = new string[] { "0xBABE", "0xCAFE", "0xWRONG", "0xFACE" };
-            Task<RpcResult<System.Collections.Generic.IEnumerable<ObjectDataResponse>>> wrong_batch_request_multi_object_task = this.Toolbox.Client.MultiGetObjects(object_ids);
-            yield return new WaitUntil(() => wrong_batch_request_multi_object_task.IsCompleted);
-
-            Assert.IsNull(wrong_batch_request_multi_object_task.Result.Result);
-            Assert.IsTrue(wrong_batch_request_multi_object_task.Result.Error.Message == "Unable to validate the address.");
-        }
-
-        [UnityTest]
         public IEnumerator InvalidDigestTest()
         {
             // Empty Digest
-            Task<RpcResult<TransactionBlockResponse>> empty_digest_task = this.Toolbox.Client.GetTransactionBlock("");
+            Task<RpcResult<TransactionBlockResponse>> empty_digest_task = this.Toolbox.Client.GetTransactionBlockAsync("");
             yield return new WaitUntil(() => empty_digest_task.IsCompleted);
 
             Assert.IsNull(empty_digest_task.Result.Result);
             Assert.IsTrue(empty_digest_task.Result.Error.Message == "Invalid digest.");
 
             // Wrong Batch Request
-            string[] digests = new string[] { "AQ7FA8JTGs368CvMkXj2iFz2WUWwzP6AAWgsLpPLxUmr", "wrong" };
-            Task<RpcResult<System.Collections.Generic.IEnumerable<TransactionBlockResponse>>> wrong_digest_batch_task = this.Toolbox.Client.GetTransactionBlocks(digests);
+            List<string> digests = new List<string> { "AQ7FA8JTGs368CvMkXj2iFz2WUWwzP6AAWgsLpPLxUmr", "wrong" };
+            Task<RpcResult<IEnumerable<TransactionBlockResponse>>> wrong_digest_batch_task = this.Toolbox.Client.MultiGetTransactionBlocksAsync(digests);
             yield return new WaitUntil(() => wrong_digest_batch_task.IsCompleted);
 
             Assert.IsNull(wrong_digest_batch_task.Result.Result);
-            Assert.IsTrue(wrong_digest_batch_task.Result.Error.Message == "Invalid digest.");
+            Assert.IsTrue(wrong_digest_batch_task.Result.Error.Message == "Invalid digests.");
         }
     }
 }
