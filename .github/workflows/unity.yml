@@ -46,8 +46,8 @@ jobs:
           
     - name: Clone and Build Sui
       run: |
-        git clone https://github.com/MystenLabs/sui /tmp/sui
-        cd /tmp/sui
+        git clone https://github.com/MystenLabs/sui $GITHUB_WORKSPACE/sui
+        cd $GITHUB_WORKSPACE/sui
         cargo build --release
 
     - uses: actions/cache@v2
@@ -59,7 +59,7 @@ jobs:
           
     - name: Start Sui Localnet
       run: |
-        nohup /tmp/sui/target/release/sui-test-validator &
+        nohup $GITHUB_WORKSPACE/sui/target/release/sui-test-validator &
 
     - uses: actions/cache@v2
       with:
