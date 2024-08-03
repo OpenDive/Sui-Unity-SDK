@@ -31,11 +31,15 @@ jobs:
         mkdir -p ~/sui
         tar -xzf sui.tgz -C ~/sui
         echo 'export PATH=$PATH:~/sui' >> ~/.bashrc
-        source ~/.bashrc
-
+        export PATH=$PATH:~/sui
+        
     - name: Start Sui Localnet
       run: |
-        sui start --with-faucet --force-regenesis
+        nohup ~/sui/sui-test-validator &
+
+#    - name: Start Sui Localnet
+#      run: |
+#        sui start --with-faucet --force-regenesis
 
 #    - uses: actions/cache@v2
 #      with:
