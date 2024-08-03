@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       sui-localnet:
-        image: rust:1.78
+        image: rust:1.80.0
         options: --privileged
         env:
           RUST_LOG: "off,sui_node=info"
