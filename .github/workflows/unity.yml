@@ -31,8 +31,16 @@ jobs:
         mkdir -p ~/sui
         tar -xzf sui.tgz -C ~/sui
         export PATH=$PATH:~/sui
+        
+    - name: Execute Sui Localnet
+      run: |
         echo 'export PATH=$PATH:~/sui' >> ~/.bashrc
+        source ~/.bashrc
         nohup sui start --with-faucet --force-regenesis &
+        
+    - name: Test Gas Price Reference
+      run: |
+        curl -v -H "Content-Type: application/json" -d '{"id":1,"method":"suix_getLatestSuiSystemState","jsonrpc":"2.0"}' "http://127.0.0.1:9000/" -X POST ;
 
 #    - name: Start Sui Localnet
 #      run: |
