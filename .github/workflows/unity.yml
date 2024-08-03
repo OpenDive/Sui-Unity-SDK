@@ -30,11 +30,8 @@ jobs:
         wget https://github.com/MystenLabs/sui/releases/download/testnet-v1.30.1/sui-testnet-v1.30.1-ubuntu-x86_64.tgz -O sui.tgz
         mkdir -p ~/sui
         tar -xzf sui.tgz -C ~/sui
-        echo 'export PATH=$PATH:~/sui' >> ~/.bashrc
         export PATH=$PATH:~/sui
-        
-    - name: Start Sui Localnet
-      run: |
+        echo 'export PATH=$PATH:~/sui' >> ~/.bashrc
         nohup sui start --with-faucet --force-regenesis &
 
 #    - name: Start Sui Localnet
