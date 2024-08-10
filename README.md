@@ -358,4 +358,4 @@ bool verified = chad.Verify(MessageUt8Bytes, signature);
 
 ### License ###
 
-Sui-Unity-SDK is released under the Apache 2.0 license. [See LICENSE](https://github.com/OpenDive/Sui-Unity-SDK/LICENSE) for details.
+Sui-Unity-SDK is released under the MIT license. [See LICENSE](https://github.com/OpenDive/Sui-Unity-SDK/LICENSE) for details.
