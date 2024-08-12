@@ -49,7 +49,6 @@ We envision a tool that not only provides the flexibility and customization for 
 
 - [x] Create new accounts using the ED25519 Key Standard.
 - [x] Simulate and submit transaction.
-- [x] Transferring objects.
 - [x] Transfer Sui.
 - [x] Air drop Sui tokens.
 - [x] Merge and Split coins.
@@ -58,7 +57,7 @@ We envision a tool that not only provides the flexibility and customization for 
 - [x] Execute move calls.
 - [x] Retrieving objects, transactions, checkpoints, coins, and events.
 - [x] Local Transaction Building.
-- [x] Local, custom, dev, test, and main net compatiblity.
+- [x] Local, custom, dev, test, and main net compatibility.
 - [x] Comprehensive Unit and Integration Test coverage.
 
 ### Make Account Transfer Quickly and Easily! ###
