@@ -30,7 +30,7 @@ using Sui.Accounts;
 using Sui.Clients.Faucet.Request;
 using Sui.Cryptography;
 using Sui.Rpc;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 
 namespace Sui.Clients
 {

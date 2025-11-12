@@ -23,7 +23,7 @@
 //  THE SOFTWARE.
 //
 
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 using OpenDive.BCS;
 using Sui.Accounts;
 using System.Linq;

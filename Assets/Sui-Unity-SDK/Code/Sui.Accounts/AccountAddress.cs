@@ -29,7 +29,7 @@ using Sui.Cryptography;
 using Sui.Rpc.Models;
 using Sui.Utilities;
 using static Sui.Cryptography.SignatureUtils;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 
 namespace Sui.Accounts
 {

@@ -1,0 +1,14 @@
+{
+  "name": "com.opendive.sui-unity-sdk",
+  "displayName": "Sui Unity SDK",
+  "version": "1.0.5",
+  "unity": "6000.60",
+  "description": "The OpenDive Sui Unity SDK is the first fully-featured Unity SDK with offline transaction building. This means that games built with our SDK can directly craft custom Move calls without relying Sui's 'unsafe' RPC calls under the Transaction Builder API -- which in turn reduces the number of RPC / Network requests.Our SDK fully supports mobile, desktop and WebGL application built with the Unity game engine.",
+  "keywords": ["sui", "extensions", "zklogin", "enoki", "kiosk", "blockchain", "transaction", "seal"],
+  "author": {
+    "name": "Ali AVCI",
+    "email": "alininavcisi@gmail.com",
+    "url": "https://bermuda.gs"
+  },
+  "dependencies": {"com.unity.nuget.newtonsoft-json": "3.2.1"}
+}

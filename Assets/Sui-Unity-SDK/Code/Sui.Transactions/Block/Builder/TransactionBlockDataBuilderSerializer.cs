@@ -33,6 +33,7 @@ using Sui.Transactions.Builder;
 using Sui.Transactions.Data;
 using Sui.Types;
 using Sui.Utilities;
+using System.Diagnostics;
 
 namespace Sui.Transactions
 {

@@ -380,6 +380,9 @@ Developers can also verify the integrity of the message using the public key, as
 bool verified = chad.Verify(MessageUt8Bytes, signature);
 ```
 
+For Enoki's ZK Login implementation => https://github.com/viol3/Sui-Unity-SDK/tree/zk-login/Assets/Sui-Unity-SDK/Code/Sui.ZKLogin
+For Seal implementation in WebGL => https://github.com/viol3/Sui-Unity-SDK/tree/zk-login/Assets/Sui-Unity-SDK/Code/Sui.Seal
+
 ### License ###
 
 Sui-Unity-SDK is released under the MIT license. [See LICENSE](https://github.com/OpenDive/Sui-Unity-SDK/LICENSE) for details.

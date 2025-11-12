@@ -1,6 +1,6 @@
 using System;
 using Sui.Accounts;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 
 namespace Sui.Rpc.Models
 {
@@ -9,7 +9,16 @@ namespace Sui.Rpc.Models
         public override bool CanConvert(Type object_type) => object_type == typeof(AccountAddress);
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-            => new AccountAddress(reader.Value.ToString());
+        {
+            if (reader.TokenType == JsonToken.Null)
+            {
+                if (objectType == typeof(AccountAddress))
+                    return null;
+                return null;
+            }
+            return new AccountAddress(reader.Value.ToString());
+        }
+        
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {

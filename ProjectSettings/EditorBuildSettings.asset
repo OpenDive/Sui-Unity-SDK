@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Sui-Unity-SDK/SDK-Examples/GoogleOAuth.unity
-    guid: 21354d98d34614823b4e0075f1317560
+    path: Assets/Sui-Unity-SDK/Samples/Seal/Scenes/Seal.unity
+    guid: 9e6114f304187f240b008717f188c0bc
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

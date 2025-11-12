@@ -23,6 +23,8 @@
 //  THE SOFTWARE.
 //
 
+using Newtonsoft.Json;
+
 namespace Sui.Utilities
 {
     /// <summary>
@@ -39,6 +41,7 @@ namespace Sui.Utilities
         /// <summary>
         /// The error if the execution failed.
         /// </summary>
+        [JsonProperty(PropertyName = "error")]
         public ErrorBase Error { get; }
 
         public ResultBase

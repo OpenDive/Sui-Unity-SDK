@@ -1,0 +1,5 @@
+C:/Users/Ali/Documents/Unity Projects/Sui-Unity-SDK/.utmp/RelWithDebInfo/2717305f/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/Ali/Documents/Unity Projects/Sui-Unity-SDK/.utmp/RelWithDebInfo/2717305f/arm64-v8a/CMakeFiles/rebuild_cache.dir
+C:/Users/Ali/Documents/Unity Projects/Sui-Unity-SDK/.utmp/RelWithDebInfo/2717305f/arm64-v8a/FramePacing/CMakeFiles/swappywrapper.dir
+C:/Users/Ali/Documents/Unity Projects/Sui-Unity-SDK/.utmp/RelWithDebInfo/2717305f/arm64-v8a/FramePacing/CMakeFiles/edit_cache.dir
+C:/Users/Ali/Documents/Unity Projects/Sui-Unity-SDK/.utmp/RelWithDebInfo/2717305f/arm64-v8a/FramePacing/CMakeFiles/rebuild_cache.dir

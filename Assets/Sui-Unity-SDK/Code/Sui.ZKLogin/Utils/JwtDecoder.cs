@@ -1,10 +1,11 @@
 namespace OpenDive.Utils.Jwt
 {
+    using Newtonsoft.Json;
     using System;
+    using System.Collections.Generic;
     using System.Text;
     using UnityEngine;
-    using Newtonsoft.Json;
-    using System.Collections.Generic;
+    using UnityEngine.Scripting;
 
     /// <summary>
     /// A class to decode JWT tokens.
@@ -155,8 +156,11 @@ namespace OpenDive.Utils.Jwt
     /// <summary>
     /// Represents a decoded JWT with header, payload, and signature.
     /// </summary>
+    [Preserve]
     public class JWT
     {
+        [JsonConstructor]
+        public JWT() { }
         /// <summary>
         /// The JOSE (JSON Object Signing and Encryption) Header is comprised
         /// of a set of Header Parameters that typically consist of a name/value pair:
@@ -203,26 +207,53 @@ namespace OpenDive.Utils.Jwt
     /// <summary>
     /// Represents the JWT header.
     /// </summary>
+    [Preserve]
     public class JWTHeader
     {
+        [JsonConstructor]
+        public JWTHeader() { }
+
+        [JsonProperty("alg")]
         public string alg { get; set; } // * Algorithm. Required for ZK Login.
+        
+        [JsonProperty("typ")]
         public string typ { get; set; } // * Token type. Required for ZK Login.
+        
+        [JsonProperty("kid")]
         public string kid { get; set; } // * The kid value indicates what key was used to sign the JWT. Required for ZK Login.
     }
 
     /// <summary>
     /// Represents the JWT payload with common claims.
     /// </summary>
+    [Preserve]
     public class JWTPayload
     {
+        [JsonConstructor]
+        public JWTPayload() { }
         // <> Registered claims </>
+        [JsonProperty("iss")]
         public string Iss { get; set; } // * Issuer of the JWT. Required for ZK Login.
+
+        [JsonProperty("sub")]
         public string Sub { get; set; } // * Subject of the JWT (the user). Required for ZK Login.
+
+        [JsonProperty("aud")]
         public string Aud { get; set; } // Recipient for which the JWT is intended
+
+        [JsonProperty("azp")]
         public string Azp { get; set; } // Authorized party - the party to which the ID Token was issued
+
+        [JsonProperty("exp")]
         public long? Exp { get; set; }  // Time after which the JWT expires
+
+        [JsonProperty("nbf")]
         public long? Nbf { get; set; }  // Time before which the JWT must not be accepted for processing (Unix timestamp)
+
+        [JsonProperty("iat")]
         public long? Iat { get; set; }  // Issued at .. Time at which the JWT was issued; can be used to determine age of the JWT (Unix timestamp)
+
+        [JsonProperty("jti")]
         public string Jti { get; set; } // JWT ID (unique identifier for the token). Can be used to prevent the JWT from being replayed (allows a token to be used only once)
 
         // <> Public claims </>

@@ -26,7 +26,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Sui.Types;
-using Unity.Plastic.Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using OpenDive.BCS;
 
 namespace Sui.Transactions

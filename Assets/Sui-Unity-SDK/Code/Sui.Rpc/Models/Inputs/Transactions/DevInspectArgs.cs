@@ -25,7 +25,7 @@
 
 using Sui.Accounts;
 using System.Numerics;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace Sui.Rpc.Models

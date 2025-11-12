@@ -24,10 +24,10 @@
 //
 
 using System.Collections.Generic;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 using Sui.Types;
 using System;
-using Unity.Plastic.Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using Sui.Accounts;
 using System.Linq;
 using Sui.Utilities;

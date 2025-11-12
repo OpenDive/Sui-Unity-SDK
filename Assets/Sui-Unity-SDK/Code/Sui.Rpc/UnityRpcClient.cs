@@ -23,11 +23,13 @@
 //  THE SOFTWARE.
 //
 
+using Sui.ZKLogin.Utils;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 using UnityEngine.Networking;
 
 namespace Sui.Rpc
@@ -91,6 +93,7 @@ namespace Sui.Rpc
         /// <returns>An asynchronous task that returns a wrapped `T` object.</returns>
         public async Task<RpcResult<T>> SendAsync<T>(RpcRequest rpc_request)
         {
+            string requestJson = JsonConvert.SerializeObject(rpc_request);
             using (UnityWebRequest request = new UnityWebRequest(this.Endpoint, this.POSTMethod))
             {
                 request.uploadHandler = new UploadHandlerRaw
@@ -100,7 +103,7 @@ namespace Sui.Rpc
                         JsonConvert.SerializeObject
                         (
                             rpc_request,
-                            new Unity.Plastic.Newtonsoft.Json.Converters.StringEnumConverter()
+                            new Newtonsoft.Json.Converters.StringEnumConverter()
                         )
                     )
                 );
@@ -109,8 +112,16 @@ namespace Sui.Rpc
                 request.SendWebRequest();
 
                 while (!request.isDone)
+                {
                     await Task.Yield();
-
+                    if(request.result == UnityWebRequest.Result.ConnectionError ||
+                    request.result == UnityWebRequest.Result.ProtocolError ||
+                    request.result == UnityWebRequest.Result.DataProcessingError
+                    )
+                    {
+                        return new RpcResult<T>(default, new Client.RpcError(-1, request.error, null));
+                    }
+                }            
                 return JsonConvert.DeserializeObject<RpcResult<T>>
                 (
                     request.downloadHandler.text

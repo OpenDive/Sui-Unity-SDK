@@ -23,6 +23,8 @@
 //  THE SOFTWARE.
 //
 
+using Newtonsoft.Json;
+
 namespace Sui.Utilities
 {
     /// <summary>
@@ -38,7 +40,8 @@ namespace Sui.Utilities
         /// <summary>
         /// The message corresponding to what happened.
         /// </summary>
-        public string Message { get; internal set; }
+        [JsonProperty(PropertyName = "message")]
+        public string Message { get; set; }
 
         /// <summary>
         /// The data pertaining to the error.

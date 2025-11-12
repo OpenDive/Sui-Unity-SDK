@@ -25,7 +25,7 @@
 
 using System;
 using Chaos.NaCl;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 
 namespace Sui.Utilities
 {

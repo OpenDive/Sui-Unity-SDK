@@ -39,6 +39,7 @@ using Sui.Types;
 using Sui.Rpc.Client;
 using Sui.Utilities;
 using Sui.Cryptography;
+using System.Diagnostics;
 
 namespace Sui.Transactions
 {
@@ -482,9 +483,13 @@ namespace Sui.Transactions
         public async Task<byte[]> Build(BuildOptions build_options)
         {
             await this.Prepare(build_options);
-
+            
             if (this.Error != null)
+            {
+                UnityEngine.Debug.LogError(this.Error.Message);
                 return null;
+            }
+                
 
             byte[] build_result = this.BlockDataBuilder.Build(null, build_options.OnlyTransactionKind);
 
@@ -831,6 +836,13 @@ namespace Sui.Transactions
                             continue;
                         }
 
+                        // If the input value is a string, we need to resolve it (it's an object ID).
+                        if (input_value.GetType() == typeof(BString))
+                        {
+                            objects_to_resolve.Add(new ObjectToResolve(((BString)input_value).Value, input, param_enumerated.Item2));
+                            continue;
+                        }
+
                         // If the parameter isn't a reference nor a mutable reference (and if it isn't a Type Parameter), it's an unknown call argument.
                         if (NormalizedUtilities.ExtractStructType(param_enumerated.Item2) == null && param_enumerated.Item2.Type != SuiMoveNormalizedTypeSerializationType.TypeParameter)
                         {
@@ -838,12 +850,7 @@ namespace Sui.Transactions
                             return;
                         }
 
-                        // If the input value is a string, we need to resolve it (it's an object ID).
-                        if (input_value.GetType() == typeof(BString))
-                        {
-                            objects_to_resolve.Add(new ObjectToResolve(((BString)input_value).Value, input, param_enumerated.Item2));
-                            continue;
-                        }
+                        
 
                         this.SetError<SuiError>("Input Value Is Not Object ID.", input_value);
                         return;

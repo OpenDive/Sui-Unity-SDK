@@ -25,7 +25,7 @@
 
 using System.Numerics;
 using NBitcoin.DataEncoders;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 using OpenDive.BCS;
 using Sui.Accounts;
 using Sui.Utilities;

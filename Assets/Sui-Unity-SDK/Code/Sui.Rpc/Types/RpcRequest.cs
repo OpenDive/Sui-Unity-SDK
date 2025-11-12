@@ -24,8 +24,8 @@
 //
 
 using System.Collections.Generic;
-using Unity.Plastic.Newtonsoft.Json;
-using Unity.Plastic.Newtonsoft.Json.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Sui.Rpc
 {

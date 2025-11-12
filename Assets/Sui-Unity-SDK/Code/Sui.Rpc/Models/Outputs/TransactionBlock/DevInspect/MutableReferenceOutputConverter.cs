@@ -25,8 +25,8 @@
 
 using System;
 using System.Linq;
-using Unity.Plastic.Newtonsoft.Json;
-using Unity.Plastic.Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Sui.Types;
 using Sui.Utilities;
 

@@ -1,5 +1,5 @@
 using System.Numerics;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 using Sui.Types;
 using Sui.Accounts;
 
