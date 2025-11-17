@@ -111,8 +111,8 @@ namespace Sui.Seal
         /// </summary>
         /// <param name="data">The plaintext data to encrypt.</param>
         /// <param name="suiAddressHex">The Sui address in hexadecimal format.</param>
-        /// <returns>A <see cref="TransactionBlock"/> containing encrypted data ready for submission.</returns>
-        public async Task<TransactionBlock> Encrypt(string data, string suiAddressHex)
+        /// <returns>An <see cref="EncryptionResult"/> containing encrypted bytes and nonce for transaction construction.</returns>
+        public async Task<EncryptionResult> Encrypt(string data, string suiAddressHex)
         {
             _canceled = false;
             _encryptedBytes = null;
@@ -128,7 +128,7 @@ namespace Sui.Seal
             {
                 return null;
             }
-            return PrepareTransactionBlock(_encryptedBytes, nonceBytes);
+            return new EncryptionResult(_encryptedBytes, nonceBytes);
         }
 
         /// <summary>
@@ -243,27 +243,31 @@ namespace Sui.Seal
             }
             _decryptedBytes = Convert.FromBase64String(decryptedObjectBase64);
         }
+    }
+
+    /// <summary>
+    /// Result class containing encrypted data and nonce from Seal encryption process.
+    /// Users can use these values to construct their own TransactionBlock for their specific contract.
+    /// 
+    /// Author: viol3
+    /// </summary>
+    [System.Serializable]
+    public class EncryptionResult
+    {
+        /// <summary>
+        /// The encrypted data bytes.
+        /// </summary>
+        public byte[] EncryptedBytes { get; set; }
 
         /// <summary>
-        /// Prepares a Sui transaction block to store encrypted Seal data on-chain.
+        /// The nonce bytes used during encryption.
         /// </summary>
-        /// <param name="encryptedBytes">The encrypted payload bytes.</param>
-        /// <param name="nonceBytes">The nonce bytes used during encryption.</param>
-        /// <returns>Configured <see cref="TransactionBlock"/> ready for signing and execution.</returns>
-        TransactionBlock PrepareTransactionBlock(byte[] encryptedBytes, byte[] nonceBytes)
+        public byte[] NonceBytes { get; set; }
+
+        public EncryptionResult(byte[] encryptedBytes, byte[] nonceBytes)
         {
-            TransactionBlock tx_block = new TransactionBlock();
-            tx_block.AddMoveCallTx
-            (
-                SuiMoveNormalizedStructType.FromStr($"{_packageId}::{_moduleName}::{_funcName}"),
-                new SerializableTypeTag[] { },
-                new TransactionArgument[]
-                {
-                tx_block.AddPure(new OpenDive.BCS.Bytes(nonceBytes)),
-                tx_block.AddPure(new OpenDive.BCS.Bytes(encryptedBytes))
-                }
-            );
-            return tx_block;
+            EncryptedBytes = encryptedBytes;
+            NonceBytes = nonceBytes;
         }
     }
 

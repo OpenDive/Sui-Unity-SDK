@@ -102,10 +102,21 @@ SealBridge.Instance.SetServerObjectIds(
 ### 2. Encrypt/Decrypt data
 
 Encrypt the given plaintext for a specific Sui address.
-Returns a TransactionBlock ready to be signed and executed on-chain.
+Returns an EncryptionResult containing encrypted bytes and nonce for transaction construction.
 <pre><code class="language-csharp">
-var tx = await SealBridge.Instance.Encrypt("my secret text", suiAddress);
-await suiClient.SignAndExecuteTransactionBlock(tx);
+EncryptionResult result = await SealBridge.Instance.Encrypt("my secret text", suiAddress);
+TransactionBlock tx_block = new TransactionBlock();
+tx_block.AddMoveCallTx
+(
+    SuiMoveNormalizedStructType.FromStr($"{_packageId}::{_moduleName}::{_funcName}"),
+    new SerializableTypeTag[] { },
+    new TransactionArgument[]
+    {
+    tx_block.AddPure(new OpenDive.BCS.Bytes(encryptionResult.NonceBytes)),
+    tx_block.AddPure(new OpenDive.BCS.Bytes(encryptionResult.EncryptedBytes))
+    }
+);
+await suiClient.SignAndExecuteTransactionBlock(tx_block);
 </code></pre>
 
 Decrypt the encrypted payload using a standard private key.
