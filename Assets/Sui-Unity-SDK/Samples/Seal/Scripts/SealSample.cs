@@ -6,6 +6,7 @@ using Sui.Rpc;
 using Sui.Rpc.Client;
 using Sui.Rpc.Models;
 using Sui.Transactions;
+using Sui.Types;
 using System.Linq;
 using System.Text;
 using TMPro;
@@ -27,7 +28,7 @@ namespace Sui.Seal
     public class SealSample : MonoBehaviour
     {
         /// <summary>
-        /// Demonstrates Seal encryption and decryption flows integrated with Unity’s UI system.
+        /// Demonstrates Seal encryption and decryption flows integrated with Unityï¿½s UI system.
         /// 
         /// The class handles creating a testnet client, signing transactions with the current account, 
         /// and displaying results in the user interface.
@@ -79,8 +80,20 @@ namespace Sui.Seal
         public async void OnEncryptButtonClick()
         {
             string dataToEncrypt = _encryptTextField.text;
-            TransactionBlock txBlock = await SealBridge.Instance.Encrypt(dataToEncrypt, _account.SuiAddress().ToHex());
-            await _client.SignAndExecuteTransactionBlockAsync(txBlock, _account);
+            EncryptionResult encryptionResult = await SealBridge.Instance.Encrypt(dataToEncrypt, _account.SuiAddress().ToHex());
+
+            TransactionBlock tx_block = new TransactionBlock();
+            tx_block.AddMoveCallTx
+            (
+                SuiMoveNormalizedStructType.FromStr($"{_packageId}::{_moduleName}::{_funcName}"),
+                new SerializableTypeTag[] { },
+                new TransactionArgument[]
+                {
+                tx_block.AddPure(new OpenDive.BCS.Bytes(encryptionResult.NonceBytes)),
+                tx_block.AddPure(new OpenDive.BCS.Bytes(encryptionResult.EncryptedBytes))
+                }
+            );
+            await _client.SignAndExecuteTransactionBlockAsync(tx_block, _account);
             _encryptedText.gameObject.SetActive(true);
         }
 

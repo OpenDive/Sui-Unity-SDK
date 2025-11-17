@@ -5,6 +5,7 @@ using Sui.Accounts;
 using Sui.Rpc.Client;
 using Sui.Rpc.Models;
 using Sui.Transactions;
+using Sui.Types;
 using Sui.ZKLogin;
 using Sui.ZKLogin.Enoki;
 using Sui.ZKLogin.Enoki.Utils;
@@ -141,8 +142,19 @@ namespace Sui.Seal
         public async void OnEncryptButtonClick()
         {
             string dataToEncrypt = _encryptTextField.text;
-            TransactionBlock txBlock = await SealBridge.Instance.Encrypt(dataToEncrypt, EnokiZKLogin.GetSuiAddress());
-            await EnokiZKLogin.SignAndExecuteTransactionBlock(txBlock);
+            EncryptionResult encryptionResult = await SealBridge.Instance.Encrypt(dataToEncrypt, EnokiZKLogin.GetSuiAddress());
+            TransactionBlock tx_block = new TransactionBlock();
+            tx_block.AddMoveCallTx
+            (
+                SuiMoveNormalizedStructType.FromStr($"{_packageId}::{_moduleName}::{_funcName}"),
+                new SerializableTypeTag[] { },
+                new TransactionArgument[]
+                {
+                tx_block.AddPure(new OpenDive.BCS.Bytes(encryptionResult.NonceBytes)),
+                tx_block.AddPure(new OpenDive.BCS.Bytes(encryptionResult.EncryptedBytes))
+                }
+            );
+            await EnokiZKLogin.SignAndExecuteTransactionBlock(tx_block);
             _encryptedText.gameObject.SetActive(true);
         }
 
